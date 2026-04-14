@@ -628,13 +628,27 @@ Synopsis가 작성되면 사용자의 **명시적 승인**이 있어야 Full Pro
 
 이 프로젝트에서 활용하는 외부 데이터 소스:
 
-| MCP 서버 | 용도 |
-|----------|------|
+### MCP 서버
+
+| 서버 | 용도 |
+|------|------|
 | **Clinical Trials** (ClinicalTrials.gov API v2) | 유사 시험 검색, 프로토콜 설계 참고, 엔드포인트 분석 |
 | **PubMed** | 문헌 검색 — PK/PD, 안전성, 용량 설정 근거 |
 | **ICD-10** | ICD-10-CM/PCS 코드 조회 — 적응증 코딩 |
-| **DailyMed/openFDA** (예정) | 약물 라벨 정보 — 허가사항, 약물상호작용 섹션 |
-| **MFDS** (예정) | 임상시험 승인현황, 가이드라인 검색 |
+
+### Web API (WebFetch)
+
+MCP 서버 없이 WebFetch로 공개 API를 직접 호출. 쿼리 레시피는 `.claude/references/api_reference/`에 수록:
+
+| API | Base URL | 용도 |
+|-----|----------|------|
+| **DailyMed** | `dailymed.nlm.nih.gov/dailymed/services/v2/` | 미국 FDA 승인 약물 SPL 라벨 전문 (약물상호작용·약동학·약물유전체 섹션) |
+| **openFDA** | `api.fda.gov/drug/` | 허가 정보(NDA 번호·승인일), NDC, FAERS 이상반응, 보조 라벨 |
+
+### 조사 중 (향후 통합 검토)
+
+- **MFDS 의약품안전나라** (`nedrug.mfds.go.kr`): 국내 임상시험 승인현황, 한국 허가사항. 현재는 WebSearch 폴백
+- **PharmGKB / CPIC**: 약물유전체 권고 — 현재 PubMed 논문 기반으로 대체
 
 ---
 
@@ -651,10 +665,12 @@ Synopsis가 작성되면 사용자의 **명시적 승인**이 있어야 Full Pro
 
 ### 진행 중·향후 계획
 
-1. **MCP 도구 확장** — DailyMed/openFDA, MFDS 의약품안전나라 API 통합
-2. **추가 cross-agency 비교** — ADME, 집단 PK(PopPK), 신장/간 기능 저하, 소아 시험 비교표
-3. **ICH 원문 수집** — 사용자 PDF 제공이 필요한 항목 보강 (`.claude/references/guidelines/needs_user_input.md` 참조)
-4. **Plugin 변환** — 검증 완료된 하네스를 Claude Code plugin으로 변환하여 범용 배포
+1. **DailyMed/openFDA WebFetch 통합 완료** ✅ (2026-04-14) — 쿼리 레시피는 `.claude/references/api_reference/`
+2. **MCP 서버 전환 검토** — DailyMed/openFDA를 커스텀 MCP 서버로 전환 (현재 WebFetch로 운영 중, 플러그인 전환 시점에 재검토)
+3. **MFDS 의약품안전나라 WebFetch 통합** — 국내 임상시험 승인현황 API 조사 후 통합
+4. **추가 cross-agency 비교** — ADME, 집단 PK(PopPK), 신장/간 기능 저하, 소아 시험 비교표
+5. **ICH 원문 수집** — 사용자 PDF 제공이 필요한 항목 보강 (`.claude/references/guidelines/needs_user_input.md` 참조)
+6. **Plugin 변환** — 검증 완료된 하네스를 Claude Code plugin으로 변환하여 범용 배포
 
 ---
 

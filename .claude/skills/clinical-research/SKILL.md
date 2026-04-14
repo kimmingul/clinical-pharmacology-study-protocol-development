@@ -22,7 +22,7 @@ description: "임상시험 배경 조사를 수행하는 스킬. IB 분석, Clin
 | **약물유전체학** (CYP/표적 다형성, 한국인 빈도) | translational-scientist | PubMed + 라벨 |
 | **대사체학** (인체 특이 대사체, 내인성 바이오마커) | translational-scientist | PubMed |
 | 규제 가이드라인 | regulatory-expert | MFDS/FDA/EMA 가이드라인 DB |
-| 약물 라벨 정보 (PG 섹션 추출 포함) | regulatory-expert | DailyMed/openFDA |
+| 약물 라벨 정보 (PG 섹션 추출 포함) | regulatory-expert | **DailyMed + openFDA (WebFetch)** — 상세 쿼리는 `.claude/references/api_reference/` |
 | ICD-10 코딩 | regulatory-expert | ICD-10 API |
 | MFDS 승인현황 | regulatory-expert | MFDS (의약품안전나라) |
 | 선정/제외 기준 근거 | clinician | PubMed |
@@ -139,13 +139,23 @@ search_codes(query="{적응증명}", code_type="diagnosis") → lookup_code(code
 - Cross-Agency 비교: `.claude/references/guidelines/by_study_type/` — 시험 유형별 4개 기관 차이점 통합 비교
 - 국내 법령: `.claude/references/guidelines/regulations/` (약사법, KGCP, PIPA, 생명윤리법)
 
-### Step 3: 약물 라벨 정보 (허가 약물)
+### Step 3: 약물 라벨 정보 (허가 약물) — WebFetch 기반
 
-허가된 약물의 경우 라벨/SPC에서 수집:
-- 허가사항 (적응증, 용법용량)
-- 약물상호작용 섹션 (대사 효소, 수송체 정보)
-- 금기 사항
-- 약동학 섹션 (공개된 PK 파라미터)
+허가된 약물의 경우 **DailyMed (1차)** + **openFDA (보완)** WebFetch로 라벨·허가 정보 조회. 상세 쿼리 레시피는 `.claude/references/api_reference/{dailymed,openfda}.md` 참조.
+
+**Step 3-A: DailyMed SPL 라벨 수집**
+1. `GET https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json?drug_name={name}&pagesize=5` → 최신 setid 선택
+2. `GET https://dailymed.nlm.nih.gov/dailymed/services/v2/spls/{setid}.xml` → 라벨 전문 추출
+3. 추출 필드: 적응증, 용법용량, 금기, 경고/주의, 약물상호작용, 약동학, **약물유전체(PG, 있을 시)**, 특수 집단, 임상시험
+4. 저장: `_workspace/01_references/labels/{drug_name}_DailyMed.md`
+
+**Step 3-B: openFDA 허가 메타데이터 + FAERS**
+1. `GET https://api.fda.gov/drug/drugsfda.json?search=openfda.generic_name:{name}` → NDA 번호, 최초 승인일, 현재 상태
+2. `GET https://api.fda.gov/drug/event.json?search=patient.drug.medicinalproduct:{NAME}&count=patient.reaction.reactionmeddrapt.exact&limit=20` → FAERS 상위 이상반응 (참고용, 공식 빈도는 라벨 참조)
+3. 저장: `_workspace/01_references/labels/{drug_name}_openFDA.md`
+
+**Step 3-C: PG 섹션 translational-scientist 인계**
+라벨에 PG 섹션이 있으면 별도 추출하여 translational-scientist에게 참고자료로 전달 (해석·한국인 빈도 분석은 TS 담당).
 
 ### Step 4: MFDS 임상시험 승인현황
 

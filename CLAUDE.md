@@ -16,12 +16,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | FIH, SAD/MAD (신약) | IB 필수 | 신약이므로 공개 정보 없음. IB가 유일한 1차 자료 |
 | DDI, BE, FE, QTc, ADME 등 | 약물명만으로 충분 | 이미 허가된 약물 대상. 기존 문헌·공개 DB에서 정보 수집 가능 |
 
-## MCP Tools Available
+## 외부 데이터 소스
 
-이 프로젝트에서는 다음 MCP 도구를 활용할 수 있음:
+### MCP Tools
 - **Clinical Trials**: ClinicalTrials.gov API v2 — 유사 시험 검색, 프로토콜 설계 참고, 엔드포인트 분석
 - **ICD-10 Codes**: ICD-10-CM/PCS 코드 조회 — 적응증 코딩, 선정/제외 기준 작성 시 활용
 - **PubMed**: 문헌 검색 — 배경 근거, 용량 설정 근거, 안전성 정보 확인
+
+### Web API (WebFetch 기반)
+MCP 서버 없이 WebFetch로 직접 공개 API를 호출. 쿼리 레시피는 `.claude/references/api_reference/` 참조:
+- **DailyMed** (`dailymed.nlm.nih.gov/dailymed/services/v2/`): 미국 FDA 승인 약물 SPL 라벨 전문 — regulatory-expert가 약물 라벨 1차 수집
+- **openFDA** (`api.fda.gov/drug/`): 허가 정보(NDA 번호·승인일), NDC, FAERS 이상반응, 보조 라벨 — regulatory-expert 보완 조사
 
 ## Language Conventions
 

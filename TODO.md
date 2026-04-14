@@ -65,7 +65,36 @@ BE/FE 시험에서 translational-scientist는 **완전 불참**으로 설정 (re
 
 ---
 
-## 4. `regulatory-review` 스킬명 변경 검토 (Minor, 네이밍)
+## 4. DailyMed/openFDA Custom MCP 서버 전환 (Major, 인프라)
+
+### 현황
+2026-04-14 기준 DailyMed/openFDA는 **WebFetch 기반**으로 통합됨. 쿼리 레시피는 `.claude/references/api_reference/{dailymed,openfda}.md`에 수록. regulatory-expert가 2-step 조회(`/spls.json` → `/spls/{setid}.xml`)를 프롬프트 지시로 수행.
+
+### 전환 트리거
+다음 조건이 충족되면 Custom MCP 서버로 전환:
+- **일관성 이슈 실측**: WebFetch 기반 라벨 추출이 에이전트마다 다른 필드를 놓치거나, 동일 약물에 다른 결과를 내는 사례가 축적
+- **rate limit 초과**: openFDA 무키 1,000 req/day 초과 (현재 예상 사용량으로는 불가능에 가까움)
+- **Plugin 배포**: `clinical-pharmacology-study-protocol-development` Claude Code plugin으로 전환 시 — 이때 MCP 서버로 전환하면 다른 사용자가 API 쿼리 패턴을 재학습할 필요 없음
+
+### 구현 스케치
+1. `.claude/scripts/mcp-servers/dailymed.mjs` (~200줄)
+   - `get_spl_by_drug_name(name) → setid[]`
+   - `get_spl_label(setid) → {sections}`
+   - `extract_pg_section(setid) → text` (정규표현식 기반)
+2. `.claude/scripts/mcp-servers/openfda.mjs` (~300줄)
+   - `get_drugsfda(generic_name) → approval_info`
+   - `get_label(generic_name) → label_json`
+   - `count_faers_reactions(drug_name, top=20) → [{pt, count}]`
+3. `.mcp.json` 프로젝트 루트에 서버 등록
+4. regulatory-expert.md의 "Web API (WebFetch)" 섹션을 "MCP Tools" 섹션으로 이동
+5. `.claude/references/api_reference/` — 레퍼런스로 유지 (MCP 서버 디버깅 및 폴백용)
+
+### 우선순위 판단
+현재는 WebFetch로 충분히 기능적. **Plugin 전환 시점까지 보류** 권장.
+
+---
+
+## 5. `regulatory-review` 스킬명 변경 검토 (Minor, 네이밍)
 
 ### 현황
 스킬 이름 `regulatory-review`지만 실제로는 임상약리/통계/임상의학/중개의학 리뷰까지 모두 포함.
@@ -89,7 +118,7 @@ BE/FE 시험에서 translational-scientist는 **완전 불참**으로 설정 (re
 
 ---
 
-## 5. ICH E6(R3) Annex 1 "13개 필수 항목" 체크리스트 원문 검증 (Major, 규제)
+## 6. ICH E6(R3) Annex 1 "13개 필수 항목" 체크리스트 원문 검증 (Major, 규제)
 
 ### 현황
 `.claude/skills/regulatory-review/SKILL.md` Line 55-69의 13개 항목은 에이전트가 외우는 기준이나, 실제 ICH E6(R3) Annex 1 Appendix B의 항목 목록과 1:1 대조 검증 미완.
@@ -120,7 +149,14 @@ BE/FE 시험에서 translational-scientist는 **완전 불참**으로 설정 (re
 - M4: Phase 1 입력에서 "유전체/인체유래물" 제거
 - M5: compare.md 비교 항목 확장
 
-✅ **Minor (3건)** — 현 커밋
+✅ **Minor (3건)** — `ad8e69f` 커밋
 - m3: clinical-research 시험 유형별 특화 조사 표 경계 명확화
 - m4: /synopsis 인자-스크립트 매핑 표 명시화
 - m5: settings.local.json 불필요 권한 정리
+
+✅ **DailyMed/openFDA WebFetch 통합** (2026-04-14)
+- `.claude/references/api_reference/dailymed.md` — SPL 2-step 조회, PG 섹션 추출 레시피
+- `.claude/references/api_reference/openfda.md` — 5개 엔드포인트, FAERS 이상반응 집계
+- regulatory-expert.md + clinical-research/SKILL.md Step 3에 구체 절차 반영
+- CLAUDE.md + README.md에 "Web API (WebFetch)" 섹션 신설
+- (Custom MCP 서버 전환은 위 4번 항목으로 이관)
