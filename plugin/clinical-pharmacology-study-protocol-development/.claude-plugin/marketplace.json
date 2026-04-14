@@ -4,7 +4,7 @@
     "name": "Min-Gul Kim"
   },
   "metadata": {
-    "description": "한국 MFDS 환경 기준 임상약리 임상시험 문서 개발 하네스 marketplace. Protocol·ICF·Synopsis를 8개 전문 에이전트와 10단계 파이프라인으로 생성.",
+    "description": "임상약리 임상시험 문서 개발 하네스 marketplace. Protocol·ICF·Synopsis를 8개 전문 에이전트와 10단계 파이프라인으로 생성.",
     "version": "2.0.0"
   },
   "plugins": [
