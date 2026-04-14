@@ -2,6 +2,9 @@
 
 임상약리 임상시험 문서를 체계적으로 개발하는 Claude Cowork/Code 하네스 프로젝트.
 
+Plugin 파일: /plugin 폴더 내에 있는 clinical-pharmacology-study-protocol-development.zip 파일을 이용하면 됩니다.
+
+
 7개의 전문 에이전트가 역할 기반으로 협업하여 **배경 조사**, **시험 설계**, **Synopsis**, **계획서(Protocol)**, **동의설명서/동의서(ICF)**를 생성합니다. 시험 유형에 따라 두 가지 워크플로우로 분기합니다:
 
 - **FIH/SAD/MAD (신약)**: IB(시험자자료집) 기반 — 초기 용량 산출 포함
@@ -657,30 +660,15 @@ MCP 서버 없이 WebFetch로 공개 API를 직접 호출. 쿼리 레시피는 `
 
 ---
 
-## 진행 현황 및 향후 계획
-
-### 완료된 항목
-
-- ✅ **하네스 7-에이전트 재구성** — 역할 기반 구조 (조사 4 + 작성 2 + 검토 1)
-- ✅ **Commands 구현** — 7개 단계별 commands (`/research`, `/design`, `/synopsis`, `/compare`, `/protocol`, `/review`, `/icf`)
-- ✅ **Sample size 코드 템플릿** — 7개 디자인별 Python 스크립트 (`.claude/scripts/sample_size/`)
-- ✅ **FIH 산출 코드** — 초기 용량 산출 + 용량 증량 스킴 (`.claude/scripts/fih/`)
-- ✅ **규제 가이드라인 라이브러리 구축** — ICH/FDA/EMA/MFDS 가이드라인 + 국내 법령 + 시험 유형별 cross-agency 비교표 (`.claude/references/guidelines/`)
-- ✅ **E2E 검증** — 실제 시험 문서 1건 생성 및 다중 에이전트 리뷰 (`e2e/` 디렉토리)
-
 ### 진행 중·향후 계획
 
-1. ✅ **DailyMed/openFDA WebFetch 통합** (2026-04-14)
-2. ✅ **MFDS 의약품안전나라 WebFetch 통합** (2026-04-14) — searchClinic 리버스엔지니어링 + Nexacro SOAP 상세 페이지 크롤링 (재검증으로 searchType 매핑/hidden 파라미터 결함 해결, 상세 본문 4 endpoint 실증 추가)
-3. ✅ **PharmGKB/CPIC WebFetch 통합** (2026-04-14) — translational-scientist의 약물유전체 조사에 활용
-4. **MCP 서버 전환 검토** — Web API 5종을 커스텀 MCP 서버로 전환 (플러그인 전환 시점에 재검토, TODO.md 참조)
-5. **MFDS `data.go.kr` OpenAPI 전환** — serviceKey 기반 JSON 공식 API로 업그레이드 (searchClinic HTML 구조 변경 대비, TODO.md 참조)
-6. **추가 cross-agency 비교** — ADME, 집단 PK(PopPK), 신장/간 기능 저하, 소아 시험 비교표
-7. **ICH 원문 수집** — ICH E6(R3) ✅ 완료 (2026-04-14). E8(R1)/E14/M13A/E9(R1)/E17/M9 등 나머지 항목은 PDF 제공 시 동일 방식(pdftotext 기반)으로 보강 가능 (`.claude/references/guidelines/needs_user_input.md` 참조)
-8. **Plugin 변환** — 검증 완료된 하네스를 Claude Code plugin으로 변환하여 범용 배포
+1. **MCP 서버 전환 검토** — Web API 5종을 커스텀 MCP 서버로 전환 (플러그인 전환 시점에 재검토, TODO.md 참조)
+2. **MFDS `data.go.kr` OpenAPI 전환** — serviceKey 기반 JSON 공식 API로 업그레이드 (searchClinic HTML 구조 변경 대비, TODO.md 참조)
+3. **추가 cross-agency 비교** — ADME, 집단 PK(PopPK), 신장/간 기능 저하, 소아 시험 비교표
+4. **ICH 원문 수집** — ICH E6(R3) ✅ 완료 (2026-04-14). E8(R1)/E14/M13A/E9(R1)/E17/M9 등 나머지 항목은 PDF 제공 시 동일 방식(pdftotext 기반)으로 보강 가능 (`.claude/references/guidelines/needs_user_input.md` 참조)
 
 ---
 
 ## 라이선스
 
-Private - All rights reserved.
+MIT
