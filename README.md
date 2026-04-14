@@ -1,6 +1,6 @@
-# Clinical Trial Protocol Generator
+# Clinical Pharmacology Study Protocol Development Plugin for Claude Cowork/Code
 
-임상약리 임상시험 문서를 체계적으로 개발하는 Claude Code 하네스 프로젝트.
+임상약리 임상시험 문서를 체계적으로 개발하는 Claude Cowork/Code 하네스 프로젝트.
 
 7개의 전문 에이전트가 역할 기반으로 협업하여 **배경 조사**, **시험 설계**, **Synopsis**, **계획서(Protocol)**, **동의설명서/동의서(ICF)**를 생성합니다. 시험 유형에 따라 두 가지 워크플로우로 분기합니다:
 
