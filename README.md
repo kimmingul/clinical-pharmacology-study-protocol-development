@@ -257,10 +257,12 @@ Metformin과 Rifampin의 DDI 시험 문서를 작성해줘
 
 regulatory-expert 에이전트가 수행하는 한국 규제 자료 조사:
 
-**임상시험 승인현황 조사**
-- 의약품안전나라(nedrug.mfds.go.kr)에서 동일/유사 약물의 국내 임상시험 승인 사례 검색
-- 승인 조건, 시험 설계, 대상자 수 등 참고 정보 수집
-- 국내 임상시험 환경(기관, 규모)에 대한 맥락 파악
+**임상시험 승인현황 조사 — 2단계 크롤링 (2026-04-14 재검증)**
+
+1. **검색 결과 리스트** (HTML): 의약품안전나라 `searchClinic` 엔드포인트에서 약물명·의뢰자·시험명·실시기관 기반으로 승인 시험 리스트 수집. searchType 매핑 `ST1=의뢰자 / ST2=제품명 / ST3=임상시험 제목 / ST4=실시기관`. hidden `approvalStart`/`approvalEnd`와 UI `approvalDtStart`/`approvalDtEnd`를 **모두** 전송해야 결과 반환. 서버 제약상 **최대 3년(1096일)** 범위 → 장기 조사는 3년 단위 구간 분할 반복 호출, 페이지당 10건 페이지네이션.
+2. **시험별 상세 본문** (Nexacro SOAP): 각 시험의 `clinicExamSeq`·`clinicExamNo`·`receiptNo`를 키로 상세 endpoint 4종을 POST (`Content-Type: text/xml; charset=UTF-8`, body는 Nexacro 표준 XML)로 호출하여 **Tab 1 임상시험계획** (선정·제외 기준, 시험약, 평가변수 등 8개 dataset)과 **Tab 2 임상시험결과**(결과 본문)를 XML로 수신. 헤드리스 브라우저·유료 API 키 불필요. HTML entity(`&#32;` 공백, `&#10;` 줄바꿈) unescape 필수.
+
+상세 프로토콜·완전한 curl/Python 예시·탭별 endpoint 매핑은 `.claude/references/api_reference/mfds.md` 참조. 과거 레시피의 결함(searchType 매핑 오류, hidden 날짜 파라미터 누락)은 2026-04-14 재검증으로 해결 완료.
 
 **MFDS 가이드라인 조사**
 - 시험 유형별 해당 MFDS 가이드라인 확인 및 핵심 요건 정리
@@ -645,7 +647,7 @@ MCP 서버 없이 WebFetch로 공개 API를 직접 호출. 쿼리 레시피는 `
 |-----|----------|------------|------|
 | **DailyMed** | `dailymed.nlm.nih.gov/dailymed/services/v2/` | regulatory-expert | 미국 FDA 승인 약물 SPL 라벨 전문 (약물상호작용·약동학·약물유전체 섹션) |
 | **openFDA** | `api.fda.gov/drug/` | regulatory-expert | 허가 정보(NDA 번호·승인일), NDC, FAERS 이상반응, 보조 라벨 |
-| **MFDS 의약품안전나라** | `nedrug.mfds.go.kr/searchClinic` | regulatory-expert | 국내 임상시험 승인현황 (HTML 응답, 인증 불필요) |
+| **MFDS 의약품안전나라** | `nedrug.mfds.go.kr/searchClinic` + `nedrug.mfds.go.kr/ext/CCAAK02F010/*` | regulatory-expert | 국내 임상시험 승인현황 리스트(HTML) + 시험별 본문(Nexacro SOAP XML — 선정·제외, 시험약, 결과). 인증 불필요, 최대 3년 구간 분할 |
 | **PharmGKB / ClinPGx** | `api.pharmgkb.org/v1/` | translational-scientist | 약물-유전자 임상 annotation, 라벨 PGx, 변이 annotation (CC BY-SA 4.0) |
 | **CPIC** | `api.cpicpgx.org/v1/` | translational-scientist | 표현형별 용량 조절 권고, 권고 등급(A/B/C/D), Diplotype→Phenotype 매핑 (CC0 Public Domain) |
 
@@ -669,7 +671,7 @@ MCP 서버 없이 WebFetch로 공개 API를 직접 호출. 쿼리 레시피는 `
 ### 진행 중·향후 계획
 
 1. ✅ **DailyMed/openFDA WebFetch 통합** (2026-04-14)
-2. ✅ **MFDS 의약품안전나라 WebFetch 통합** (2026-04-14) — searchClinic 리버스엔지니어링 기반
+2. ✅ **MFDS 의약품안전나라 WebFetch 통합** (2026-04-14) — searchClinic 리버스엔지니어링 + Nexacro SOAP 상세 페이지 크롤링 (재검증으로 searchType 매핑/hidden 파라미터 결함 해결, 상세 본문 4 endpoint 실증 추가)
 3. ✅ **PharmGKB/CPIC WebFetch 통합** (2026-04-14) — translational-scientist의 약물유전체 조사에 활용
 4. **MCP 서버 전환 검토** — Web API 5종을 커스텀 MCP 서버로 전환 (플러그인 전환 시점에 재검토, TODO.md 참조)
 5. **MFDS `data.go.kr` OpenAPI 전환** — serviceKey 기반 JSON 공식 API로 업그레이드 (searchClinic HTML 구조 변경 대비, TODO.md 참조)

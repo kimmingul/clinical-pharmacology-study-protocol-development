@@ -29,7 +29,7 @@ MCP 서버 없이 WebFetch로 직접 공개 API를 호출. 쿼리 레시피는 `
 **규제·라벨 (regulatory-expert 담당)**
 - **DailyMed** (`dailymed.nlm.nih.gov/dailymed/services/v2/`): 미국 FDA 승인 약물 SPL 라벨 전문 — 약물 라벨 1차 수집
 - **openFDA** (`api.fda.gov/drug/`): 허가 정보(NDA 번호·승인일), NDC, FAERS 이상반응, 보조 라벨
-- **MFDS 의약품안전나라** (`nedrug.mfds.go.kr/searchClinic`): 국내 임상시험 승인현황 — HTML 응답 파싱, 인증 불필요
+- **MFDS 의약품안전나라** (`nedrug.mfds.go.kr/searchClinic` + `/ext/CCAAK02F010/*`): 국내 임상시험 승인현황 리스트(HTML) + 시험별 상세 본문(Nexacro SOAP XML). 인증 불필요. 검색은 최대 3년 구간, 상세는 `clinicExamSeq`+`clinicExamNo`로 POST 호출. 레시피: `.claude/references/api_reference/mfds.md`
 
 **약물유전체 (translational-scientist 담당)**
 - **PharmGKB / ClinPGx** (`api.pharmgkb.org/v1/`): 약물-유전자 임상 annotation, 라벨 PGx, 변이 annotation — 무인증, 2 req/sec, CC BY-SA 4.0
@@ -113,4 +113,5 @@ MCP 서버 없이 WebFetch로 직접 공개 API를 호출. 쿼리 레시피는 `
 | 2026-04-14 | **Phase 4에 유전체/대사체 분석 계획 협의 추가** + **ICF Part 4(선택 동의) PG/오믹스 섹션 강화** + **regulatory-expert 라벨 PG 섹션 추출 책임 추가** | 자료수집·설계협의·동의문서 전 단계에 PG/오믹스가 일관되게 흐르도록 구성. 생명윤리법(인체유래물 연구) 준수 보장 |
 | 2026-04-14 | **Web API 5종 통합**: DailyMed + openFDA + MFDS 의약품안전나라(searchClinic 리버스엔지니어링) + PharmGKB/ClinPGx + CPIC. `.claude/references/api_reference/` 하위 5개 레시피 파일, WebFetch 기반 즉시 사용 가능 | MCP 서버 구축 없이 공개 API·크롤링 가능 페이지로 외부 데이터 소스 확장 |
 | 2026-04-14 | **ICH E6(R3) 원문 전문 MD 수록 + 체크리스트 재구성**: `ich/e6_r3_full/` 10개 파일, regulatory-review/SKILL.md의 13개 추정 체크리스트를 **Appendix B 공식 16개 섹션(B.1~B.16)**으로 교체. B.8 "Assessment of Efficacy" 공식 명칭 확인으로 Phase 1 용량 정책 정당성 확보 | 사용자가 ICH PDF 제공 → `pdftotext`로 원문 추출 → QA 기준의 근본 신뢰성 확보 |
+| 2026-04-14 | **MFDS 크롤링 전면 재검증 + Nexacro SOAP 상세 크롤링 신설**: 기존 레시피의 searchType 매핑 오류(ST1/2/3/4 전체 혼선) + hidden 날짜 파라미터(`approvalStart`/`approvalEnd`) 누락으로 모든 검색이 0건 반환되던 문제 해결. 상세 페이지는 Nexacro SPA이나 `/ext/CCAAK02F010/*` SOAP endpoint 4종(clinicExamPlanReport PLAN/RESULT, clinicExamOpenChk, clinicExamOpenItem)을 HTTP POST + 표준 XML body로 직접 호출하여 **선정·제외 기준·시험약·결과 본문까지 XML dataset 수신 실증**. 검색 리스트 → 상세 자동 follow 전략 도입 (N×4 호출 제한 N≤30) | 사용자 지적으로 실사용 불가 상태가 드러남 + 상세 본문 자동 수집 요구 → 2단계 크롤링(리스트 + Nexacro SOAP) 완성. 헤드리스 브라우저·유료 API 키 불필요 |
 | 2026-04-14 | **v2 DDI E2E 실행 후 하네스 강화**: (1) protocol-writer/regulatory-expert에 **규제 상수 표** 추가 — KGCP 기록 보존 **15년** (3년 오기 방지), SAE 7/15일, 종료 90일, 90% CI 80–125% 기본값. (2) clinician에 **약물 계열별 안전성 체크리스트** 추가 — Thienopyridine TTP 4종 세트(혈소판·LDH 정기·Haptoglobin·말초혈구도말). (3) biostatistician에 **SAS PROC MIXED 표준 문법 3종** + **Co-primary IUT 판정 로직**. (4) protocol-template §10.1에 **AUC 시간 범위 선택 표** (AUC₀₋∞/AUC₀₋ₜ/AUC₀₋₇₂ₕ/AUC₀₋τ 가이드라인 정합성). (5) `/synopsis`에 design_decisions.md **강제 반영 Step A/B/C**. (6) `/research`에 **TS 참여 매트릭스 + 자가 검증 절차**. A군 Web API 결함(MFDS JS 렌더링, PharmGKB HTTP 400)은 `TODO.md §0`에 이관 | E2E v2 DDI(`e2e/v2_2026_04_14_DDI/`) 5명 리뷰 중 Major 8건 분석 → 재발 방지용 상수·체크리스트·검증 단계를 에이전트·템플릿·커맨드에 주입 |
