@@ -428,15 +428,16 @@ NOAEL (mg/kg, 동물)
 
 ### 프로세스
 
-Full Protocol 작성 완료 후, 4명의 전문가 에이전트가 **병렬로** 계획서를 리뷰합니다.
+Full Protocol 작성 완료 후, **4-5명의 전문가 에이전트가 병렬로** 계획서를 리뷰합니다. translational-scientist는 BE/FE 외 시험에만 참여합니다 (PG/PD가 시험 목적과 관련 있을 때).
 
 ```
 Protocol 완성
        │
-       ├─→ clinical-pharmacologist 리뷰
-       ├─→ clinician 리뷰 (조건부)
-       ├─→ regulatory-expert 리뷰
-       └─→ biostatistician 리뷰
+       ├─→ clinical-pharmacologist 리뷰 (항상)
+       ├─→ translational-scientist 리뷰 (BE/FE 외)
+       ├─→ clinician 리뷰 (항상)
+       ├─→ regulatory-expert 리뷰 (항상)
+       └─→ biostatistician 리뷰 (항상)
               │
               ▼
        qa-reviewer: 취합 + 우선순위 분류
@@ -449,12 +450,13 @@ Protocol 완성
 
 각 리뷰어의 검토 범위를 명확히 분리하여 중복을 방지합니다:
 
-| 리뷰어 | 검토 초점 |
-|--------|----------|
-| **clinical-pharmacologist** | PK 설계 적절성, 채혈 시점, 약물상호작용 평가 방법, 용량 근거, washout 기간 |
-| **clinician** | 선정/제외 기준의 임상적 타당성, 안전성 모니터링 계획, 이상반응 관리, 중지 기준 |
-| **regulatory-expert** | ICH E6(R3) Annex 1 필수 요소 충족, MFDS/FDA 가이드라인 준수, 규제 용어 적절성 |
-| **biostatistician** | 통계 섹션 완결성, sample size 정당성, 무작위화 방법, 1차/2차 분석 방법, 결측치 처리 |
+| 리뷰어 | 검토 초점 | 참여 |
+|--------|----------|------|
+| **clinical-pharmacologist** | PK 설계 적절성, 채혈 시점, 약물상호작용 평가 방법, 용량 근거, washout 기간 | 항상 |
+| **translational-scientist** | PD 평가 섹션(바이오마커 선정·측정법), PK-PD 모델링, PG 분석 계획(대상 유전자, 한국인 빈도), 대사체 분석, **계획서-ICF Part 4 PG/오믹스 정합성** | **BE/FE 외** |
+| **clinician** | 선정/제외 기준의 임상적 타당성, 안전성 모니터링 계획, 이상반응 관리, 중지 기준 | 항상 |
+| **regulatory-expert** | ICH E6(R3) Annex 1 필수 요소 충족, MFDS/FDA 가이드라인 준수, 규제 용어 적절성 | 항상 |
+| **biostatistician** | 통계 섹션 완결성, sample size 정당성, 무작위화 방법, 1차/2차 분석 방법, 결측치 처리 | 항상 |
 
 ### 분류 체계
 
