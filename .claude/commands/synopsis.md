@@ -18,11 +18,21 @@ Synopsis는 Phase 4에서 확정된 **모든 설계 결정**을 포함해야 한
 - 유전체/대사체 분석 계획 (해당 시)
 
 ## 인자 처리
-- `/synopsis` → 기본 설계로 synopsis 생성
-- `/synopsis crossover 2x2` → 2×2 crossover 변형
-- `/synopsis parallel` → parallel design 변형
-- `/synopsis replicate 2x4` → 2×4 replicate crossover 변형
-- 변형 지정 시 해당 설계에 맞게 sample size와 통계 방법을 조정
+
+변형을 지정하면 해당 설계에 맞게 sample size와 통계 방법을 조정한다. 지원되는 인자는 `.claude/scripts/sample_size/` 디렉토리의 스크립트와 1:1 매핑된다.
+
+| 인자 | 설계 | 매핑 스크립트 |
+|------|------|-------------|
+| (생략) | 기본 설계 (design_decisions.md 결정 반영) | — |
+| `crossover 2x2` | 2×2 crossover (BE/DDI/FE 공통) | `crossover_2x2_be.py` 또는 `crossover_2x2_ddi.py` |
+| `crossover 2x3` | 2-sequence × 3-period replicate | `replicate_crossover_be.py` |
+| `crossover 2x4` | 2-sequence × 4-period replicate (RSABE) | `replicate_crossover_be.py` |
+| `crossover 4x4` | Williams 4×4 | `williams_4x4.py` |
+| `one-sequence` | 단일 순서 DDI | `one_sequence_ddi.py` |
+| `parallel` | Parallel (연속형 기본) | `parallel_continuous.py` |
+| `parallel binary` | Parallel 이분형 | `parallel_binary.py` |
+
+> 미지원 인자 입력 시 위 표를 제시하고 재입력을 요청한다.
 
 ## 산출물 파일명
 - 기본: `_workspace/02_synopsis.md`

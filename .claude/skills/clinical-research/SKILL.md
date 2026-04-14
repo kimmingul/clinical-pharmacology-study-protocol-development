@@ -79,9 +79,9 @@ IB 불필요. 약물명만으로 배경 자료를 수집한다.
 | **DDI** | 대사 효소(CYP), 수송체(P-gp, OATP), 기존 DDI 연구 결과, in vitro 데이터 | FDA DDI 가이드라인, MFDS 약물상호작용 평가 가이드라인 |
 | **BE** | BCS 분류, 용출 프로파일, 원개발사 PK 데이터, 기존 BE 시험 | MFDS 생동성시험 가이드라인, 동등성 한계, 고변동약물 가이드라인 |
 | **FE** | BCS 분류, 흡수 특성, 식이 영향 관련 기존 데이터 | FDA FE 가이드라인, 식이 조건 요건 |
-| **QTc** | hERG 데이터, 기존 QTc 연구, PK-QTc 관계 | ICH E14, FDA QT/QTc 가이드라인 |
-| **ADME** | 방사성 표지 연구 문헌, 대사 경로, 배설 경로 | 방사성의약품 관련 규제 요건 |
-| **FIH** | IB 분석, 초기 용량 산출, 용량 증량 설계 | FDA/EMA/MFDS FIH 가이드라인, 안전성 보고 요건 |
+| **QTc** | hERG 데이터(안전성 약리), 기존 QTc 연구의 PK 측면 (PK-QTc 정량 모델은 translational-scientist) | ICH E14, FDA QT/QTc 가이드라인 |
+| **ADME** | 대사 경로·배설 경로 정성 (방사성 표지 관련 PK) | 방사성의약품 관련 규제 요건 |
+| **FIH** | IB 분석(PK·독성 요약), 초기 용량 산출, 용량 증량 설계 (비임상 약리·PD 평가는 translational-scientist) | FDA/EMA/MFDS FIH 가이드라인, 안전성 보고 요건 |
 
 ## clinical-pharmacologist 절차
 
