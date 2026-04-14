@@ -76,7 +76,8 @@ Synopsis 초안 완성 후 사용자에게 제시하기 전에 다음을 자체 
 | `crossover 2x3` | 2-sequence × 3-period replicate | `replicate_crossover_be.py` |
 | `crossover 2x4` | 2-sequence × 4-period replicate (RSABE) | `replicate_crossover_be.py` |
 | `crossover 4x4` | Williams 4×4 | `williams_4x4.py` |
-| `one-sequence` | 단일 순서 DDI | `one_sequence_ddi.py` |
+| **`crossover 6x3`** | **Williams 6×3 — 양방향 DDI** (3 treatments: A 단독, B 단독, A+B) | **`williams_6x3_ddi.py`** |
+| `one-sequence` | 단일 순서 단방향 DDI | `one_sequence_ddi.py` |
 | `parallel` | Parallel (연속형 기본) | `parallel_continuous.py` |
 | `parallel binary` | Parallel 이분형 | `parallel_binary.py` |
 
@@ -98,6 +99,11 @@ Synopsis 초안 완성 후 사용자에게 제시하기 전에 다음을 자체 
 ## 3. 시험 설계
 - 설계 유형, 맹검, 무작위화
 - 처리군 구성
+- **DDI 시험인 경우 명시 필수**:
+  - 각 약물의 role: probe / victim / perpetrator (또는 양방향이면 양쪽 역할)
+  - **방향성**: 단방향(X→Y 또는 Y→X) / **양방향(X↔Y)**
+  - 양방향 DDI라면 3 treatments 구조(A=X 단독, B=Y 단독, C=X+Y) + Williams 6×3 sequence 구성 명시
+  - carry-over 제어 방안 (MBI 여부, washout 기간)
 ## 4. 대상자
 ### 4.1 대상 집단
 ### 4.2 선정 기준 (design_decisions.md의 전체 항목 반영)
@@ -107,6 +113,11 @@ Synopsis 초안 완성 후 사용자에게 제시하기 전에 다음을 자체 
 ## 6. 평가 변수
 ### 6.1 1차 평가변수
 (시험 유형별 핵심 변수: AUC/Cmax, GMR, ddQTcF 등. 절단 AUC 적용 시 AUC₀₋₇₂ₕ, 미적용 시 AUC₀₋ₜ. 용어는 시험 목적에 따라 "유효성 평가" 또는 "약동학/약력학 평가" 적용 — Phase 1 용어 가이드 참조)
+
+**양방향 DDI인 경우 co-primary 1차 평가변수 두 개**:
+- Direction 1: A vs C — X의 AUC/Cmax GMR 및 90% CI
+- Direction 2: B vs C — Y의 AUC/Cmax GMR 및 90% CI
+- 판정: Intersection-Union Test (IUT) — 두 방향 모두 90% CI ⊂ (0.80, 1.25) 충족 시 "상호작용 없음" 판정. α 조정 불필요
 ### 6.2 2차 평가변수
 ### 6.3 유효성/약력학(PD) 평가 항목 (해당 시)
 - 시험 유형별 PD 평가 요소:
@@ -160,7 +171,8 @@ Synopsis 초안 완성 후 사용자에게 제시하기 전에 다음을 자체 
 | 시험 유형 | 강조되는 섹션 | 간소화 가능 섹션 |
 |----------|-------------|--------------|
 | BE/FE | 6.4 절단 AUC, 7. PK 채혈, 8. Washout | 6.3 PD 평가, 10. 유전체/대사체 (생략) |
-| DDI | 6.1 GMR, 6.3 PD 평가(probe 약물), 10.1 PG(CYP PM/EM) | — |
+| DDI 단방향 | 3. 설계(role·방향성 명시), 6.1 GMR(victim), 6.3 PD 평가, 10.1 PG(CYP PM/EM) | — |
+| DDI **양방향** | 3. 설계(**Williams 6×3**, 3 treatments, 양방향 role), **6.1 co-primary GMR 두 개(A vs C, B vs C)**, 통계(IUT), 6.3 PD 평가(양쪽) | — |
 | QTc | 6.3 PD 평가(ddQTcF, C-QTc) | 6.4 절단 AUC (해당 없음) |
 | FIH/SAD/MAD | 5. 용량 증량, 6.3 PD 바이오마커, 9. 안전성 | 6.4 절단 AUC |
 | ADME | 10.2 대사체 분석(MIST) | — |

@@ -15,7 +15,7 @@ description: "임상약리학 전문가. PK 자료 수집(반감기, 변동성, 
 2. **PK 기반 시험 설계 파라미터 도출**: 수집된 PK 파라미터로부터 채혈 시점, 휴약기, 절단 AUC 적용 여부를 과학적으로 산출 (아래 "PK 파라미터 기반 설계" 섹션 참조)
 3. **유사 시험 분석**: ClinicalTrials.gov에서 동일/유사 약물의 임상시험 설계, 용량, 엔드포인트 분석
 4. **FIH 초기 용량 산출**: IB 데이터로부터 NOAEL → HED → MRSD 계산, 용량 증량 스킴 설계
-5. **약물상호작용 기전 평가**: 대사 효소(CYP), 수송체(P-gp, OATP) 관련 in vitro/in vivo 데이터 수집 — **정성적 기여 및 기전** 위주 (PG 다형성에 따른 정량 변화는 translational-scientist 담당)
+5. **약물상호작용 기전 평가**: 대사 효소(CYP), 수송체(P-gp, OATP) 관련 in vitro/in vivo 데이터 수집 — **정성적 기여 및 기전** 위주 (PG 다형성에 따른 정량 변화는 translational-scientist 담당). **DDI 시험에서는 "방향성 평가 매트릭스"(아래 §DDI 방향성 평가 참조) 작성 필수**
 6. **시험 유형별 특화 조사 (PK 측면)**: DDI(CYP/수송체 기전), BE(BCS/용출), FE(흡수특성), QTc(hERG는 안전성 약리, PD는 translational-scientist), ADME(대사경로 정성)
 
 ## 작업 원칙
@@ -89,6 +89,72 @@ description: "임상약리학 전문가. PK 자료 수집(반감기, 변동성, 
 - **근거**: FDA BE Guidance (2014): 장반감기 약물에서 소실 단계는 제형 차이를 반영하지 않음. 72시간 채혈로 흡수·분포 충분히 특성화 가능
 - **MFDS 주의**: 절단 AUC에 대한 별도 명시 규정 없음 → **IND 신청 전 MFDS 사전 협의 권장** 사항으로 표기
 - **실무적 이점**: 입원 기간 단축, 대상자 부담 감소, 비용 절감
+
+## DDI 방향성 평가 매트릭스 (★ DDI 시험에서 필수)
+
+DDI 시험의 조사 단계에서 **두 약물이 서로에게 영향을 미칠 수 있는 방향**을 체계적으로 파악해야 한다. 방향성을 모호하게 두면 설계 단계(`/design`)에서 단방향 기본값으로 암묵적 결정되어 **양방향 평가가 필요한 시험에서 한 방향 데이터만 확보**하는 결함이 발생한다.
+
+### Step 1: 각 약물의 역할 분류 매트릭스 작성
+
+두 약물 X, Y에 대해 다음 매트릭스를 문헌·라벨·in vitro 데이터 근거로 작성:
+
+| 약물 | CYP/수송체 **기질**? | CYP/수송체 **저해제**? | CYP/수송체 **유도제**? |
+|-----|------------------|-------------------|-------------------|
+| **X** | 주로 어떤 효소? (예: CYP2C19) | 저해 효소·강도 (없으면 "해당 없음") | 유도 효소·강도 |
+| **Y** | 주로 어떤 효소? (예: CYP2C19) | 저해 효소·강도 | 유도 효소·강도 |
+
+근거 필수 인용: FDA DailyMed 라벨 §DDI, FDA Table of Substrates/Inhibitors/Inducers, 핵심 in vitro 논문 PMID.
+
+### Step 2: 방향성 판정
+
+위 매트릭스에서 **상대 약물에 대한 영향 가능성**을 체크:
+
+| 조합 | 영향 | 방향성 |
+|------|------|-------|
+| X는 Y의 대사 효소의 기질, Y는 그 효소의 저해/유도제 | **Y → X** (X의 PK 변화) | 1 방향 |
+| Y는 X의 대사 효소의 기질, X는 그 효소의 저해/유도제 | **X → Y** (Y의 PK 변화) | 1 방향 |
+| 양쪽 영향 모두 가능 | **X ↔ Y (양방향)** | 양방향 |
+| 한쪽만 영향 가능 | 단방향 (명확한 perpetrator / victim) | 단방향 |
+
+**양방향 가능성 체크리스트**:
+- [ ] 두 약물 모두 공통 CYP/수송체의 **기질**인가?
+- [ ] 각 약물이 그 효소에 대한 **저해/유도 효과**가 있는가? (약한 저해도 포함)
+- [ ] 한쪽이 비가역적 저해제(MBI)인가? (carry-over 위험 → 고정순서 선호)
+- [ ] 참고 유사 시험(ClinicalTrials.gov)에서 양방향 평가가 수행되었는가?
+
+하나라도 ✓이면 **양방향 가능성 있음**으로 기록하고 `/design` 단계에서 사용자에게 명시적으로 결정받도록 산출물에 플래그 표시.
+
+### Step 3: 산출물에 필수 기재
+
+`_workspace/01_research_cp.md`의 "DDI 기전" 섹션에 다음을 표로 포함:
+
+```markdown
+## DDI 방향성 분석
+
+### 역할 매트릭스
+| 약물 | 기질(CYP/수송체) | 저해 | 유도 | 근거 |
+...
+
+### 방향성 판정
+- 평가 방향: [단방향 X→Y / 단방향 Y→X / **양방향 X↔Y**]
+- 근거: [예: 두 약물 모두 CYP2C19 기질 + Y는 CYP2C19 MBI → X는 영향받음(주 평가), Y도 X가 CYP2C19 경쟁적 기질이므로 역영향 가능성 배제 불가 → 양방향 권장]
+
+### /design 단계 권고
+- 단방향 확정 시: one-sequence 또는 2x2 crossover (victim PK만 측정)
+- 양방향 확정 시: **Williams 6x3 crossover 권장** (3 treatments: X alone, Y alone, X+Y)
+  → 샘플사이즈는 `.claude/scripts/sample_size/williams_6x3_ddi.py` 사용
+```
+
+### 양방향 설계의 대표 예시 — Williams 6x3
+
+- 3 treatments: **A=X 단독**, **B=Y 단독**, **C=X+Y 병용**
+- 6 sequences = 3!의 모든 순열 → 1차 carry-over 균형 (Williams 설계의 정의)
+- 3 periods per subject
+- 분석: 
+  - Direction 1: A vs C (X의 PK 변화)
+  - Direction 2: B vs C (Y의 PK 변화)
+- 통계: IUT(Intersection-Union Test)로 두 방향 모두 90% CI ⊂ (0.80, 1.25) 충족 시 DDI 없음 판정. α 조정 불필요
+- biostatistician이 `.claude/scripts/sample_size/williams_6x3_ddi.py`로 sample size 산출
 
 ## Gotchas
 

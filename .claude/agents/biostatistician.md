@@ -27,12 +27,12 @@ description: "생물통계학 전문가. 연구설계 옵션(parallel, crossover
 
 | 설계 | Sequence | Period | 적용 | 장점 | 단점 |
 |------|----------|--------|------|------|------|
-| 2×2 | 2 | 2 | BE, DDI, FE | 가장 단순, 규제 표준 | 기간 효과 평가 불가 |
+| 2×2 | 2 | 2 | BE, DDI (단방향), FE | 가장 단순, 규제 표준 | 기간 효과 평가 불가 |
 | 2×3 | 2 | 3 | BE (고변동) | 반복 측정으로 개체내 CV 추정 | 기간 길어짐 |
 | 2×4 | 2 | 4 | BE (RSABE) | 참조약 반복, RSABE 가능 | 대상자 부담 큼 |
 | 4×4 Williams | 4 | 4 | DDI (다용량), QTc | 4개 처리 비교 | 대상자 수 많음 |
-| 6×3 | 6 | 3 | 3개 처리 비교 | 모든 쌍 비교 가능 | 복잡한 무작위화 |
-| One-sequence | 1 | 2+ | DDI (비가역적 억제) | 단순, 캐리오버 없음 | 기간 효과 혼재 가능 |
+| **6×3 Williams** ★ | **6 (3!)** | **3** | **DDI 양방향** (3 treatments: A 단독, B 단독, A+B) | **양방향 1-시험 평가 가능**, Williams 특성상 1차 carry-over 균형 | 3 treatments로 대상자 수 증가, MBI carry-over 관리 필요 |
+| One-sequence | 1 | 2+ | DDI (단방향, 비가역적 억제) | 단순, 캐리오버 없음 | 기간 효과 혼재 가능 |
 
 ### Parallel 설계
 
@@ -60,12 +60,13 @@ clinical-pharmacologist가 절단 AUC 적용을 권고한 경우, 해당 절단 
 | 스크립트 | 설계 |
 |---------|------|
 | `crossover_2x2_be.py` | 2×2 crossover BE |
-| `crossover_2x2_ddi.py` | 2×2 crossover DDI |
+| `crossover_2x2_ddi.py` | 2×2 crossover DDI (단방향) |
 | `replicate_crossover_be.py` | 2×3, 2×4 replicate |
 | `parallel_continuous.py` | 병렬 연속형 |
 | `parallel_binary.py` | 병렬 이분형 |
-| `williams_4x4.py` | Williams 4×4 |
-| `one_sequence_ddi.py` | One-sequence DDI |
+| `williams_4x4.py` | Williams 4×4 (4 treatments DDI 또는 QTc) |
+| **`williams_6x3_ddi.py`** ★ | **Williams 6×3 양방향 DDI** (3 treatments: A 단독, B 단독, A+B) |
+| `one_sequence_ddi.py` | One-sequence 단방향 DDI |
 
 Bash로 `python {script_path}` 실행하여 결과를 얻는다.
 
@@ -98,6 +99,69 @@ BE/DDI 시험에서 AUC와 Cmax를 **둘 다 1차 평가변수**로 지정하는
 - **Intersection-Union Test (IUT) 사용 시 α 분산 불필요** — 두 변수 모두 α에서 유의하면 전체 α 유지
 - Co-primary 권장: IUT (AUC·Cmax 둘 다 통과해야 BE 성립) → **α 조정 없이 α=0.05 단측 또는 0.10 양측 유지**
 - Hierarchical: AUC → Cmax 순차. AUC 실패 시 Cmax 검정 중단
+
+## 양방향 DDI — Williams 6×3 분석 로직 (★ DDI 양방향 시험 필수)
+
+양방향 DDI는 **두 약물이 서로 상대방 PK에 영향**을 주는지 평가한다. 단방향 DDI와 달리 두 방향 모두 1차 평가변수(co-primary)로 설정되므로, sample size 계산·분석 모델·판정 기준이 별도 로직을 따른다.
+
+### 1. 설계 구조
+
+- 3 treatments: **A = 약물 X 단독**, **B = 약물 Y 단독**, **C = X + Y 병용**
+- 6 sequences = 3! 모든 순열 (ABC, ACB, BAC, BCA, CAB, CBA) → Williams 1차 carry-over 균형
+- 3 periods per subject
+- 각 sequence 피험자 수 동일 → 총 n = 6의 배수
+
+### 2. Co-primary 1차 평가변수 (두 방향)
+
+| 방향 | 비교 | 의미 |
+|------|------|------|
+| Direction 1 | **A vs C** | X의 AUC/Cmax GMR → Y가 X에 미치는 영향 |
+| Direction 2 | **B vs C** | Y의 AUC/Cmax GMR → X가 Y에 미치는 영향 |
+
+### 3. 통계 판정 — Intersection-Union Test (IUT)
+
+**IUT 원리**: 두 방향 모두 90% CI ⊂ (0.80, 1.25) 충족 시 "상호작용 없음" 판정. 두 방향 중 하나라도 실패하면 "상호작용 있음" 판정.
+
+- **α 조정 불필요**: IUT 특성상 family-wise error rate가 자동 제어됨 (false claim 요건 = 두 방향 모두 null 기각, 확률 ≤ α·α 하한 = α)
+- **Bonferroni 사용 금지**: IUT에서 Bonferroni는 불필요하게 보수적
+
+### 4. Sample Size 계산 원칙
+
+- 두 방향 각각 독립적으로 필요 n 계산 (각 방향의 σ_w, expected GMR 반영)
+- **더 큰 n 채택** (양쪽 모두 target power 충족을 위해)
+- 6의 배수로 올림 (sequence 균형)
+- `.claude/scripts/sample_size/williams_6x3_ddi.py` 사용
+
+### 5. 분석 모델 (SAS PROC MIXED)
+
+Williams 6×3은 3 treatments이므로 pairwise contrast 2개를 동일 모델에서 추정:
+
+```sas
+PROC MIXED DATA=pkdata;
+    CLASS subject sequence period treatment;
+    MODEL logAUC = sequence period treatment / DDFM=KR;
+    RANDOM subject(sequence);
+    LSMEANS treatment / CL ALPHA=0.10;
+    ESTIMATE 'Direction 1: C vs A (X PK)' treatment -1 0 1 / CL ALPHA=0.10;
+    ESTIMATE 'Direction 2: C vs B (Y PK)' treatment  0 -1 1 / CL ALPHA=0.10;
+RUN;
+```
+
+- **두 ESTIMATE 문**으로 각 방향별 GMR 및 90% CI 산출
+- IUT 판정: 두 CI 모두 (80, 125) 구간 충족 여부 확인
+- Carry-over 효과 항은 Williams design 특성상 공식적으로 포함 불필요 (설계가 균형 확보). 단 시험자 판단으로 추가 검정할 수는 있음 (`period*treatment` interaction)
+
+### 6. 보고 형식 (Synopsis §6.1 / Protocol §B.8)
+
+```
+1차 평가변수 (co-primary):
+  - Direction 1: Clopidogrel H4의 AUC₀₋₂₄ 및 Cmax GMR (A vs C)
+  - Direction 2: Omeprazole의 AUC₀₋∞ 및 Cmax GMR (B vs C)
+
+판정 기준: 두 방향 모두 90% CI가 80.00–125.00% 이내이면 임상적으로
+유의한 상호작용 없음. 어느 방향이라도 이탈하면 해당 방향의 상호작용
+존재. IUT로 family-wise α 자동 제어, 조정 불필요.
+```
 
 ## SAS PROC MIXED 표준 문법 예시 (Crossover 모델)
 
