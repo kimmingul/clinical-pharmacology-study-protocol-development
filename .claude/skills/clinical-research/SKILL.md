@@ -157,23 +157,63 @@ search_codes(query="{적응증명}", code_type="diagnosis") → lookup_code(code
 **Step 3-C: PG 섹션 translational-scientist 인계**
 라벨에 PG 섹션이 있으면 별도 추출하여 translational-scientist에게 참고자료로 전달 (해석·한국인 빈도 분석은 TS 담당).
 
-### Step 4: MFDS 임상시험 승인현황 — WebFetch 기반
+### Step 4: MFDS 임상시험 승인현황 — 2단계 크롤링 (2026-04-14 재검증)
 
-**URL**: `https://nedrug.mfds.go.kr/searchClinic` (인증 불필요, GET 요청, HTML 응답)
+**URL**: `https://nedrug.mfds.go.kr/` (인증 불필요)
 
-**쿼리 예시:**
+상세 쿼리 레시피·HTML 파싱 힌트·Python 파싱 코드는 **`.claude/references/api_reference/mfds.md`** (정본) 참조. 아래는 핵심만 요약.
+
+**Step 4-A: 검색 리스트 (HTML GET)**
+
+`GET https://nedrug.mfds.go.kr/searchClinic`에 다음 파라미터를 **모두** 전송 — hidden 파라미터 누락이 과거 결함의 주 원인.
+
+| 파라미터 | 설명 | 필수 |
+|---------|------|------|
+| `page` | 페이지 번호 (기본 1, 페이지당 10건) | ✓ |
+| `searchYn=true` | 검색 실행 플래그 | ✓ |
+| **`approvalStart`** (hidden) | DB 쿼리 실제 사용 승인일 시작 | **✓** |
+| **`approvalEnd`** (hidden) | DB 쿼리 실제 사용 승인일 종료 | **✓** |
+| `approvalDtStart` (UI) | UI date picker 시작 — `approvalStart`와 동일 값 | ✓ |
+| `approvalDtEnd` (UI) | UI date picker 종료 — `approvalEnd`와 동일 값 | ✓ |
+| `searchType` | `ST1`=의뢰자, `ST2`=제품명, `ST3`=시험 제목, `ST4`=실시기관 | ✓ |
+| `searchKeyword` | 검색어 (국내 등록 제품은 **한글** 우선) | ✓ (빈 값이면 전체) |
+| `localList=000` | 실시기관 지역 (전체) | ✓ |
+
+**3년(1096일) 범위 제한** — 장기 조사 시 3년 단위로 구간 분할하여 반복 호출.
+
+추출: 총 건수(`총 <strong>N</strong> 건`), 각 `<tr>` 첫 `<a>` href에서 `clinicExamSeq`·`clinicExamNo`·`receiptNo`·`approvalDt` 추출.
+
+산출물: `_workspace/01_references/mfds_clinical_trials/{topic}/_list.md`
+
+**Step 4-B: 시험별 상세 본문 (Nexacro SOAP POST)**
+
+Step 4-A에서 추출한 `clinicExamSeq`·`clinicExamNo`·`receiptNo`로 4개 endpoint를 POST 호출. **Content-Type**: `text/xml; charset=UTF-8`, **Body**: Nexacro 표준 XML.
+
+| Tab | Endpoint | 추가 파라미터 | 주요 dataset |
+|-----|---------|------------|------------|
+| 공통 | `/ext/CCAAK02F010/clinicExamOpenChk` | — | `planOpenChk`, `resultOpenChk` |
+| **Tab 1 PLAN** | `/ext/CCAAK02F010/clinicExamPlanReport` | — | `chooseEx1List`(선정), `chooseEx2List`(제외), `compDrugList`(시험약) 등 8개 |
+| **Tab 1 PLAN** | `/ext/CCAAJ01F010/clinicExamOpenItem` | `receiptNo`, `mode=CCAAK02F010_PLAN` | `clinicExamOpenInfo` |
+| **Tab 2 RESULT** | `/ext/CCAAK02F010/clinicExamPlanReport` | `mode=RESULT_INFO` | `clinicExamPlanReport`, `resultDetail` |
+
+요청 body 템플릿:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Root xmlns="http://www.nexacroplatform.com/platform/dataset">
+  <Parameters>
+    <Parameter id="clinicExamSeq">{seq}</Parameter>
+    <Parameter id="clinicExamNo">{no}</Parameter>
+  </Parameters>
+</Root>
 ```
-GET https://nedrug.mfds.go.kr/searchClinic?searchYn=true&page=1&searchType=ST1&searchKeyword={약물명}&approvalDtStart=2023-01-01&approvalDtEnd=2024-12-31
-```
 
-**추출 항목**: 총 건수, 각 시험의 제목·의뢰자·임상 단계·실시기관·승인일
+응답 XML 파싱 시 HTML entity(`&#32;`=공백, `&#10;`=줄바꿈) unescape 필수.
 
-**산출물**: `_workspace/01_references/mfds_clinical_trials/{topic}_approval_list.md`
+산출물: 시험별 `_workspace/01_references/mfds_clinical_trials/{topic}/{clinicExamNo}_plan.md`, `{clinicExamNo}_result.md`
 
-상세 쿼리 레시피·HTML 파싱 힌트·파라미터 목록은 `.claude/references/api_reference/mfds.md` 참조.
+**운영 주의**: 검색 N건 × 최대 4 endpoint = 호출량. **N ≤ 30 권장**. 초과 시 `data.go.kr` OpenAPI 전환 검토(`TODO.md §5`).
 
-- 동일/유사 약물의 국내 임상시험 승인 사례
-- 승인 조건, 시험 설계, 대상자 수 참고
+추출 목표: 동일/유사 약물의 국내 승인 사례, 승인 조건·설계·대상자 수·선정/제외 기준·시험약·결과.
 
 ## clinician 절차 (모든 시험에서 참여)
 
