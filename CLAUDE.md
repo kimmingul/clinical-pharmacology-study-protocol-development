@@ -39,7 +39,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **약사법 및 의약품등의 안전에 관한 규칙**: 제30조~34조 (임상시험 관련)
 - **임상시험 관리기준(KGCP)**: 식약처 고시
 - **개인정보 보호법(PIPA)**: 개인정보 수집·이용·제3자 제공 동의 요건
-- **생명윤리 및 안전에 관한 법률**: 인체유래물 연구, 유전체 분석 시 적용
+- **생명윤리 및 안전에 관한 법률**: 인체유래물 연구, 약물유전체(PG) 분석, 대사체 분석, 잔여 검체 보관 시 적용. design 단계에서 PG/대사체 분석 계획이 결정되면 ICF Part 4(선택 동의)에 반드시 반영하고, IRB 외에 기관생명윤리위원회 추가 심의 필요 여부 확인
 - **헬싱키 선언**: 윤리적 원칙
 
 ## 하네스: 임상시험 문서 개발
@@ -98,3 +98,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 2026-04-14 | **규제 가이드라인 라이브러리 구축**: `.claude/references/guidelines/`에 ICH(E6 R3, E8 R1, E14, M13A) + FDA + EMA + MFDS 가이드라인 + 국내 법령(약사법, KGCP, PIPA, 생명윤리법) + 시험 유형별 cross-agency 비교표 6건(BE, DDI, FIH, QTc, FE, PK 일반) 사전 수록 | 매번 웹 검색하지 않고 신뢰 가능한 사전 자료 우선 활용 |
 | 2026-04-14 | **디렉토리 정리**: `resources/` (루트) → `.claude/scripts/`로 이동·개명 (실행 가능한 Python 코드의 본질 명확화); 중복된 MFDS 가이드라인은 `.claude/references/guidelines/mfds/`로 일원화 | 단일 진실 공급원 + 명명 일관성 (`scripts` vs `references`) |
 | 2026-04-14 | **translational-scientist 신규 에이전트**: PD 바이오마커, PK-PD 모델링, 약물유전체학, 대사체학, 수용체 점유율 자료 수집 전담. clinical-pharmacologist는 PK 측면에 집중하도록 영역 재정의 | Phase 4 PD/유효성 평가 협의에 필요한 사전 자료 수집 빈틈 보완. PK ↔ PD 영역 명확 분리 |
+| 2026-04-14 | **Phase 4에 유전체/대사체 분석 계획 협의 추가** + **ICF Part 4(선택 동의) PG/오믹스 섹션 강화** + **regulatory-expert 라벨 PG 섹션 추출 책임 추가** | 자료수집·설계협의·동의문서 전 단계에 PG/오믹스가 일관되게 흐르도록 구성. 생명윤리법(인체유래물 연구) 준수 보장 |

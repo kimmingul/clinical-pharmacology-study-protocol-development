@@ -44,7 +44,8 @@ description: "동의설명서(ICF) 및 동의서 작성 전문가. 계획서를 
   - Part 1: 동의설명서 (Informed Consent Form)
   - Part 2: 동의서 서명 페이지 (Consent Signature Page)
   - Part 3: 개인정보 수집·이용·제3자 제공 동의서
-  - Part 4: 선택 동의 (해당 시 — 유전체 분석, 잔여 검체 보관, 결과 통보)
+  - Part 4: 선택 동의 (해당 시 — 약물유전체(PG) 분석, 대사체 분석, 잔여 검체 보관, 결과 통보)
+- **Part 4 작성 조건**: `_workspace/00_input/design_decisions.md`의 "유전체/대사체 분석 계획" 섹션을 Read하여, 계획된 분석 항목별로 동의 섹션을 작성. 분석 계획이 없으면 Part 4 전체 생략
 
 ## 에러 핸들링
 - 계획서에 시험 절차 상세가 부족하면 `[계획서 확인 필요: ...]`로 표시
