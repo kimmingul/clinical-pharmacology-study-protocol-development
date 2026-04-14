@@ -1,0 +1,185 @@
+---
+name: synopsis
+description: "임상시험 Synopsis 생성. 설계 협의 결과를 1-3페이지 요약 문서로 작성한다. 인자로 설계 변형을 지정할 수 있다 (예: /synopsis crossover 2x2). /synopsis 또는 시놉시스 요청 시 사용."
+---
+
+# /synopsis — Synopsis 생성 (Phase 6)
+
+## 전제 조건
+- `_workspace/00_input/design_decisions.md` 존재 (설계 협의 완료)
+- `_workspace/00_input/statistical_design.md` 존재 (통계 설계 완료)
+- 미존재 시: "먼저 /design으로 설계 협의를 완료해주세요" 안내
+
+## 원칙: Phase 4 협의 결과 전량 반영
+
+Synopsis는 Phase 4에서 확정된 **모든 설계 결정**을 포함해야 한다. design_decisions.md의 섹션 중 하나라도 Synopsis에 누락되면, 해당 결정이 이후 Protocol/ICF 작성에서 참조되지 못하는 위험이 있다. 특히 다음 항목은 반드시 포함한다:
+- 선정/제외기준 (확정된 전체 목록)
+- 유효성/약력학(PD) 평가 항목 (해당 시)
+- 유전체/대사체 분석 계획 (해당 시)
+
+## ★ 강제 반영 단계 (작성 전 필수 실행)
+
+Synopsis 작성을 시작하기 **전에** 아래 두 단계를 반드시 수행한다. 누락 시 하류(Protocol, ICF) 작성에서 심각한 정합성 결함이 발생한다.
+
+### Step A: design_decisions.md 필수 섹션 매핑 확인
+
+`_workspace/00_input/design_decisions.md`를 Read한 후 아래 매핑표에 따라 **각 Synopsis 섹션에 반영할 내용이 있는지 확인**한다. 각 항목에 대해 "포함함" 또는 "해당 없음 (사유)"를 명시한다.
+
+| design_decisions.md 섹션 | Synopsis 반영 위치 | 누락 시 지적 수준 |
+|-------------------------|------------------|-----------------|
+| 선정·제외 기준 (전체 번호) | §4.2, §4.3 (전체 목록 그대로) | **Critical** — 번호·문구 정확 일치 |
+| 연구설계 (Fixed-sequence/crossover 등) | §3 | **Critical** |
+| 투여 일정 (로딩·유지·pre-treatment) | §3.1 또는 §5 | Major |
+| 1차/2차 평가변수 | §6.1, §6.2 | **Critical** |
+| **유효성/PD 평가 항목** (VerifyNow, ddQTcF, PRU 등) | §6.3 | **Critical** (해당 시) |
+| 절단 AUC 결정 | §6.4 (해당 시) | Major |
+| PK 채혈 시점 | §7.1 | **Critical** |
+| Washout 기간·근거 | §8 | **Critical** |
+| 안전성 모니터링·중지 기준 | §9 | **Critical** |
+| **유전체/대사체 분석 계획 §7 (PG·대사체·잔여 검체·결과 통보)** | **§10 (10.1 PG / 10.2 대사체 / 10.3 보관)** | **Critical — 4개 하위 결정 모두 명시적으로 기술** |
+| Sample size (biostatistician 결과) | §4.4, §11.1 | **Critical** |
+| 투여 조건 (공복/식후) | §5 | Major |
+
+### Step B: 유전체/대사체 4개 하위 결정 필수 명시 (§10)
+
+BE/FE 외 시험에서 design_decisions.md §7의 4개 하위 결정이 §10에 **각각 명시적 문장으로** 기술되어야 한다. 사용자 결정이 "미시행"이거나 "없음"이라도 **생략하지 말고 명시적으로 기술**한다 (icf-writer가 이 정보를 기반으로 Part 4 구성을 결정하므로).
+
+| design_decisions §7 항목 | Synopsis §10 필수 기술 형식 |
+|---|---|
+| 7.1 약물유전체(PG) 분석 | `§10.1` — 분석 여부 (시행/미시행), 대상 유전자, 시점, 분석 방법, 별도 동의 필요 여부 |
+| 7.2 대사체 분석 | `§10.2` — 분석 대상 대사체, 측정 방법, 채혈 시점 |
+| 7.3 잔여 검체 보관 | `§10.3` — 보관 여부, 기간, 보관 장소, 2차 활용 동의 |
+| 7.4 결과 통보 정책 | `§10` 중 기술 (해당 시 별도 문단) |
+
+**예시 (미시행 결정)**:
+> §10.1 약물유전체(PG) 분석 — **미시행** (의뢰자 결정). CPIC/FDA 라벨 권고는 §서론·배경에 참고 인용만 수행, 본 시험에 미적용 명시.
+
+### Step C: 자기 점검 (작성 완료 후)
+
+Synopsis 초안 완성 후 사용자에게 제시하기 전에 다음을 자체 검증:
+
+- [ ] design_decisions.md의 선정·제외 기준 번호·문구가 §4.2/§4.3에 **한 글자도 빠짐없이 일치**하는가
+- [ ] §10의 4개 하위 항목(10.1 PG / 10.2 대사체 / 10.3 보관 / 결과 통보)이 모두 명시적으로 기술되었는가 (미시행도 명시)
+- [ ] sample size 숫자가 statistical_design.md와 일치하는가
+- [ ] Washout 일수가 design_decisions.md와 일치하는가
+
+하나라도 누락되면 사용자에게 Synopsis를 제시하지 말고 먼저 수정한다.
+
+## 인자 처리
+
+변형을 지정하면 해당 설계에 맞게 sample size와 통계 방법을 조정한다. 지원되는 인자는 `${CLAUDE_PLUGIN_ROOT}/scripts/sample_size/` 디렉토리의 스크립트와 1:1 매핑된다.
+
+| 인자 | 설계 | 매핑 스크립트 |
+|------|------|-------------|
+| (생략) | 기본 설계 (design_decisions.md 결정 반영) | — |
+| `crossover 2x2` | 2×2 crossover (BE/DDI/FE 공통) | `crossover_2x2_be.py` 또는 `crossover_2x2_ddi.py` |
+| `crossover 2x3` | 2-sequence × 3-period replicate | `replicate_crossover_be.py` |
+| `crossover 2x4` | 2-sequence × 4-period replicate (RSABE) | `replicate_crossover_be.py` |
+| `crossover 4x4` | Williams 4×4 | `williams_4x4.py` |
+| **`crossover 6x3`** | **Williams 6×3 — 양방향 DDI** (3 treatments: A 단독, B 단독, A+B) | **`williams_6x3_ddi.py`** |
+| `one-sequence` | 단일 순서 단방향 DDI | `one_sequence_ddi.py` |
+| `parallel` | Parallel (연속형 기본) | `parallel_continuous.py` |
+| `parallel binary` | Parallel 이분형 | `parallel_binary.py` |
+
+> 미지원 인자 입력 시 위 표를 제시하고 재입력을 요청한다.
+
+## 산출물 파일명
+- 기본: `_workspace/02_synopsis.md`
+- 변형: `_workspace/02_synopsis_{variant}.md` (예: `02_synopsis_crossover_2x2.md`)
+
+## Synopsis 구조
+
+```markdown
+# 임상시험 Synopsis
+
+## 1. 시험 제목
+## 2. 시험 목적
+### 2.1 1차 목적
+### 2.2 2차 목적
+## 3. 시험 설계
+- 설계 유형, 맹검, 무작위화
+- 처리군 구성
+- **DDI 시험인 경우 명시 필수**:
+  - 각 약물의 role: probe / victim / perpetrator (또는 양방향이면 양쪽 역할)
+  - **방향성**: 단방향(X→Y 또는 Y→X) / **양방향(X↔Y)**
+  - 양방향 DDI라면 3 treatments 구조(A=X 단독, B=Y 단독, C=X+Y) + Williams 6×3 sequence 구성 명시
+  - carry-over 제어 방안 (MBI 여부, washout 기간)
+## 4. 대상자
+### 4.1 대상 집단
+### 4.2 선정 기준 (design_decisions.md의 전체 항목 반영)
+### 4.3 제외 기준 (design_decisions.md의 전체 항목 반영)
+### 4.4 대상자 수: N명 (근거: CV=X%, 검정력=X%)
+## 5. 시험약 및 투여
+## 6. 평가 변수
+### 6.1 1차 평가변수
+(시험 유형별 핵심 변수: AUC/Cmax, GMR, ddQTcF 등. 절단 AUC 적용 시 AUC₀₋₇₂ₕ, 미적용 시 AUC₀₋ₜ. 용어는 시험 목적에 따라 "유효성 평가" 또는 "약동학/약력학 평가" 적용 — Phase 1 용어 가이드 참조)
+
+**양방향 DDI인 경우 co-primary 1차 평가변수 두 개**:
+- Direction 1: A vs C — X의 AUC/Cmax GMR 및 90% CI
+- Direction 2: B vs C — Y의 AUC/Cmax GMR 및 90% CI
+- 판정: Intersection-Union Test (IUT) — 두 방향 모두 90% CI ⊂ (0.80, 1.25) 충족 시 "상호작용 없음" 판정. α 조정 불필요
+### 6.2 2차 평가변수
+### 6.3 유효성/약력학(PD) 평가 항목 (해당 시)
+- 시험 유형별 PD 평가 요소:
+  - DDI: Probe 약물 PK 변화율(GMR), 대사효소 활성 마커
+  - QTc: ddQTcF (ΔΔQTcF), C-QTc 모델
+  - FIH/MAD: PD 바이오마커, 수용체 점유율
+  - ADME: 대사체 프로파일
+- 선정된 바이오마커, 측정 시점, 분석 방법, PK-PD 모델링 계획
+### 6.4 절단 AUC 적용 근거 (해당 시, BE/FE 주로 적용)
+- t½ > 24시간 여부
+- FDA/MFDS 규제 상태
+- MFDS 사전 협의 권장 여부
+## 7. PK 채혈 시점 및 근거
+### 7.1 채혈 시점표
+(시점 #, 투여 후 시간, 구간, PK 파라미터 기반 설계 근거)
+### 7.2 채혈 시점 설계 원칙
+- Tmax 기반 밀집 구간 정의
+- t½ 기반 총 채혈 기간 산출
+- 총 채혈량
+## 8. 휴약기(Washout) 근거
+- t½(max) 값 및 출처
+- 산출 공식: ≥ 10×t½(max)
+- 잔류 농도 추정 (< 0.1% Cmax)
+- 규제 요건(MFDS: ≥ 5×t½) 비교
+- 최종 설정값
+## 9. 안전성 평가
+## 10. 유전체/대사체 분석 계획 (해당 시, BE/FE 외)
+### 10.1 약물유전체(PG) 분석
+- 분석 여부 (필수/선택/미수행)
+- 분석 대상 유전자 (예: CYP2C19, CYP2D6)
+- 분석 시점, 분석 방법, 분석 기관
+- 별도 동의(생명윤리법) 요건
+### 10.2 대사체 분석 (해당 시)
+- 분석 대상 (인체 특이 대사체 / 내인성 바이오마커)
+- 측정 방법 (LC-MS/MS), 채혈 시점
+### 10.3 인체유래물 보관 정책
+- 잔여 검체 보관 여부, 기간, 장소
+- 2차 활용 동의 조항
+## 11. 통계 분석
+### 11.1 Sample size 근거
+### 11.2 1차 분석 방법
+### 11.3 2차 분석 방법
+## 12. 방문 일정 요약
+## 13. 시험 기간
+```
+
+### 시험 유형별 특화 섹션 안내
+
+위 구조는 표준이며, 시험 유형에 따라 일부 섹션의 상세도가 달라진다:
+
+| 시험 유형 | 강조되는 섹션 | 간소화 가능 섹션 |
+|----------|-------------|--------------|
+| BE/FE | 6.4 절단 AUC, 7. PK 채혈, 8. Washout | 6.3 PD 평가, 10. 유전체/대사체 (생략) |
+| DDI 단방향 | 3. 설계(role·방향성 명시), 6.1 GMR(victim), 6.3 PD 평가, 10.1 PG(CYP PM/EM) | — |
+| DDI **양방향** | 3. 설계(**Williams 6×3**, 3 treatments, 양방향 role), **6.1 co-primary GMR 두 개(A vs C, B vs C)**, 통계(IUT), 6.3 PD 평가(양쪽) | — |
+| QTc | 6.3 PD 평가(ddQTcF, C-QTc) | 6.4 절단 AUC (해당 없음) |
+| FIH/SAD/MAD | 5. 용량 증량, 6.3 PD 바이오마커, 9. 안전성 | 6.4 절단 AUC |
+| ADME | 10.2 대사체 분석(MIST) | — |
+| Special Pop | 4.1 대상 집단(기능 분류), 10.1 PG | — |
+
+## 작성 원칙
+- 1-3 페이지로 간결하게 (전체 계획서의 핵심 요약)
+- 모든 설계 결정에 근거 명시 (연구 보고서 reference)
+- Sample size 근거에 Python 코드 결과 인용
+- 변형 synopsis 작성 시: 변형 사유와 기본 설계와의 차이점을 명시
