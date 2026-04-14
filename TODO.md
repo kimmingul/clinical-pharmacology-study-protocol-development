@@ -8,16 +8,48 @@
 
 v2 DDI E2E(Clopidogrel+Omeprazole) 실행 중 사용자 지시로 수정 보류된 항목. 하네스 파이프라인에는 영향이 제한적이나 레시피 개정이 필요.
 
-### 0-1. MFDS `searchClinic` WebFetch 파싱 실패 (Medium)
+### 0-1. ~~MFDS `searchClinic` WebFetch 파싱 실패~~ ✅ **해결 완료 (2026-04-14 재조사)**
 
-- **증상**: `https://nedrug.mfds.go.kr/searchClinic?searchYn=true&...&searchKeyword=clopidogrel` 호출 시 한글/영문 키워드 모두 **0건 반환**. 파싱 실패 추정
-- **원인**: 서버 사이드 테이블이 아닌 **JavaScript 동적 렌더링**으로 추정 → `.claude/references/api_reference/mfds.md`의 전제(HTML 응답 파싱)가 깨짐
-- **영향**: 국내 임상시험 승인현황 자동 수집 불가. ClinicalTrials.gov 한국 사이트로 부분 대체 가능
-- **권고 수정**:
-  1. `mfds.md` 레시피에 "JS 렌더링 제한" 경고 섹션 추가
-  2. 위 5번 항목 (data.go.kr OpenAPI 전환) 우선순위 격상
-  3. 대체 경로 문서화: ClinicalTrials.gov `country=South Korea&intervention={drug}`
-- **증빙**: `e2e/v2_2026_04_14_DDI/E2E_TEST_REPORT.md §3 결함 #1`
+- **최종 진단**: JavaScript 동적 렌더링 추정은 **오진**. 실제는 **순수 서버 렌더링 HTML**이며 엔드포인트 정상 작동.
+- **진짜 원인 2가지** (기존 레시피 결함):
+  1. `searchType` 코드 매핑 오류 — `ST1=제품명` 등으로 잘못 기재됨. 실제는 `ST1=의뢰자, ST2=제품명, ST3=시험제목, ST4=실시기관` (HTML `<select><option>` 실측)
+  2. hidden 파라미터 `approvalStart`/`approvalEnd` 누락 — UI date picker(`approvalDtStart`/`End`)와 **별도로** DB 쿼리에 사용되는 hidden input이 존재. 둘 다 전송해야 함
+- **검증 결과** (실측, 3년 범위):
+  - ST2 제품명 "클로피도그렐" → 7건 ✓
+  - ST3 시험제목 "클로피도그렐" → 8건 ✓
+  - ST1 의뢰자 "한미약품" → 17건 (페이지당 10건, 페이지네이션 확인)
+  - ST4 실시기관 "서울대학교병원" → 1,142건 ✓
+- **적용된 수정**:
+  1. `.claude/references/api_reference/mfds.md` 전면 재작성 (올바른 매핑 + hidden 파라미터 + 3년 제한 반복 검색 전략)
+  2. `.claude/agents/regulatory-expert.md` Step D 업데이트
+  3. E2E v2 DDI 결과(0건)는 당시 잘못된 파라미터로 인한 것. 재실행 시 정확한 결과 수신 가능
+- **남은 이슈**: 
+  - 장기 조사 시 3년 구간 반복 호출은 여전히 WebFetch 호출 수 증가 → data.go.kr OpenAPI 전환(§5)이 여전히 중기 가치 있음
+  - UI 개편 대응은 §5 또는 HTML 구조 변경 시점에 재검증
+  - **상세 페이지(Nexacro SPA) 본문 크롤링 미지원** — 0-3 항목 참조
+
+### 0-3. ~~MFDS 상세 페이지 본문 크롤링~~ ✅ **해결 완료 (2026-04-14 추가 분석)**
+
+- **최종 진단**: Nexacro SPA이지만 SOAP transaction endpoint를 **HTTP POST로 직접 호출하여 XML 응답 수신 가능**. 헤드리스 브라우저 불필요.
+- **검증된 호출 형식**:
+  - Method: POST
+  - Base: `https://nedrug.mfds.go.kr/`
+  - Content-Type: `text/xml; charset=UTF-8`
+  - Body: `<Root xmlns="http://www.nexacroplatform.com/platform/dataset"><Parameters>...</Parameters></Root>`
+  - 응답: 동일 namespace의 XML, `<Dataset>` 노드들에 데이터
+  - 인증 불필요
+- **검증 결과 (2026-04-14, 시험 clinicExamSeq=202600092, clinicExamNo=103126)**:
+  - `clinicExamPlanReport` (Tab 1) → 32 KB, 8개 dataset (선정·제외 기준, 시험약, 임상연구, 자료, 위변조, 메타) 정상 수신 ✓
+  - `clinicExamPlanReport` + `mode=RESULT_INFO` (Tab 2) → 23 KB, 결과 본문 정상 수신 ✓
+  - `clinicExamOpenChk` → 662 B, 공개 여부 ✓
+  - `clinicExamOpenItem` → 2.2 KB, 공개 항목 메타 ✓
+- **적용**:
+  1. `.claude/references/api_reference/mfds.md` §"상세 페이지 크롤링 — Nexacro SOAP 직접 호출" 신설 — 완전한 curl + Python 파싱 예시
+  2. `.claude/agents/regulatory-expert.md` Step D-8/D-9 갱신 — 상세 본문까지 자동 수집 정책
+- **운영 주의**:
+  - 검색 N건 × 최대 4 endpoint = SOAP 호출량. N≤30 권장. 초과 시 `data.go.kr` OpenAPI(§5) 사용
+  - HTML entity(`&#32;`=공백, `&#10;`=줄바꿈) unescape 필수
+  - xfdl 구조 변경 시 `/NEXACRO/Work/Ext/Apr/ccaak02/CCAAK02F010_PLAN.xfdl.js`에서 `var sUrl = "..."` 패턴 재추출
 
 ### 0-2. PharmGKB `clinicalAnnotation` API HTTP 400 (Minor)
 
