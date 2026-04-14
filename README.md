@@ -640,15 +640,17 @@ Synopsis가 작성되면 사용자의 **명시적 승인**이 있어야 Full Pro
 
 MCP 서버 없이 WebFetch로 공개 API를 직접 호출. 쿼리 레시피는 `.claude/references/api_reference/`에 수록:
 
-| API | Base URL | 용도 |
-|-----|----------|------|
-| **DailyMed** | `dailymed.nlm.nih.gov/dailymed/services/v2/` | 미국 FDA 승인 약물 SPL 라벨 전문 (약물상호작용·약동학·약물유전체 섹션) |
-| **openFDA** | `api.fda.gov/drug/` | 허가 정보(NDA 번호·승인일), NDC, FAERS 이상반응, 보조 라벨 |
+| API | Base URL | 담당 에이전트 | 용도 |
+|-----|----------|------------|------|
+| **DailyMed** | `dailymed.nlm.nih.gov/dailymed/services/v2/` | regulatory-expert | 미국 FDA 승인 약물 SPL 라벨 전문 (약물상호작용·약동학·약물유전체 섹션) |
+| **openFDA** | `api.fda.gov/drug/` | regulatory-expert | 허가 정보(NDA 번호·승인일), NDC, FAERS 이상반응, 보조 라벨 |
+| **MFDS 의약품안전나라** | `nedrug.mfds.go.kr/searchClinic` | regulatory-expert | 국내 임상시험 승인현황 (HTML 응답, 인증 불필요) |
+| **PharmGKB / ClinPGx** | `api.pharmgkb.org/v1/` | translational-scientist | 약물-유전자 임상 annotation, 라벨 PGx, 변이 annotation (CC BY-SA 4.0) |
+| **CPIC** | `api.cpicpgx.org/v1/` | translational-scientist | 표현형별 용량 조절 권고, 권고 등급(A/B/C/D), Diplotype→Phenotype 매핑 (CC0 Public Domain) |
 
-### 조사 중 (향후 통합 검토)
+### 보완 조사 (현재 PubMed 기반)
 
-- **MFDS 의약품안전나라** (`nedrug.mfds.go.kr`): 국내 임상시험 승인현황, 한국 허가사항. 현재는 WebSearch 폴백
-- **PharmGKB / CPIC**: 약물유전체 권고 — 현재 PubMed 논문 기반으로 대체
+- **한국인 약물유전체 빈도**: PharmGKB/CPIC에 구조화되어 있지 않음. PubMed에서 `"{gene} polymorphism Korean"` 등으로 별도 조사
 
 ---
 
@@ -665,12 +667,14 @@ MCP 서버 없이 WebFetch로 공개 API를 직접 호출. 쿼리 레시피는 `
 
 ### 진행 중·향후 계획
 
-1. **DailyMed/openFDA WebFetch 통합 완료** ✅ (2026-04-14) — 쿼리 레시피는 `.claude/references/api_reference/`
-2. **MCP 서버 전환 검토** — DailyMed/openFDA를 커스텀 MCP 서버로 전환 (현재 WebFetch로 운영 중, 플러그인 전환 시점에 재검토)
-3. **MFDS 의약품안전나라 WebFetch 통합** — 국내 임상시험 승인현황 API 조사 후 통합
-4. **추가 cross-agency 비교** — ADME, 집단 PK(PopPK), 신장/간 기능 저하, 소아 시험 비교표
-5. **ICH 원문 수집** — 사용자 PDF 제공이 필요한 항목 보강 (`.claude/references/guidelines/needs_user_input.md` 참조)
-6. **Plugin 변환** — 검증 완료된 하네스를 Claude Code plugin으로 변환하여 범용 배포
+1. ✅ **DailyMed/openFDA WebFetch 통합** (2026-04-14)
+2. ✅ **MFDS 의약품안전나라 WebFetch 통합** (2026-04-14) — searchClinic 리버스엔지니어링 기반
+3. ✅ **PharmGKB/CPIC WebFetch 통합** (2026-04-14) — translational-scientist의 약물유전체 조사에 활용
+4. **MCP 서버 전환 검토** — Web API 5종을 커스텀 MCP 서버로 전환 (플러그인 전환 시점에 재검토, TODO.md 참조)
+5. **MFDS `data.go.kr` OpenAPI 전환** — serviceKey 기반 JSON 공식 API로 업그레이드 (searchClinic HTML 구조 변경 대비, TODO.md 참조)
+6. **추가 cross-agency 비교** — ADME, 집단 PK(PopPK), 신장/간 기능 저하, 소아 시험 비교표
+7. **ICH 원문 수집** — 사용자 PDF 제공이 필요한 항목 보강 (`.claude/references/guidelines/needs_user_input.md` 참조)
+8. **Plugin 변환** — 검증 완료된 하네스를 Claude Code plugin으로 변환하여 범용 배포
 
 ---
 

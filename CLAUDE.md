@@ -25,8 +25,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Web API (WebFetch 기반)
 MCP 서버 없이 WebFetch로 직접 공개 API를 호출. 쿼리 레시피는 `.claude/references/api_reference/` 참조:
-- **DailyMed** (`dailymed.nlm.nih.gov/dailymed/services/v2/`): 미국 FDA 승인 약물 SPL 라벨 전문 — regulatory-expert가 약물 라벨 1차 수집
-- **openFDA** (`api.fda.gov/drug/`): 허가 정보(NDA 번호·승인일), NDC, FAERS 이상반응, 보조 라벨 — regulatory-expert 보완 조사
+
+**규제·라벨 (regulatory-expert 담당)**
+- **DailyMed** (`dailymed.nlm.nih.gov/dailymed/services/v2/`): 미국 FDA 승인 약물 SPL 라벨 전문 — 약물 라벨 1차 수집
+- **openFDA** (`api.fda.gov/drug/`): 허가 정보(NDA 번호·승인일), NDC, FAERS 이상반응, 보조 라벨
+- **MFDS 의약품안전나라** (`nedrug.mfds.go.kr/searchClinic`): 국내 임상시험 승인현황 — HTML 응답 파싱, 인증 불필요
+
+**약물유전체 (translational-scientist 담당)**
+- **PharmGKB / ClinPGx** (`api.pharmgkb.org/v1/`): 약물-유전자 임상 annotation, 라벨 PGx, 변이 annotation — 무인증, 2 req/sec, CC BY-SA 4.0
+- **CPIC** (`api.cpicpgx.org/v1/`): 표현형별 용량 조절 권고, 권고 등급(A/B/C/D), Diplotype→Phenotype 매핑 — 무인증, CC0 Public Domain, PostgREST
 
 ## Language Conventions
 

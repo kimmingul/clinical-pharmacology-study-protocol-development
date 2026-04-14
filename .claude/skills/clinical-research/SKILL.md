@@ -19,12 +19,12 @@ description: "임상시험 배경 조사를 수행하는 스킬. IB 분석, Clin
 | **PD 바이오마커** (작용 기전, 측정법) | translational-scientist | PubMed |
 | **PK-PD 모델링** | translational-scientist | PubMed |
 | **수용체 점유율** (PET 등) | translational-scientist | PubMed |
-| **약물유전체학** (CYP/표적 다형성, 한국인 빈도) | translational-scientist | PubMed + 라벨 |
+| **약물유전체학** (CYP/표적 다형성, 한국인 빈도) | translational-scientist | **PharmGKB + CPIC (WebFetch)** + PubMed (한국인 빈도) — `.claude/references/api_reference/{pharmgkb,cpic}.md` |
 | **대사체학** (인체 특이 대사체, 내인성 바이오마커) | translational-scientist | PubMed |
 | 규제 가이드라인 | regulatory-expert | MFDS/FDA/EMA 가이드라인 DB |
-| 약물 라벨 정보 (PG 섹션 추출 포함) | regulatory-expert | **DailyMed + openFDA (WebFetch)** — 상세 쿼리는 `.claude/references/api_reference/` |
+| 약물 라벨 정보 (PG 섹션 추출 포함) | regulatory-expert | **DailyMed + openFDA (WebFetch)** — `.claude/references/api_reference/{dailymed,openfda}.md` |
 | ICD-10 코딩 | regulatory-expert | ICD-10 API |
-| MFDS 승인현황 | regulatory-expert | MFDS (의약품안전나라) |
+| MFDS 승인현황 | regulatory-expert | **MFDS 의약품안전나라 (WebFetch)** — `nedrug.mfds.go.kr/searchClinic`, `.claude/references/api_reference/mfds.md` |
 | 선정/제외 기준 근거 | clinician | PubMed |
 | 안전성 프로파일·모니터링 근거 | clinician | PubMed |
 
@@ -157,7 +157,20 @@ search_codes(query="{적응증명}", code_type="diagnosis") → lookup_code(code
 **Step 3-C: PG 섹션 translational-scientist 인계**
 라벨에 PG 섹션이 있으면 별도 추출하여 translational-scientist에게 참고자료로 전달 (해석·한국인 빈도 분석은 TS 담당).
 
-### Step 4: MFDS 임상시험 승인현황
+### Step 4: MFDS 임상시험 승인현황 — WebFetch 기반
+
+**URL**: `https://nedrug.mfds.go.kr/searchClinic` (인증 불필요, GET 요청, HTML 응답)
+
+**쿼리 예시:**
+```
+GET https://nedrug.mfds.go.kr/searchClinic?searchYn=true&page=1&searchType=ST1&searchKeyword={약물명}&approvalDtStart=2023-01-01&approvalDtEnd=2024-12-31
+```
+
+**추출 항목**: 총 건수, 각 시험의 제목·의뢰자·임상 단계·실시기관·승인일
+
+**산출물**: `_workspace/01_references/mfds_clinical_trials/{topic}_approval_list.md`
+
+상세 쿼리 레시피·HTML 파싱 힌트·파라미터 목록은 `.claude/references/api_reference/mfds.md` 참조.
 
 - 동일/유사 약물의 국내 임상시험 승인 사례
 - 승인 조건, 시험 설계, 대상자 수 참고

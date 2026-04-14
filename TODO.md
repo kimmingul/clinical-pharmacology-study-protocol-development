@@ -65,36 +65,69 @@ BE/FE 시험에서 translational-scientist는 **완전 불참**으로 설정 (re
 
 ---
 
-## 4. DailyMed/openFDA Custom MCP 서버 전환 (Major, 인프라)
+## 4. Web API 전체의 Custom MCP 서버 전환 (Major, 인프라)
 
 ### 현황
-2026-04-14 기준 DailyMed/openFDA는 **WebFetch 기반**으로 통합됨. 쿼리 레시피는 `.claude/references/api_reference/{dailymed,openfda}.md`에 수록. regulatory-expert가 2-step 조회(`/spls.json` → `/spls/{setid}.xml`)를 프롬프트 지시로 수행.
+2026-04-14 기준 5개 Web API(DailyMed, openFDA, MFDS, PharmGKB, CPIC)가 **WebFetch 기반**으로 통합됨. 쿼리 레시피는 `.claude/references/api_reference/`에 수록.
 
 ### 전환 트리거
 다음 조건이 충족되면 Custom MCP 서버로 전환:
-- **일관성 이슈 실측**: WebFetch 기반 라벨 추출이 에이전트마다 다른 필드를 놓치거나, 동일 약물에 다른 결과를 내는 사례가 축적
-- **rate limit 초과**: openFDA 무키 1,000 req/day 초과 (현재 예상 사용량으로는 불가능에 가까움)
-- **Plugin 배포**: `clinical-pharmacology-study-protocol-development` Claude Code plugin으로 전환 시 — 이때 MCP 서버로 전환하면 다른 사용자가 API 쿼리 패턴을 재학습할 필요 없음
+- **일관성 이슈 실측**: WebFetch 기반 추출이 에이전트마다 다른 필드를 놓치거나 동일 쿼리에 다른 결과를 내는 사례가 축적
+- **Rate limit 초과**: openFDA 무키 1,000 req/day 또는 PharmGKB 2 req/sec 초과
+- **Plugin 배포**: `clinical-pharmacology-study-protocol-development` Claude Code plugin 전환 시 — 이때 MCP로 전환하면 다른 사용자가 API 쿼리 패턴 재학습 불필요
 
 ### 구현 스케치
 1. `.claude/scripts/mcp-servers/dailymed.mjs` (~200줄)
    - `get_spl_by_drug_name(name) → setid[]`
    - `get_spl_label(setid) → {sections}`
-   - `extract_pg_section(setid) → text` (정규표현식 기반)
+   - `extract_pg_section(setid) → text`
 2. `.claude/scripts/mcp-servers/openfda.mjs` (~300줄)
-   - `get_drugsfda(generic_name) → approval_info`
-   - `get_label(generic_name) → label_json`
-   - `count_faers_reactions(drug_name, top=20) → [{pt, count}]`
-3. `.mcp.json` 프로젝트 루트에 서버 등록
-4. regulatory-expert.md의 "Web API (WebFetch)" 섹션을 "MCP Tools" 섹션으로 이동
-5. `.claude/references/api_reference/` — 레퍼런스로 유지 (MCP 서버 디버깅 및 폴백용)
+   - `get_drugsfda(generic_name)`, `get_label(generic_name)`, `count_faers_reactions(drug_name)`
+3. `.claude/scripts/mcp-servers/mfds.mjs` (~150줄)
+   - `search_clinical_trials({drug_name, sponsor, date_range, page})` → HTML 파싱 + 구조화
+4. `.claude/scripts/mcp-servers/pharmgkb.mjs` (~200줄)
+   - `get_clinical_annotation(drug, gene)`, `get_guideline(drug, source)`, `get_label_pgx(source, drug)`
+5. `.claude/scripts/mcp-servers/cpic.mjs` (~200줄)
+   - `get_pair(drug, gene) → {level, guideline}`
+   - `get_recommendations(drug, gene) → {phenotype: recommendation[]}`
+   - `get_diplotype_mapping(gene) → {diplotype: phenotype}`
+6. `.mcp.json` 프로젝트 루트에 5개 서버 등록
+7. regulatory-expert/translational-scientist의 "Web API" 섹션을 "MCP Tools"로 이동
+8. `.claude/references/api_reference/` — 레퍼런스로 유지 (MCP 서버 디버깅 및 폴백용)
+9. 기존 커뮤니티 MCP 참고 검토:
+   - **OpenPGx** (https://github.com/open-pgx/openpgx) — PharmGKB + CPIC 통합, 초기 단계(star 5)
+   - **BioMCP** — CPIC + PharmGKB 통합
 
 ### 우선순위 판단
-현재는 WebFetch로 충분히 기능적. **Plugin 전환 시점까지 보류** 권장.
+현재 WebFetch로 충분. **Plugin 전환 시점까지 보류** 권장. 단, 커뮤니티 MCP(OpenPGx, BioMCP)가 안정화되면 재검토 가치 있음.
 
 ---
 
-## 5. `regulatory-review` 스킬명 변경 검토 (Minor, 네이밍)
+## 5. MFDS `data.go.kr` OpenAPI 전환 (Major, 안정성)
+
+### 현황
+MFDS 의약품안전나라 임상시험 승인현황은 현재 **searchClinic HTML 스크래핑**으로 운영 중. 공식 OpenAPI(`data.go.kr` ID 15056835 등)는 serviceKey 발급이 필요해 미통합.
+
+### 전환 트리거
+- **searchClinic HTML 구조 변경**으로 파싱 실패가 반복 발생
+- **대량 조사 필요**: 수백 건 이상 페이지네이션 시 HTML 파싱 부담이 커짐
+- **공식 인용 필요**: 계획서/보고서에 "공식 API 기반"이라는 명시가 필요한 경우
+
+### 전환 절차
+1. 사용자가 `data.go.kr`에서 무료 회원가입 후 serviceKey 발급
+   - API: `15056835` (의약품 임상시험 정보) 기본
+   - 개발계정 10,000 req/day, 운영계정은 활용사례 등록 후 증설
+2. serviceKey를 **환경변수** `MFDS_SERVICE_KEY`로 저장 (절대 settings.local.json이나 파일로 커밋 금지)
+3. `.claude/references/api_reference/mfds.md`에 OpenAPI 섹션 추가 (엔드포인트·파라미터 상세)
+   - Swagger UI는 JS 렌더링이라 WebFetch로 파싱 불가 → 사용자가 data.go.kr 로그인 후 명세 확인 필요
+4. regulatory-expert.md Step D를 "OpenAPI 우선, searchClinic fallback"으로 변경
+
+### 우선순위 판단
+현재 searchClinic으로 충분. HTML 구조 변경이 실제 발생하면 그때 전환. **Plugin 배포 시에는 무조건 OpenAPI 전환 권장** (다른 사용자가 serviceKey 발급만 하면 동작).
+
+---
+
+## 6. `regulatory-review` 스킬명 변경 검토 (Minor, 네이밍)
 
 ### 현황
 스킬 이름 `regulatory-review`지만 실제로는 임상약리/통계/임상의학/중개의학 리뷰까지 모두 포함.
@@ -118,7 +151,7 @@ BE/FE 시험에서 translational-scientist는 **완전 불참**으로 설정 (re
 
 ---
 
-## 6. ICH E6(R3) Annex 1 "13개 필수 항목" 체크리스트 원문 검증 (Major, 규제)
+## 7. ICH E6(R3) Annex 1 "13개 필수 항목" 체크리스트 원문 검증 (Major, 규제)
 
 ### 현황
 `.claude/skills/regulatory-review/SKILL.md` Line 55-69의 13개 항목은 에이전트가 외우는 기준이나, 실제 ICH E6(R3) Annex 1 Appendix B의 항목 목록과 1:1 대조 검증 미완.
@@ -159,4 +192,16 @@ BE/FE 시험에서 translational-scientist는 **완전 불참**으로 설정 (re
 - `.claude/references/api_reference/openfda.md` — 5개 엔드포인트, FAERS 이상반응 집계
 - regulatory-expert.md + clinical-research/SKILL.md Step 3에 구체 절차 반영
 - CLAUDE.md + README.md에 "Web API (WebFetch)" 섹션 신설
-- (Custom MCP 서버 전환은 위 4번 항목으로 이관)
+
+✅ **MFDS 의약품안전나라 WebFetch 통합** (2026-04-14)
+- `.claude/references/api_reference/mfds.md` — searchClinic 리버스엔지니어링 기반
+- 파라미터 전체(searchType/Keyword/approvalDt/clinicStepCode 등) 확인
+- regulatory-expert.md + clinical-research/SKILL.md Step 4 갱신
+- 공식 `data.go.kr` OpenAPI 전환은 위 5번 항목으로 이관
+
+✅ **PharmGKB/CPIC WebFetch 통합** (2026-04-14)
+- `.claude/references/api_reference/pharmgkb.md` — api.pharmgkb.org/v1, CC BY-SA 4.0
+- `.claude/references/api_reference/cpic.md` — api.cpicpgx.org/v1, CC0 Public Domain, PostgREST
+- translational-scientist.md에 "Web API (WebFetch) — PharmGKB/CPIC" 섹션 + 5단계 조사 절차 추가
+- 한국인 빈도는 PubMed 보완 조사 명시 (PharmGKB/CPIC에 구조화 안 됨)
+- Custom MCP 서버 전환은 위 4번 항목으로 이관
