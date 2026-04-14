@@ -534,6 +534,7 @@ Synopsis가 작성되면 사용자의 **명시적 승인**이 있어야 Full Pro
 │   │   ├── guidelines/                    # 규제 가이드라인
 │   │   │   ├── index.md                   # 마스터 인덱스
 │   │   │   ├── ich/                       # ICH (E6 R3, E8 R1, E14, M13A)
+│   │   │   │   └── e6_r3_full/            # ICH E6(R3) 2025-01-06 최종본 MD 전문 (10개 파일)
 │   │   │   ├── fda/                       # FDA (BE, DDI, FIH, FE, QTc, BMV)
 │   │   │   ├── ema/                       # EMA (BE, DDI, FIH, BMV)
 │   │   │   ├── mfds/                      # MFDS (BE, DDI, FIH, 임상약리, 통계)
@@ -673,7 +674,7 @@ MCP 서버 없이 WebFetch로 공개 API를 직접 호출. 쿼리 레시피는 `
 4. **MCP 서버 전환 검토** — Web API 5종을 커스텀 MCP 서버로 전환 (플러그인 전환 시점에 재검토, TODO.md 참조)
 5. **MFDS `data.go.kr` OpenAPI 전환** — serviceKey 기반 JSON 공식 API로 업그레이드 (searchClinic HTML 구조 변경 대비, TODO.md 참조)
 6. **추가 cross-agency 비교** — ADME, 집단 PK(PopPK), 신장/간 기능 저하, 소아 시험 비교표
-7. **ICH 원문 수집** — 사용자 PDF 제공이 필요한 항목 보강 (`.claude/references/guidelines/needs_user_input.md` 참조)
+7. **ICH 원문 수집** — ICH E6(R3) ✅ 완료 (2026-04-14). E8(R1)/E14/M13A/E9(R1)/E17/M9 등 나머지 항목은 PDF 제공 시 동일 방식(pdftotext 기반)으로 보강 가능 (`.claude/references/guidelines/needs_user_input.md` 참조)
 8. **Plugin 변환** — 검증 완료된 하네스를 Claude Code plugin으로 변환하여 범용 배포
 
 ---

@@ -60,23 +60,28 @@ description: "임상시험 문서의 다중 에이전트 리뷰를 지원하는 
 | 생명윤리법 | 인체유래물 연구 해당 시 5개 항목 |
 | 규제 용어 | 식약처 가이드라인 용어 사용, 영문 병기 |
 
-**ICH E6(R3) Annex 1 체크리스트:**
+**ICH E6(R3) Appendix B 체크리스트 (16개 공식 섹션):**
 
-| # | 필수 항목 |
-|---|----------|
-| 1 | 시험명 및 프로토콜 식별 정보 |
-| 2 | 버전 번호 및 개정 이력 |
-| 3 | 배경 정보 및 시험 근거 |
-| 4 | 시험 목적 (1차/2차) |
-| 5 | 시험 설계 (유형, 맹검, 대조) |
-| 6 | 대상자 선정/제외 기준 |
-| 7 | 시험 치료 (용량, 투여 방법) |
-| 8 | 약동학/약력학(PK/PD) 평가 변수. 시험 목적에 따른 표현 적절성 (FIH/MAD/ADME/Special Pop: "약동학/약력학 평가"; DDI/BE/FE/QTc: "유효성 평가" — 각 시험의 1차 평가변수가 PD/약효 측정인 경우). 상세는 `.claude/skills/protocol-drafting/SKILL.md`의 "Phase 1 용어 가이드" 참조 |
-| 9 | 안전성 평가 방법 |
-| 10 | 통계 분석 계획 |
-| 11 | 윤리적 고려사항 |
-| 12 | 자료 관리 |
-| 13 | 품질 관리/보증 |
+> **원문 근거**: `.claude/references/guidelines/ich/e6_r3_full/07_appendix_b_protocol.md` (ICH E6(R3) 2025-01-06 최종본 Appendix B 전문)
+
+| # | 섹션 | 필수 내용 |
+|---|------|----------|
+| B.1 | General Information | 프로토콜 제목, 고유 식별 번호, 날짜, 개정 번호/날짜, 의뢰자 이름·주소, 서명 권한자 |
+| B.2 | Background Information | 시험약 이름·설명, 비임상/임상 주요 소견, 알려진·잠재 위험과 이익, 투여 경로·용량·치료 기간의 정당성, GCP 준수 선언, 대상 집단 설명, 관련 문헌 참조 |
+| B.3 | Trial Objectives and Purpose | 과학적 목적·목적의 명확 기술, Estimand 정보 (정의된 경우, ICH E9(R1) 참조) |
+| B.4 | Trial Design | 1차/2차 평가변수, 시험 유형·설계, 편향 최소화 조치(무작위화·맹검), 시험약 설명·투여법, 스케줄, 중지 규칙·용량 조정, 대상자 참여 기간·순서, 설명책임 절차, 무작위화 코드 유지·해제 절차, 원본 자료 식별 |
+| B.5 | Selection of Participants | 선정 기준, 제외 기준 |
+| B.6 | Discontinuation of Trial Intervention and Participant Withdrawal from Trial | 시험 중단·탈락 기준, 추적관찰 절차, 동의 철회 후 자료 처리 |
+| B.7 | Treatment and Interventions for Participants | 허용·금지 병용요법·약물, 환자 순응도 모니터링 절차 |
+| B.8 | **Assessment of Efficacy** | 유효성 평가 변수 명세, 평가 방법·일정·기록 방법. ★ **ICH E6(R3) 공식 섹션명이 "Assessment of Efficacy"**임 — Phase 1 시험에서도 PD/약효가 1차 평가변수인 경우(DDI의 GMR, BE의 동등성, FE의 식이 영향, QTc의 ddQTcF) "유효성 평가" 표현이 공식 용어로 사용됨. 시험 목적이 PK·안전성·내약성 확립인 FIH/MAD/ADME/Special Pop는 "약동학/약력학 평가"로 기술 (Phase 1 용어 가이드는 `.claude/skills/protocol-drafting/SKILL.md` 참조) |
+| B.9 | Assessment of Safety | 안전성 평가 변수, AE/SAE 기록·보고 방법, 안전성 추적관찰 계획 |
+| B.10 | Statistical Considerations | 통계 분석 방법·중간 분석 계획, sample size 산출 근거, 유의수준, 분석 집단 정의, 결측치 처리 |
+| B.11 | Direct Access to Source Records | 의뢰자·규제 당국의 원본 자료 접근 권한, 모니터링·감사·IRB 심의·규제 검토 허용 |
+| B.12 | Quality Control and Quality Assurance | QC·QA 절차, 모니터링 계획 |
+| B.13 | Ethics | 윤리적 고려사항 (Declaration of Helsinki, IRB/IEC 승인, 참여자 보호) |
+| B.14 | Data Handling and Record Keeping | 자료 관리·기록 보존 방법, 전자 시스템 사용, 감사 추적 |
+| B.15 | Financing and Insurance | 재정 및 보험 — 별도 문서로 다루어질 수 있음 |
+| B.16 | Publication Policy | 결과 공표 정책 — 별도 문서로 다루어질 수 있음 |
 
 **PIPA 체크리스트:**
 

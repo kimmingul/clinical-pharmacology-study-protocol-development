@@ -9,9 +9,16 @@
 | 발행일 | 2025년 1월 6일 (Step 4 채택) |
 | 발효일 | 2025년 7월 23일 (EMA 기준) |
 | 원문 URL | https://database.ich.org/sites/default/files/ICH_E6(R3)_Step4_FinalGuideline_2025_0106.pdf |
-| 마지막 검증일 | 2026-04-14 |
+| 원문 PDF (로컬) | `docs/guidance/ICH_E6(R3)_Step4_FinalGuideline_2025_0106.pdf` |
+| **원문 MD (섹션별)** | **`.claude/references/guidelines/ich/e6_r3_full/`** — 10개 파일 (Introduction + Principles + Annex 1 × 4 + Appendix A/B/C + Glossary) |
+| 마지막 검증일 | 2026-04-14 (PDF 전문 MD 변환 완료) |
 | 이전 버전 | E6(R2) — 2016년 (R1 addendum 포함) |
 | 상태 | Step 4 최종본 (Annex 2는 Step 2 초안 단계, 2025년 말 예정) |
+
+> **본 파일은 요약·빠른 참조용**이다. 정확한 원문 인용·QA 체크리스트 근거가 필요하면 `e6_r3_full/` 하위 파일을 참조:
+> - 프로토콜 QA 기준: `e6_r3_full/07_appendix_b_protocol.md` (B.1~B.16 16개 필수 섹션)
+> - 용어 정의: `e6_r3_full/09_glossary.md`
+> - GCP 원칙: `e6_r3_full/01_principles.md` (11개 원칙)
 
 ---
 

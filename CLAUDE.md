@@ -45,7 +45,7 @@ MCP 서버 없이 WebFetch로 직접 공개 API를 호출. 쿼리 레시피는 `
 ## Regulatory References
 
 문서 작성 시 준수해야 할 주요 규정:
-- **ICH E6(R3)**: GCP 가이드라인 — Annex 1(비기술적 원칙)에 프로토콜 필수 요소 정의. R2와 구조가 다르므로 주의
+- **ICH E6(R3)**: GCP 가이드라인 — 2025-01-06 Step 4 최종본 전문이 `.claude/references/guidelines/ich/e6_r3_full/`에 MD로 수록됨. **Appendix B**(`07_appendix_b_protocol.md`)가 프로토콜 16개 필수 섹션(B.1-B.16)을 공식 정의. R2와 구조가 다르므로 주의
 - **ICH E8(R1)**: 임상시험의 일반적 고려사항
 - **ICH E14**: QTc 시험 가이드라인 (QTc 시험 해당 시)
 - **약사법 및 의약품등의 안전에 관한 규칙**: 제30조~34조 (임상시험 관련)
@@ -111,3 +111,5 @@ MCP 서버 없이 WebFetch로 직접 공개 API를 호출. 쿼리 레시피는 `
 | 2026-04-14 | **디렉토리 정리**: `resources/` (루트) → `.claude/scripts/`로 이동·개명 (실행 가능한 Python 코드의 본질 명확화); 중복된 MFDS 가이드라인은 `.claude/references/guidelines/mfds/`로 일원화 | 단일 진실 공급원 + 명명 일관성 (`scripts` vs `references`) |
 | 2026-04-14 | **translational-scientist 신규 에이전트**: PD 바이오마커, PK-PD 모델링, 약물유전체학, 대사체학, 수용체 점유율 자료 수집 전담. clinical-pharmacologist는 PK 측면에 집중하도록 영역 재정의 | Phase 4 PD/유효성 평가 협의에 필요한 사전 자료 수집 빈틈 보완. PK ↔ PD 영역 명확 분리 |
 | 2026-04-14 | **Phase 4에 유전체/대사체 분석 계획 협의 추가** + **ICF Part 4(선택 동의) PG/오믹스 섹션 강화** + **regulatory-expert 라벨 PG 섹션 추출 책임 추가** | 자료수집·설계협의·동의문서 전 단계에 PG/오믹스가 일관되게 흐르도록 구성. 생명윤리법(인체유래물 연구) 준수 보장 |
+| 2026-04-14 | **Web API 5종 통합**: DailyMed + openFDA + MFDS 의약품안전나라(searchClinic 리버스엔지니어링) + PharmGKB/ClinPGx + CPIC. `.claude/references/api_reference/` 하위 5개 레시피 파일, WebFetch 기반 즉시 사용 가능 | MCP 서버 구축 없이 공개 API·크롤링 가능 페이지로 외부 데이터 소스 확장 |
+| 2026-04-14 | **ICH E6(R3) 원문 전문 MD 수록 + 체크리스트 재구성**: `ich/e6_r3_full/` 10개 파일, regulatory-review/SKILL.md의 13개 추정 체크리스트를 **Appendix B 공식 16개 섹션(B.1~B.16)**으로 교체. B.8 "Assessment of Efficacy" 공식 명칭 확인으로 Phase 1 용량 정책 정당성 확보 | 사용자가 ICH PDF 제공 → `pdftotext`로 원문 추출 → QA 기준의 근본 신뢰성 확보 |

@@ -151,15 +151,38 @@ MFDS 의약품안전나라 임상시험 승인현황은 현재 **searchClinic HT
 
 ---
 
-## 7. ICH E6(R3) Annex 1 "13개 필수 항목" 체크리스트 원문 검증 (Major, 규제)
+## 7. ~~ICH E6(R3) Annex 1 체크리스트 원문 검증~~ ✅ 완료 (2026-04-14)
+
+사용자가 ICH E6(R3) 2025-01-06 최종본 PDF를 제공하여 전체 원문을 MD로 변환하고 체크리스트를 재구성함.
+
+### 해결 내용
+- **원문 수록**: `.claude/references/guidelines/ich/e6_r3_full/` 하위 10개 MD 파일 (Introduction + Principles + Annex 1 × 4 + Appendix A/B/C + Glossary)
+- **체크리스트 갱신**: `regulatory-review/SKILL.md`의 "13개 필수 항목"을 **Appendix B 공식 16개 섹션(B.1~B.16)**으로 교체
+- **발견한 추정 오류**:
+  - 기존: 13개 "필수 항목" → 실제: **16개 공식 섹션**
+  - 누락된 섹션: B.6 Discontinuation, B.11 Direct Access, B.15 Financing, B.16 Publication
+  - **B.8이 공식적으로 "Assessment of Efficacy"** — 최근 "Phase 1 용어 정책 완화"가 ICH 원문에 부합함이 확인됨
+- **요약본 보존**: 기존 `ich_e6_r3.md`는 빠른 참조용 요약으로 유지, 상단에 원문 링크 추가
+
+### 후속 과제 (남은 원문 필요 항목)
+`needs_user_input.md`의 항목 2-8 (ICH E8(R1), E14, M13A, E9(R1), E17, M9)도 동일한 방식으로 PDF 제공 시 보강 가능. **Quick Win 후보**.
+
+---
+
+## 8. ICH E6(R3) 요약본 재작성 검토 (Minor, 품질)
 
 ### 현황
-`.claude/skills/regulatory-review/SKILL.md` Line 55-69의 13개 항목은 에이전트가 외우는 기준이나, 실제 ICH E6(R3) Annex 1 Appendix B의 항목 목록과 1:1 대조 검증 미완.
-
-### 근거
-`.claude/references/guidelines/needs_user_input.md`에 "ICH E6(R3) Step 4 최종본 Appendix B 전체 조항 원문 확인 필요"가 명시되어 있어, 현재 체크리스트는 추정치 가능성.
+`ich_e6_r3.md` 요약본은 원문 없이 2차 자료·기억에 기반하여 작성됨. 일부 섹션 번호나 세부 내용이 원문과 미묘한 차이가 있을 수 있음.
 
 ### 해결 경로
+원문 MD(`e6_r3_full/`)를 참조하여 요약본을 전면 재작성. 또는 요약본 자체를 폐기하고 원문 링크만 유지 (실용 가치 재평가 필요).
+
+### 우선순위 판단
+현재는 원문이 확보되어 있으므로 요약본 오류 영향은 제한적. 실사용 중 요약본에서 발견한 구체 오류가 있을 때 교정하는 방식으로 충분.
+
+---
+
+## (구 번호 7: 정책 갱신으로 대체됨)
 - 사용자가 ICH E6(R3) PDF 제공 → 원문 대조
 - 또는 ICH 공식 다운로드 URL(`.claude/references/guidelines/needs_user_input.md` 하단 링크)에서 수동 다운로드
 
@@ -205,3 +228,12 @@ MFDS 의약품안전나라 임상시험 승인현황은 현재 **searchClinic HT
 - translational-scientist.md에 "Web API (WebFetch) — PharmGKB/CPIC" 섹션 + 5단계 조사 절차 추가
 - 한국인 빈도는 PubMed 보완 조사 명시 (PharmGKB/CPIC에 구조화 안 됨)
 - Custom MCP 서버 전환은 위 4번 항목으로 이관
+
+✅ **ICH E6(R3) 원문 MD 변환 및 체크리스트 재구성** (2026-04-14)
+- `ich/e6_r3_full/` 10개 파일: Introduction, Principles (11개), Annex 1 × 4 섹션, Appendix A/B/C, Glossary
+- `pdftotext -layout` + Python 스크립트로 86페이지 PDF를 정확히 추출
+- `regulatory-review/SKILL.md` 체크리스트: 기존 13개 추정 → **Appendix B 공식 16개(B.1~B.16)**로 전면 교체
+- 기존 체크리스트에서 누락되어 있던 B.6/B.11/B.15/B.16 추가
+- B.8 "Assessment of Efficacy"가 공식 섹션명임을 확인 → Phase 1 용어 정책 정당성 확보
+- `ich_e6_r3.md` 요약본 메타정보에 원문 링크 추가, `needs_user_input.md` 항목 1 완료 표시
+- TODO #7 완료
