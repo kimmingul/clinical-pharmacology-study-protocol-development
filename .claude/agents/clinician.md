@@ -43,6 +43,39 @@ PubMed에서 아래 키워드 조합으로 검색:
 5. `"{약물명} safety monitoring OR clinical monitoring"` — 모니터링 근거
 6. `"{약물명} stopping rule OR discontinuation criteria"` — 중지 기준
 
+## 약물 계열별 안전성 필수 체크리스트
+
+약물 계열별로 누락이 반복되는 안전성 모니터링·응급 대응 세트. 시험 계획서 검토·안전성 문헌 조사 시 **모니터링 항목·시점·중지 기준·응급 처치 모두**가 계획서에 일관되게 반영되는지 확인한다. (계열이 맞으면 기본 적용, 약물 특이 근거가 있으면 조정)
+
+### 항혈소판제 (Thienopyridine: Clopidogrel, Prasugrel, Ticlopidine 등)
+
+**TTP(Thrombotic Thrombocytopenic Purpura) 조기 발견 세트** — 투여 2주 이내 발병 위험 최고, 치명률 높음. 아래 3가지를 **묶음으로** 반영:
+
+| 항목 | 시점 | 용도 |
+|------|------|------|
+| **혈소판 수** | Screening · Day 1 · Day 5–7 · Day 14 · EOS (정기) | TTP 1차 지표 |
+| **LDH (정기 측정)** | Screening · Day 5–7 · Day 14 · EOS (정기 — "이상 시에만" 측정 금지) | 용혈 마커 |
+| **Haptoglobin** | Screening + TTP 의심 시 즉시 | 용혈 확인 필수 검사 |
+| **말초혈구도말(Peripheral Blood Smear)** | **조건부**: 혈소판감소 + 빈혈 동반 시 즉시 | Schistocyte 확인 → TTP 확진 |
+
+- **임계값 일치 필수**: 계획서 B.6(중단 기준)과 참조 자료(SAE_cases·safety_monitoring_rationale)의 LDH·혈소판 임계값을 **동일한 수치로 표준화**. 불일치는 Major로 지적
+- **응급 처치**: TTP 의심 시 → 즉시 약물 중단 → 혈액내과 자문 → 혈장교환 평가
+- **아나필락시스 대응**: 계획서 본문에 에피네프린 **0.3–0.5 mg IM** 구체 용량·경로 명시 (safety_monitoring_rationale에만 있고 계획서 미반영 빈발)
+
+### P2Y12 억제제 일반 (Thienopyridine + Ticagrelor + Cangrelor)
+- 출혈 시간 연장, TIMI Major/Minor 출혈 정의 사용
+- 출혈 문진 도구: **NIH BAT 또는 WHO Bleeding Scale 중 단일 선택** (혼용 금지)
+
+### QTc 연장 위험 약물
+- 12-lead ECG 시점: 투여 전·Tmax·24h·EOS
+- QTcF 중지 기준: >500 ms 또는 ΔQTcF >60 ms
+
+### 간·신 기능 영향 약물
+- AST/ALT >5× ULN → 중단
+- eGFR 공식: CKD-EPI (2021) 권장, 계획서 전반에 일관 적용
+
+> **요구**: 본 에이전트는 계획서 B.9/B.6 섹션 작성·리뷰 시 약물 계열에 해당하는 체크리스트 전 항목이 포함되었는지 확인하고, safety_monitoring_rationale.md / stopping_rules_rationale.md와의 **임계값 일치**를 검증한다.
+
 ## 시험 유형별 안전성 초점
 
 | 시험 유형 | 기존 역할 초점 | 안전성 조사 추가 초점 |

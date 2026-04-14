@@ -4,6 +4,34 @@
 
 ---
 
+## 0. E2E v2 DDI 실행 중 발견된 Web API 결함 (2026-04-14, 미해결)
+
+v2 DDI E2E(Clopidogrel+Omeprazole) 실행 중 사용자 지시로 수정 보류된 항목. 하네스 파이프라인에는 영향이 제한적이나 레시피 개정이 필요.
+
+### 0-1. MFDS `searchClinic` WebFetch 파싱 실패 (Medium)
+
+- **증상**: `https://nedrug.mfds.go.kr/searchClinic?searchYn=true&...&searchKeyword=clopidogrel` 호출 시 한글/영문 키워드 모두 **0건 반환**. 파싱 실패 추정
+- **원인**: 서버 사이드 테이블이 아닌 **JavaScript 동적 렌더링**으로 추정 → `.claude/references/api_reference/mfds.md`의 전제(HTML 응답 파싱)가 깨짐
+- **영향**: 국내 임상시험 승인현황 자동 수집 불가. ClinicalTrials.gov 한국 사이트로 부분 대체 가능
+- **권고 수정**:
+  1. `mfds.md` 레시피에 "JS 렌더링 제한" 경고 섹션 추가
+  2. 위 5번 항목 (data.go.kr OpenAPI 전환) 우선순위 격상
+  3. 대체 경로 문서화: ClinicalTrials.gov `country=South Korea&intervention={drug}`
+- **증빙**: `e2e/v2_2026_04_14_DDI/E2E_TEST_REPORT.md §3 결함 #1`
+
+### 0-2. PharmGKB `clinicalAnnotation` API HTTP 400 (Minor)
+
+- **증상**: `https://api.pharmgkb.org/v1/data/clinicalAnnotation?view=mostRecent&chemical.name=clopidogrel&gene.symbol=CYP2C19` → HTTP 400 Bad Request
+- **원인**: URL/파라미터 형식이 현행 API 스펙과 불일치 추정 (PharmGKB → ClinPGx 전환 영향 가능)
+- **완화**: CPIC API(`api.cpicpgx.org`)가 동등한 Level A 정보를 정상 제공 → 실질 영향 낮음
+- **권고 수정**:
+  1. `pharmgkb.md` 레시피에 현행 엔드포인트 재검증 (`api.pharmgkb.org` vs `api.clinpgx.org` 전환 확인)
+  2. 쿼리 파라미터 형식 재검증 (`chemical.name` vs `chemical.symbol`)
+  3. 실패 시 CPIC 단독 사용을 공식 폴백으로 레시피에 명시
+- **증빙**: `e2e/v2_2026_04_14_DDI/E2E_TEST_REPORT.md §3 결함 #2`
+
+---
+
 ## 1. Phase 4 협의 프로세스 간소화 (Major, UX)
 
 ### 현황

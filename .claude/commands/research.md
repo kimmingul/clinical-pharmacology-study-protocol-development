@@ -36,7 +36,28 @@ mkdir -p _workspace/01_references/metabolomics
 ### Step 2: 병렬 자료 수집
 조사 에이전트들을 **동시에** 실행한다. 각 에이전트는 **개별 reference 파일을 먼저 생성**한 후 요약 보고서를 작성한다.
 
-> **translational-scientist 참여 조건**: `.claude/skills/clinical-research/SKILL.md`의 "시험 유형별 오믹스/PD 우선순위" 표를 따른다. BE/FE에서는 불참, FIH/SAD/MAD/DDI/QTc/ADME/Special Pop에서는 참여.
+#### translational-scientist 참여 결정 (자가 검증 필수)
+
+`.claude/skills/clinical-research/SKILL.md`의 "시험 유형별 오믹스/PD 우선순위" 표를 따른다. 다음 매트릭스로 **호출 전에 결정 로그를 남긴다**:
+
+| trial_info.md §시험 유형 | TS 호출 | 근거 |
+|-------------------------|---------|------|
+| FIH, SAD, MAD | ✅ 호출 | PD 바이오마커·초회 인체적용 ★ 필수 |
+| DDI | ✅ 호출 | CYP 다형성·PK-PD 관계·대사체 측정 ★ 필수 |
+| QTc | ✅ 호출 | KCNH2 PG·C-QTc 모델링 |
+| ADME | ✅ 호출 | 대사체 프로파일·MIST |
+| Special Pop (신/간장애) | ✅ 호출 | PG 기반 용량 조절 |
+| **BE** | ❌ 불참 | 동등성만 평가, PG/PD 불필요 |
+| **FE** | ❌ 불참 | 식이 영향만 평가 |
+
+**자가 검증 절차 (병렬 호출 직전)**:
+1. `_workspace/00_input/trial_info.md`의 "시험 유형" 필드 값을 확인
+2. 위 매트릭스와 매칭하여 TS 호출 여부 결정
+3. **BE/FE이면 TS Agent 호출 자체를 생략** — 그리고 사용자에게 "본 시험 유형(BE/FE)은 TS 불참, CP+REG+CLIN 3명 조사 진행" 명시적 안내
+4. 매트릭스에 없는 시험 유형이면 사용자에게 확인 질문 (불확실 시 호출 쪽으로 보수적 결정)
+5. TS 호출 시 시험 유형을 프롬프트에 **명시적으로 전달**하여 TS가 자체 확인 후 참여 생략 메시지를 쓸 가능성을 제거
+
+> **회귀 방지**: TS 호출 여부가 잘못되면 ① BE에 불필요한 PG 조사가 생성되거나 ② DDI/QTc에서 PG 자료가 누락되어 Phase 9 리뷰에서 **Critical**로 지적된다. 매트릭스를 근거로 결정 로그를 사용자에게 한 줄로 보고한 뒤 병렬 호출을 시작한다.
 
 ```
 Agent(

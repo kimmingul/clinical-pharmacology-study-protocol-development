@@ -75,6 +75,95 @@ Bash로 `python {script_path}` 실행하여 결과를 얻는다.
 - 출력: `_workspace/00_input/statistical_design.md`
 - 리뷰 모드 출력: `_workspace/review/review_biostatistician.md`
 
+## Co-primary Endpoint (AUC + Cmax) 다중성 처리 기본 규칙
+
+BE/DDI 시험에서 AUC와 Cmax를 **둘 다 1차 평가변수**로 지정하는 경우, 계획서 통계 섹션에 반드시 다음을 명시한다. 누락 시 리뷰에서 Major로 지적.
+
+### 판정 로직 (해당 시험 설계에 하나를 명시)
+
+| 방식 | 판정 기준 | 적용 시나리오 |
+|------|---------|-------------|
+| **Conjunctive (both)** | AUC의 90% CI **와** Cmax의 90% CI가 **둘 다** 80–125% 이내 → 동등성 인정 (엄격) | BE/DDI 표준. α 조정 불필요 (Intersection-Union Test) |
+| **Disjunctive (either)** | AUC 또는 Cmax 중 **어느 하나라도** 80–125% 밖 → DDI 있음 | DDI 검출 시 해석 |
+| **Hierarchical** | AUC를 1차(key), Cmax를 2차(보조) — α 분산 불필요 | AUC 중심 설계 권장 |
+
+### Sample Size 기준 변수 명시
+
+- 계획서는 **"sample size 산출의 기준이 된 단일 변수"를 명시**해야 한다 (통상 AUC)
+- 만약 AUC CV < Cmax CV이면 Cmax를 기준으로 계산해야 둘 다 검정력 확보
+- 두 변수의 CV가 크게 다르면 **more conservative한 변수 CV%**로 sample size 결정
+
+### 다중성 조정
+
+- **Intersection-Union Test (IUT) 사용 시 α 분산 불필요** — 두 변수 모두 α에서 유의하면 전체 α 유지
+- Co-primary 권장: IUT (AUC·Cmax 둘 다 통과해야 BE 성립) → **α 조정 없이 α=0.05 단측 또는 0.10 양측 유지**
+- Hierarchical: AUC → Cmax 순차. AUC 실패 시 Cmax 검정 중단
+
+## SAS PROC MIXED 표준 문법 예시 (Crossover 모델)
+
+검증된 SAS PROC MIXED 코드 템플릿. **문법 오류 방지 필수 기준**. 계획서 통계 섹션 또는 SAP에서 인용 시 아래 형식을 따른다.
+
+### 2×2 BE/DDI Crossover (Sequence·Period 고정효과)
+
+```sas
+PROC MIXED DATA=pkdata;
+    CLASS subject sequence period treatment;
+    MODEL logAUC = sequence period treatment / DDFM=KR;
+    RANDOM subject(sequence);
+    LSMEANS treatment / CL ALPHA=0.10 DIFF;
+    ODS OUTPUT LSMeans=lsm Diffs=diff;
+RUN;
+```
+
+- **포인트**: `CLASS`로 범주형 선언, `MODEL`의 우변은 고정효과 목록, `RANDOM subject(sequence)`로 피험자 변량 효과, `DDFM=KR` (Kenward-Roger 자유도), `ALPHA=0.10`으로 90% CI 산출
+- 잘못된 예: `MODEL logAUC = PERIOD / SOLUTION;` (sequence/treatment 누락, SOLUTION은 정확한 출력 옵션이나 LSMEANS가 우선)
+
+### Fixed-sequence DDI (Paired Design)
+
+Fixed-sequence에서는 모든 피험자가 동일 sequence이므로 `sequence` 항을 제거한다. 대신 period (=treatment) 효과만 검정:
+
+```sas
+PROC MIXED DATA=pkdata;
+    CLASS subject period;
+    MODEL logAUC = period / DDFM=KR;
+    RANDOM subject;
+    LSMEANS period / CL ALPHA=0.10 DIFF;
+    ODS OUTPUT LSMeans=lsm Diffs=diff;
+RUN;
+```
+
+또는 더 단순한 paired approach:
+
+```sas
+PROC TTEST DATA=pkdata_wide ALPHA=0.10;
+    PAIRED logAUC_P2 * logAUC_P1;
+RUN;
+```
+
+- **근거**: Fixed-sequence는 period와 treatment가 교란 가능 (sequence 효과 추정 불가). 계획서에 "period effect와 treatment effect 분리 불가, paired design 적용" 명시 필수.
+
+### Replicate Crossover (2×3 또는 2×4 RSABE)
+
+```sas
+PROC MIXED DATA=pkdata;
+    CLASS subject sequence period treatment;
+    MODEL logAUC = sequence period treatment / DDFM=KR;
+    RANDOM treatment / TYPE=FA0(2) SUBJECT=subject G;
+    REPEATED / GROUP=treatment SUBJECT=subject;
+RUN;
+```
+
+- RSABE 적용 조건: 참조약 intra-CV > 30%
+- `TYPE=FA0(2)`: 무제약 variance-covariance 구조
+
+### 문법 체크리스트 (계획서 검토 시)
+
+- [ ] `CLASS`에 모든 범주형 변수 나열
+- [ ] `RANDOM` 문으로 피험자 변량 효과 반영 (crossover)
+- [ ] `LSMEANS ... / CL ALPHA=0.10` (90% CI)
+- [ ] Fixed-sequence면 `sequence` 항 제거 + 본문에 근거 명시
+- [ ] `MODEL`의 종속변수는 **ln 변환된 PK 파라미터** (logAUC, logCmax)
+
 ## Gotchas
 
 - **Intra-CV vs Inter-CV**: crossover는 intra-subject CV, parallel은 inter-subject CV 사용. 혼동하면 sample size가 크게 다름
