@@ -46,16 +46,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **목표:** 임상약리 임상시험의 배경 조사, Synopsis, 계획서, 동의설명서를 체계적으로 생성하고 검토한다.
 
-**에이전트 팀 (7개):**
+**에이전트 팀 (8개):**
 
 | 에이전트 | model | 역할 | 참여 |
 |---------|-------|------|------|
-| clinical-pharmacologist | sonnet | PK/PD 자료, 대사 경로, 약물상호작용, 용량 근거, FIH 초기 용량 | 항상 |
-| regulatory-expert | sonnet | MFDS/FDA/EMA 가이드라인, 승인현황, 약물 라벨, ICD-10 | 항상 |
-| clinician | sonnet | 선정/제외 기준, 안전성 프로파일 조사, 임상 절차, 이상반응 관리 | **항상 참여** |
+| clinical-pharmacologist | sonnet | PK 자료(반감기, 변동성), 대사 경로 정성, 약물상호작용 기전, 용량 근거, FIH 초기 용량 | 항상 |
+| translational-scientist | sonnet | PD 바이오마커, PK-PD 모델링, 약물유전체학(PG), 대사체학, 수용체 점유율 | **조건부** (BE/FE 불참, 그 외 시험에 우선순위 차등 참여) |
+| regulatory-expert | sonnet | MFDS/FDA/EMA 가이드라인, 승인현황, 약물 라벨(PG 섹션 포함), ICD-10 | 항상 |
+| clinician | sonnet | 선정/제외 기준, 안전성 프로파일 조사, 임상 절차, 이상반응 관리 | **항상** |
 | biostatistician | sonnet | 연구설계, sample size (Python), 무작위화, 통계분석 | 항상 |
 | protocol-writer | opus | Synopsis + 자료 기반 Full Protocol 작성 | Phase 8 |
-| icf-writer | opus | 계획서 기반 동의문서 작성 | Phase 10 (별도 지시) |
+| icf-writer | opus | 계획서 기반 동의문서 작성 (PG/오믹스 별도 동의 포함) | Phase 10 (별도 지시) |
 | qa-reviewer | opus | 다중 리뷰 취합, Critical/Major/Minor 분류, 수정 조율 | Phase 9 |
 
 **Commands:**
@@ -73,7 +74,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **실행 규칙:**
 - 임상시험 문서 작성/수정 요청 시 `trial-doc-orchestrator` 스킬 또는 개별 command로 처리
 - 단순 질문(규제 용어, 개념 설명 등)은 에이전트 없이 직접 응답해도 무방
-- 조사 에이전트(clinical-pharmacologist, regulatory-expert, clinician, biostatistician)는 sonnet, 작성/검토 에이전트(protocol-writer, icf-writer, qa-reviewer)는 opus 사용
+- 조사 에이전트(clinical-pharmacologist, translational-scientist, regulatory-expert, clinician, biostatistician)는 sonnet, 작성/검토 에이전트(protocol-writer, icf-writer, qa-reviewer)는 opus 사용
+- translational-scientist 참여 조건은 `.claude/skills/clinical-research/SKILL.md`의 "시험 유형별 오믹스/PD 우선순위" 표를 따른다 (BE/FE 불참, 그 외 참여)
 - 모든 에이전트는 `general-purpose` 타입으로 호출 (커스텀 subagent_type 미지원)
 - 에이전트 정의(`.claude/agents/*.md`)와 스킬은 서브 에이전트가 Read로 직접 로드
 - 중간 산출물: `_workspace/` 디렉토리
@@ -95,3 +97,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 2026-04-14 | **대규모 재구성**: 4→7 에이전트 (역할 기반), 10-Phase 워크플로우, Synopsis 단계 도입 (Hard Gate), 7개 commands, 다중 에이전트 병렬 리뷰, ICF 분리, MFDS 가이드라인 조사, Reference 의무화, Sample size Python 코드, FIH 초기 용량 산출 | 도메인 전문가 피드백 + Anthropic best practices |
 | 2026-04-14 | **규제 가이드라인 라이브러리 구축**: `.claude/references/guidelines/`에 ICH(E6 R3, E8 R1, E14, M13A) + FDA + EMA + MFDS 가이드라인 + 국내 법령(약사법, KGCP, PIPA, 생명윤리법) + 시험 유형별 cross-agency 비교표 6건(BE, DDI, FIH, QTc, FE, PK 일반) 사전 수록 | 매번 웹 검색하지 않고 신뢰 가능한 사전 자료 우선 활용 |
 | 2026-04-14 | **디렉토리 정리**: `resources/` (루트) → `.claude/scripts/`로 이동·개명 (실행 가능한 Python 코드의 본질 명확화); 중복된 MFDS 가이드라인은 `.claude/references/guidelines/mfds/`로 일원화 | 단일 진실 공급원 + 명명 일관성 (`scripts` vs `references`) |
+| 2026-04-14 | **translational-scientist 신규 에이전트**: PD 바이오마커, PK-PD 모델링, 약물유전체학, 대사체학, 수용체 점유율 자료 수집 전담. clinical-pharmacologist는 PK 측면에 집중하도록 영역 재정의 | Phase 4 PD/유효성 평가 협의에 필요한 사전 자료 수집 빈틈 보완. PK ↔ PD 영역 명확 분리 |

@@ -28,10 +28,15 @@ mkdir -p _workspace/01_references/literature
 mkdir -p _workspace/01_references/guidelines
 mkdir -p _workspace/01_references/labels
 mkdir -p _workspace/01_references/safety
+mkdir -p _workspace/01_references/pd_biomarkers
+mkdir -p _workspace/01_references/pharmacogenomics
+mkdir -p _workspace/01_references/metabolomics
 ```
 
 ### Step 2: 병렬 자료 수집
-두 에이전트를 **동시에** 실행한다. 각 에이전트는 **개별 reference 파일을 먼저 생성**한 후 요약 보고서를 작성한다.
+조사 에이전트들을 **동시에** 실행한다. 각 에이전트는 **개별 reference 파일을 먼저 생성**한 후 요약 보고서를 작성한다.
+
+> **translational-scientist 참여 조건**: `.claude/skills/clinical-research/SKILL.md`의 "시험 유형별 오믹스/PD 우선순위" 표를 따른다. BE/FE에서는 불참, FIH/SAD/MAD/DDI/QTc/ADME/Special Pop에서는 참여.
 
 ```
 Agent(
@@ -96,24 +101,50 @@ Agent(
 
 개별 파일 생성 후, 요약 보고서를 _workspace/01_research_clin.md에 Write하라."
 )
+
+Agent(
+  description: "PD/오믹스 자료 조사 (조건부)",
+  model: "sonnet",
+  name: "translational-scientist",
+  prompt: "먼저 .claude/agents/translational-scientist.md를 Read하여 역할을 숙지하라.
+그 다음 .claude/skills/clinical-research/SKILL.md를 Read하여 '시험 유형별 오믹스/PD 우선순위' 표를 확인하라.
+시험 정보: _workspace/00_input/trial_info.md를 Read하라.
+
+★ 시험 유형 확인 후, 본인 참여 여부 판단:
+- 본 시험 유형이 BE 또는 FE라면: '본 시험 유형은 PG/PD 조사 우선순위 낮음 — 참여 생략' 메시지를 _workspace/01_research_ts.md에 1줄로 Write하고 종료
+- 그 외 시험 유형(FIH/SAD/MAD/DDI/QTc/ADME/Special Pop): 우선순위 표에 따라 조사 깊이 조정
+
+★ 중요: 조사한 모든 reference를 개별 MD 파일로 분리 저장하라:
+- PD 바이오마커 → _workspace/01_references/pd_biomarkers/{biomarker_name}.md
+- 약물유전체 → _workspace/01_references/pharmacogenomics/{gene_name}.md
+  (예: CYP2C19.md — 한국인 대립유전자 빈도, 표현형 분류, 라벨 권고)
+- 대사체 (해당 시) → _workspace/01_references/metabolomics/{topic}.md
+- PD/PG/대사체 관련 PubMed 논문 → _workspace/01_references/literature/PMID_xxxxxxxx.md
+개별 파일 구조는 translational-scientist.md의 템플릿을 따르라.
+
+★ MCP 도구 한계 솔직 표시: PharmGKB/HMDB 직접 접근 불가 시 '[데이터베이스 직접 접근 불가 — PubMed/라벨 기반]' 명시.
+
+개별 파일 생성 후, 요약 보고서를 _workspace/01_research_ts.md에 Write하라."
+)
 ```
 
 ### Step 3: 자료 종합
-세 에이전트 완료 후:
+모든 조사 에이전트 완료 후:
 1. `_workspace/01_references/` 내 생성된 개별 파일 목록을 확인 (Glob)
-2. `_workspace/01_research_cp.md`, `_workspace/01_research_reg.md`, `_workspace/01_research_clin.md`를 Read
+2. `_workspace/01_research_cp.md`, `_workspace/01_research_reg.md`, `_workspace/01_research_clin.md`, `_workspace/01_research_ts.md`(존재 시)를 Read
 3. 중복 제거 및 병합하여 `_workspace/01_research_report.md`에 Write
    - 통합 보고서에서 모든 개별 reference 파일을 목록으로 참조
-   - 안전성 섹션을 독립 섹션으로 포함
+   - 안전성, PD/약력학, 약물유전체, 대사체 섹션을 각각 독립 섹션으로 포함 (translational-scientist 참여 시)
 4. 핵심 발견사항 요약과 함께 **수집된 reference 파일 목록**을 사용자에게 제시
 
 ### Step 4: 사용자 검토 게이트 ★
 사용자에게 세 가지 선택지 제시:
 - **승인** → 완료. `/design`으로 진행 가능
 - **추가 조사 요청** → 요청 내용에 따라 최적 에이전트 재호출:
-  - PK/약물 관련 → clinical-pharmacologist
-  - 규제/가이드라인 → regulatory-expert
-  - 임상적 판단 → clinician
+  - PK/약물/유사 시험 → clinical-pharmacologist
+  - 규제/가이드라인/라벨 → regulatory-expert
+  - 임상적 판단/안전성 → clinician
+  - PD/약력학/약물유전체/대사체 → translational-scientist
   - 통계/설계 → biostatistician
 - **자료 직접 제공** → 사용자가 문헌/데이터를 추가 입력
 

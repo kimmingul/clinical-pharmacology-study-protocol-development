@@ -27,9 +27,10 @@
 
 | 에이전트 | model | 역할 |
 |---------|-------|------|
-| **clinical-pharmacologist** | sonnet | PK/PD 자료 수집, 대사 경로, 약물상호작용 기전, 용량 근거, FIH 초기 용량 산출 |
-| **regulatory-expert** | sonnet | MFDS/FDA/EMA 가이드라인, 임상시험 승인현황, 약물 라벨 정보, 규제 전략 |
-| **clinician** | sonnet | 선정/제외 기준, 안전성 모니터링, 임상 절차, 이상반응 관리 (**조건부 참여** — 환자 대상 시험 시) |
+| **clinical-pharmacologist** | sonnet | PK 자료 수집(반감기, 변동성, 생체이용률), 대사 경로 정성적 기여, 약물상호작용 기전, 용량 근거, FIH 초기 용량 산출 |
+| **translational-scientist** | sonnet | PD 바이오마커, PK-PD 모델링, 약물유전체학(CYP·표적 다형성), 대사체학(인체 특이 대사체, 내인성 바이오마커), 수용체 점유율 (**조건부 참여** — BE/FE 불참, 그 외 시험 유형별 우선순위 차등) |
+| **regulatory-expert** | sonnet | MFDS/FDA/EMA 가이드라인, 임상시험 승인현황, 약물 라벨(PG 섹션 포함), 규제 전략 |
+| **clinician** | sonnet | 선정/제외 기준, 안전성 모니터링, 임상 절차, 이상반응 관리 (**항상 참여**) |
 | **biostatistician** | sonnet | 연구설계 옵션, sample size 계산 (Python 코드), 무작위화, 통계분석방법 |
 
 ### 작성 에이전트 (Writing Agents)
@@ -47,16 +48,17 @@
 
 ### 조건부 참여 규칙
 
-| 시험 유형 | clinical-pharmacologist | regulatory-expert | clinician | biostatistician |
-|----------|------------------------|-------------------|-----------|-----------------|
-| FIH/SAD/MAD | **참여** (IB 분석, 초기용량) | **참여** | 참여 | **참여** |
-| DDI | **참여** (대사효소, 수송체) | **참여** | 불참 | **참여** |
-| BE | **참여** (PK 특성, BCS) | **참여** | 불참 | **참여** |
-| FE | **참여** (흡수 특성, BCS) | **참여** | 불참 | **참여** |
-| QTc | **참여** (hERG, QTc 데이터) | **참여** | 참여 | **참여** |
-| PK Special Pop | **참여** | **참여** | **참여** (환자 대상) | **참여** |
+| 시험 유형 | clinical-pharmacologist | translational-scientist | regulatory-expert | clinician | biostatistician |
+|----------|------------------------|-----------------------|-------------------|-----------|-----------------|
+| FIH/SAD/MAD | **참여** (IB 분석, 초기용량) | **참여** (PD 마커, 표적 다형성) | **참여** | **참여** | **참여** |
+| DDI | **참여** (대사 기전) | **참여** (CYP PM/EM, 내인성 바이오마커) | **참여** | **참여** | **참여** |
+| BE | **참여** (PK 특성, BCS) | **불참** | **참여** | **참여** | **참여** |
+| FE | **참여** (흡수 특성, BCS) | **불참** | **참여** | **참여** | **참여** |
+| QTc | **참여** (hERG 안전성 약리) | **참여** (C-QTc 모델, 채널 다형성) | **참여** | **참여** | **참여** |
+| ADME | **참여** (PK 정성) | **참여** (인체 특이 대사체, MIST) | **참여** | **참여** | **참여** |
+| PK Special Pop | **참여** | **참여** (집단 차이, 표적 발현) | **참여** | **참여** | **참여** |
 
-> **건강한 성인 대상** 임상약리시험(DDI, BE, FE)에서는 임상적 판단 사항이 표준화되어 있으므로 clinician이 불참합니다. **환자 대상** 시험(PK special population, QTc 일부)에서는 clinician이 참여합니다.
+> **clinician은 항상 참여**하여 안전성을 전담합니다. **translational-scientist**는 시험 목적이 동등성/식이 영향에 한정된 BE/FE에서 불참하고, 신약·DDI·QTc·ADME·특수 집단에서 PD/약력학 및 오믹스 자료를 수집합니다.
 
 ---
 
@@ -488,10 +490,11 @@ Synopsis가 작성되면 사용자의 **명시적 승인**이 있어야 Full Pro
 ├── CLAUDE.md                              # 하네스 설정 (도메인 지식, 규제, 실행 규칙)
 ├── README.md
 ├── .claude/
-│   ├── agents/                            # 에이전트 정의
-│   │   ├── clinical-pharmacologist.md     # 임상약리학자
+│   ├── agents/                            # 에이전트 정의 (8개)
+│   │   ├── clinical-pharmacologist.md     # 임상약리학자 (PK 측면)
+│   │   ├── translational-scientist.md     # 중개의학자 (PD/PG/대사체, 조건부)
 │   │   ├── regulatory-expert.md           # 규제전문가
-│   │   ├── clinician.md                   # 임상의사 (조건부)
+│   │   ├── clinician.md                   # 임상의사
 │   │   ├── biostatistician.md             # 생물통계학자
 │   │   ├── protocol-writer.md             # 계획서 작성자
 │   │   ├── icf-writer.md                  # 동의문서 작성자
