@@ -13,10 +13,10 @@
 
 | 문서 | 설명 |
 |------|------|
-| **배경 조사 보고서** | 문헌, 유사 시험, 규제 가이드라인, 약물 라벨 정보 종합 |
-| **Synopsis** | 핵심 시험 설계 요약 (연구설계, 평가변수, 대상자 수, 통계분석 등) |
+| **배경 조사 보고서** | 문헌, 유사 시험, 규제 가이드라인, 약물 라벨, **PD 바이오마커, 약물유전체(PG), 대사체** 정보 종합 |
+| **Synopsis** | 핵심 시험 설계 요약 (선정/제외기준, 연구설계, 평가변수, 대상자 수, 통계분석 등) |
 | **계획서 (Protocol)** | ICH E6(R3) Annex 1 구조 기반 임상시험 계획서 |
-| **동의설명서/동의서 (ICF)** | 시험대상자용 동의설명서 + 서명 페이지 |
+| **동의설명서/동의서 (ICF)** | 시험대상자용 동의설명서 + 서명 페이지. PG/대사체 분석 계획 시 별도 동의 섹션(Part 4) 자동 포함 |
 | **개인정보 동의서** | 개인정보 수집·이용·제3자 제공 동의서 (PIPA 요건) |
 
 ---
@@ -219,28 +219,39 @@ Metformin과 Rifampin의 DDI 시험 문서를 작성해줘
 
 ### 검색 영역 분리
 
-에이전트 간 검색 중복을 방지하기 위해 자료 수집 영역을 명확히 분리합니다:
+4개 조사 에이전트가 영역을 명확히 분리하여 중복 없이 자료를 수집합니다:
 
 | 영역 | 담당 에이전트 | 검색 도구 | 수집 항목 |
 |------|-------------|----------|----------|
-| PK/PD 자료 | clinical-pharmacologist | PubMed, ClinicalTrials.gov | PK 파라미터, 대사 경로(CYP), 수송체(P-gp, OATP), 반감기, 생체이용률 |
-| 약물상호작용 | clinical-pharmacologist | PubMed | DDI 기전, inhibition/induction 데이터, 기존 DDI 연구 결과 |
+| **PK 자료** | clinical-pharmacologist | PubMed, ClinicalTrials.gov | PK 파라미터(Cmax, AUC, Tmax, t½, CV%), 생체이용률, 분포·청소율 |
+| 대사 경로 (정성) | clinical-pharmacologist | PubMed | CYP/수송체(P-gp, OATP) 관여, 정성적 기여도 |
+| 약물상호작용 기전 | clinical-pharmacologist | PubMed | DDI 기전, inhibition/induction 데이터, 기존 DDI 연구 결과 |
 | 유사 시험 설계 | clinical-pharmacologist | ClinicalTrials.gov | 시험 설계, 용량, 엔드포인트, 선정/제외 기준 |
+| **PD 바이오마커** | translational-scientist | PubMed | 작용 기전 기반 PD 마커 후보, 측정법(LC-MS, ELISA, flow), 검증 상태 |
+| **PK-PD 모델링** | translational-scientist | PubMed | Emax, sigmoid Emax, indirect response 모델 등 기존 PK-PD 모델 |
+| **수용체 점유율** | translational-scientist | PubMed | PET tracer, 표적 결합 측정법 (CNS·항암제 중심) |
+| **약물유전체학(PG)** | translational-scientist | PubMed + 라벨 | CYP·표적 다형성, **한국인 대립유전자 빈도**, PM/EM 분류 |
+| **대사체학** | translational-scientist | PubMed | 인체 특이 대사체(MIST), 내인성 바이오마커(4β-OH-cholesterol 등) |
 | 규제 가이드라인 | regulatory-expert | MFDS/FDA/EMA 가이드라인 DB | 시험 유형별 규제 요건, 필수 평가 항목 |
 | 임상시험 승인현황 | regulatory-expert | MFDS (의약품안전나라) | 한국 내 유사 시험 승인 사례, 승인 조건 |
-| 약물 라벨 정보 | regulatory-expert | DailyMed/openFDA | 허가사항, 용법용량, 금기, 약물상호작용 섹션 |
+| 약물 라벨 정보 | regulatory-expert | DailyMed/openFDA | 허가사항, 용법용량, 금기, 약물상호작용 섹션, **PG 섹션 추출** (해석은 translational-scientist) |
 | ICD-10 코딩 | regulatory-expert | ICD-10 API | 적응증 진단 코드 |
+| 안전성 프로파일 | clinician | PubMed | 이상반응 빈도·중증도, SAE 사례, class effect, 모니터링 근거, 중지 규칙 |
+| 선정/제외 기준 임상 근거 | clinician | PubMed | 대상자 특성, 약물 특이 위험 반영 |
 
 ### 시험 유형별 특화 조사
 
-| 시험 유형 | clinical-pharmacologist 초점 | regulatory-expert 초점 |
-|----------|----------------------------|----------------------|
-| **DDI** | 대사 효소(CYP), 수송체(P-gp, OATP), 기존 DDI 연구 결과, in vitro 데이터 | FDA DDI 가이드라인, MFDS 약물상호작용 평가 가이드라인 |
-| **BE** | BCS 분류, 용출 프로파일, 원개발사 PK 데이터, 기존 BE 시험 | MFDS 생동성시험 가이드라인, 동등성 한계, 시험식이 요건 |
-| **FE** | BCS 분류, 흡수 특성, 식이 영향 관련 기존 데이터 | FDA FE 가이드라인, 식이 조건 요건 |
-| **QTc** | hERG 데이터, 기존 QTc 연구, PK-QTc 관계 | ICH E14, FDA QT/QTc 가이드라인 |
-| **ADME** | 방사성 표지 연구 문헌, 대사 경로, 배설 경로 | 방사성의약품 관련 규제 요건 |
-| **FIH** | IB 분석 (비임상 PK/독성/약리), 초기 용량 산출, 용량 증량 설계 | FDA/EMA/MFDS FIH 가이드라인, 안전성 보고 요건 |
+| 시험 유형 | clinical-pharmacologist (PK) | translational-scientist (PD/PG/대사체) | regulatory-expert (가이드라인·라벨) | clinician (안전성) |
+|----------|---|---|---|---|
+| **FIH/SAD/MAD** | IB 분석, 초기 용량 산출, 용량 증량 설계 | ★★★ PD 마커, ★★ 표적 다형성 | FDA/EMA/MFDS FIH 가이드라인 | 비임상 안전성 시그널, 용량 의존적 AE |
+| **DDI** | 대사 효소(CYP), 수송체, 기존 DDI 연구, in vitro 데이터 | ★★★ **CYP PM/EM 분류**, ★★ 내인성 바이오마커 | FDA DDI Guidance, ICH M12, MFDS DDI 가이드라인 + **CYP 다형성 라벨 권고** | 병용약 안전성, 상호작용 AE |
+| **BE** | BCS 분류, 용출 프로파일, 원개발사 PK | **불참** (PG/PD 의미 낮음) | MFDS 생동성시험 가이드라인, 동등성 한계 | 일반 안전성 |
+| **FE** | BCS 분류, 흡수 특성, 식이 영향 데이터 | **불참** | FDA FE Guidance, 식이 조건 요건 | 일반 안전성 |
+| **QTc** | hERG 안전성 약리, PK-QTc 관계 | ★★ C-QTc 모델, ★★ KCNH2/SCN5A 다형성 | ICH E14, FDA QT/QTc Guidance + **채널 다형성 라벨**(있을 시) | QT 연장 위험 인자, 심혈관 AE |
+| **ADME** | 방사성 표지 연구, 대사·배설 경로 | ★★★ **인체 특이 대사체 (MIST 준수)** | FDA Safety Testing of Drug Metabolites | 방사성 노출 안전성 |
+| **PK Special Pop** | 정상 PK, 약물 청소율 | ★★ 집단 차이, 표적 발현 | FDA Renal/Hepatic Impairment + **PG 기반 용량 조절 표** | 환자 특이 위험, 동반질환 AE |
+
+> **★★★ 필수, ★★ 권장, ★ 선택, 불참**. translational-scientist 참여 조건은 `.claude/skills/clinical-research/SKILL.md`의 시험 유형별 우선순위 표에 따른다.
 
 ### MFDS 자료 조사
 
