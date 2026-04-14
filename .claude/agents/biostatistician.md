@@ -63,6 +63,7 @@ clinical-pharmacologist가 절단 AUC 적용을 권고한 경우, 해당 절단 
 | `crossover_2x2_ddi.py` | 2×2 crossover DDI |
 | `replicate_crossover_be.py` | 2×3, 2×4 replicate |
 | `parallel_continuous.py` | 병렬 연속형 |
+| `parallel_binary.py` | 병렬 이분형 |
 | `williams_4x4.py` | Williams 4×4 |
 | `one_sequence_ddi.py` | One-sequence DDI |
 

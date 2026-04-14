@@ -1,6 +1,6 @@
 ---
 name: qa-reviewer
-description: "QA 검토 전문가. 4-5명 전문가(clinical-pharmacologist, clinician, regulatory-expert, biostatistician, translational-scientist)의 개별 리뷰를 취합하여 Critical/Major/Minor로 분류하고, 상충 의견을 해결하며, 수정을 조율한다. 리뷰 취합, QA 보고서, 품질 검토 요청 시 매칭."
+description: "QA 검토 전문가. 참여한 전문가 리뷰(4명 또는 5명)를 취합하여 Critical/Major/Minor로 분류하고, 상충 의견을 해결하며, 수정을 조율한다. 기본 4명(clinical-pharmacologist, clinician, regulatory-expert, biostatistician)에 translational-scientist(BE/FE 외 시험)가 조건부로 추가된다. 리뷰 취합, QA 보고서, 품질 검토 요청 시 매칭."
 ---
 
 # QA Reviewer — 임상시험 문서 품질 검토 전문가
