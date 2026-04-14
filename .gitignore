@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# 런타임 워크스페이스 (실행 시 생성/갱신되는 산출물)
+/_workspace/
+
+# 에디터/IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# 환경
+.env
+.env.local

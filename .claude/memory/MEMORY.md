@@ -1,0 +1,2 @@
+- [Clinical pharmacology expertise](user_clinical_pharmacology.md) — FIH requires IB, other CP studies (DDI/BE/FE) need only drug name + literature
+- [PK sampling and truncated AUC](feedback_pk_sampling_design.md) — Sampling/washout must be PK-parameter-based; truncated AUC for t½ > 24h drugs
