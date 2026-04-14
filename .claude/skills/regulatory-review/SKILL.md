@@ -1,11 +1,11 @@
 ---
 name: regulatory-review
-description: "임상시험 문서의 다중 에이전트 리뷰를 지원하는 스킬. 4명의 전문가(clinical-pharmacologist, clinician, regulatory-expert, biostatistician)가 병렬로 계획서를 검토하고, qa-reviewer가 취합하여 통합 보고서를 작성한다. 문서 검토, 문서 리뷰, QA, 품질 검토, 일관성 검토, 규제 검토, 계획서 리뷰 요청 시 사용."
+description: "임상시험 문서의 다중 에이전트 리뷰를 지원하는 스킬. 4-5명의 전문가(clinical-pharmacologist, translational-scientist(조건부), clinician, regulatory-expert, biostatistician)가 병렬로 계획서를 검토하고, qa-reviewer가 취합하여 통합 보고서를 작성한다. 문서 검토, 문서 리뷰, QA, 품질 검토, 일관성 검토, 규제 검토, 계획서 리뷰 요청 시 사용."
 ---
 
 # Regulatory Review — 다중 에이전트 리뷰
 
-4명의 전문가가 병렬로 계획서를 검토하고, qa-reviewer가 이를 취합하여 통합 리뷰 보고서를 작성한다.
+4-5명의 전문가가 병렬로 계획서를 검토하고, qa-reviewer가 이를 취합하여 통합 리뷰 보고서를 작성한다. **translational-scientist는 BE/FE 외 시험에서만 참여**한다 (PD/PG/오믹스가 시험 목적과 관련 있는 경우).
 
 ## 개별 리뷰어 절차
 
@@ -30,7 +30,7 @@ description: "임상시험 문서의 다중 에이전트 리뷰를 지원하는 
 | Washout 기간 | 5×t½ 이상인지, 교차 설계에서의 잔류 효과 |
 | 용량 증량 | 증량 비율, 센티넬 도징, SRC 기준 (FIH 시) |
 
-#### clinician 검토 항목 (조건부)
+#### clinician 검토 항목 (항상 참여)
 
 | 항목 | 검토 내용 |
 |------|----------|
@@ -39,6 +39,16 @@ description: "임상시험 문서의 다중 에이전트 리뷰를 지원하는 
 | 이상반응 관리 | 이상반응별 대처 절차, 중증도 평가 기준 |
 | 중지 기준 | 개인 수준 + 시험 수준 stopping rules |
 | 동의서 내용 | 위험 정보가 충분히 기술되었는지 |
+
+#### translational-scientist 검토 항목 (BE/FE 외 시험)
+
+| 항목 | 검토 내용 |
+|------|----------|
+| PD 평가 섹션 | 바이오마커 선정 근거(작용 기전 기반), 측정 시점·분석 방법 적절성, 검증 상태 |
+| PK-PD 모델링 | 모델 선정(Emax, sigmoid Emax, indirect response 등)의 과학적 타당성, 파라미터 근거 |
+| 약물유전체(PG) 분석 | 대상 유전자(CYP·표적)의 시험약 관련성, 한국인 빈도 반영, 표현형별 해석 기준 |
+| 대사체 분석 | MIST 준수(ADME), 내인성 바이오마커 측정법(DDI), 시료·시점 적절성 |
+| **계획서-ICF 정합성** | 계획서에 명시된 PG/대사체 분석 항목이 ICF Part 4에 빠짐없이 반영되었는가 (생명윤리법 준수) |
 
 #### regulatory-expert 검토 항목
 
@@ -61,7 +71,7 @@ description: "임상시험 문서의 다중 에이전트 리뷰를 지원하는 
 | 5 | 시험 설계 (유형, 맹검, 대조) |
 | 6 | 대상자 선정/제외 기준 |
 | 7 | 시험 치료 (용량, 투여 방법) |
-| 8 | 약동학/약력학 평가 변수 (Phase 1에서는 "유효성"이 아님) |
+| 8 | 약동학/약력학(PK/PD) 평가 변수. 시험 목적에 따른 표현 적절성 (FIH/MAD/ADME/Special Pop: "약동학/약력학 평가"; DDI/BE/FE/QTc: "유효성 평가" — 각 시험의 1차 평가변수가 PD/약효 측정인 경우). 상세는 `.claude/skills/protocol-drafting/SKILL.md`의 "Phase 1 용어 가이드" 참조 |
 | 9 | 안전성 평가 방법 |
 | 10 | 통계 분석 계획 |
 | 11 | 윤리적 고려사항 |
@@ -131,16 +141,17 @@ description: "임상시험 문서의 다중 에이전트 리뷰를 지원하는 
 
 ### Step 1: 개별 리뷰 로드
 
-모든 개별 리뷰 파일을 Read한다:
+참여한 모든 개별 리뷰 파일을 Read한다:
 - `_workspace/review/review_clinical_pharmacologist.md`
 - `_workspace/review/review_regulatory_expert.md`
 - `_workspace/review/review_biostatistician.md`
-- (해당 시) `_workspace/review/review_clinician.md`
+- `_workspace/review/review_clinician.md`
+- `_workspace/review/review_translational_scientist.md` (존재하면 — BE/FE 외 시험)
 - `_workspace/03_protocol_draft.md` (원문 대조)
 
 ### Step 2: 분류 및 우선순위 지정
 
-4개 리뷰의 발견 사항을 통합하여 심각도별로 재분류한다:
+4-5개 리뷰의 발견 사항을 통합하여 심각도별로 재분류한다:
 
 | 등급 | 정의 | 처리 |
 |------|------|------|
@@ -178,7 +189,7 @@ Protocol과 Synopsis 간 일관성을 확인한다:
 ## 검토 요약
 - 검토 일시: {날짜}
 - 대상 문서: Protocol v{X}
-- 리뷰어: clinical-pharmacologist, regulatory-expert, biostatistician{, clinician}
+- 리뷰어: clinical-pharmacologist, regulatory-expert, biostatistician, clinician{, translational-scientist (BE/FE 외)}
 - **Critical: N건 | Major: N건 | Minor: N건**
 
 ## Critical 사항
@@ -222,9 +233,10 @@ Protocol과 Synopsis 간 일관성을 확인한다:
 - **Synopsis-Protocol 불일치**: Synopsis에서 결정된 사항(설계, 대상자 수, 분석 방법)이 Protocol에서 변경되지 않았는지 반드시 확인
 - **Critical 남발**: Critical은 "규제 불합격 또는 대상자 안전 위험"에만 사용. 표현 개선이나 사소한 누락은 Minor
 - **상충 의견 무시 금지**: 리뷰어 간 의견이 다르면 반드시 양쪽을 기재하고 근거를 비교해야 한다
-- **clinician 리뷰 누락**: 건강한 성인 대상 시험에서는 clinician 리뷰가 없다. 이를 "누락"으로 보고하지 말 것
+- **translational-scientist 리뷰 누락 (BE/FE 외 시험)**: BE/FE 외 시험에서 TS가 빠지면 PD 평가·PG/오믹스 분석 섹션과 ICF Part 4 정합성을 검증할 리뷰어가 없어진다. 시험 유형을 확인하여 호출
+- **translational-scientist 리뷰 요구 금지 (BE/FE)**: BE/FE에서는 TS가 불참이다. 누락으로 보고하지 말 것
 - **ICH E6 R3 vs R2 혼동**: R3는 Annex 1/Annex 2 구조. R2의 섹션 번호와 다르므로 주의
-- **Phase 1 용어**: "유효성 평가"가 아닌 "약동학/약력학 평가"가 올바른 표현
+- **Phase 1 용어 정책**: "유효성 평가" 일률 금지 아님. 시험 목적별 차등 적용 — PD/약효 측정이 1차 평가변수인 시험(DDI의 GMR, BE의 동등성, FE의 식이 영향, QTc의 ddQTcF)은 "유효성 평가" 표현 사용 가능. FIH/MAD/ADME/Special Pop은 "약동학/약력학 평가" 유지. 상세는 `.claude/skills/protocol-drafting/SKILL.md`의 "Phase 1 용어 가이드" 표
 
 ## References
 

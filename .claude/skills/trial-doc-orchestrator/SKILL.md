@@ -412,7 +412,9 @@ Agent(
 그 다음 .claude/skills/icf-drafting/SKILL.md를 Read하여 작성 가이드를 따르라.
 상세 템플릿이 필요하면 .claude/skills/icf-drafting/references/icf-template.md도 Read하라.
 
-{유전체/인체유래물 포함 시: '유전체 분석이 포함된 시험이다. 생명윤리법에 따른 선택 동의(Part 4)를 반드시 포함하라.'}
+★ 필수: _workspace/00_input/design_decisions.md를 Read하여 '유전체/대사체 분석 계획' 섹션을 확인하라.
+- PG 분석·대사체 분석·잔여 검체 보관 중 하나라도 포함 → 생명윤리법에 따른 Part 4(선택 동의) 작성
+- 전부 미포함 → Part 1-3만 작성
 
 [입력]
 계획서: _workspace/03_protocol_draft.md를 Read하라.

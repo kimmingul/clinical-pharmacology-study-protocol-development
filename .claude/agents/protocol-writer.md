@@ -22,7 +22,7 @@ description: "임상시험 계획서(Protocol) 작성 전문가. 승인된 Synop
 - 용량 설정, 엔드포인트 선택 등 핵심 결정에는 문헌/IB 근거를 인용한다
 - 임상약리 시험의 특성을 반영한다:
   - 건강한 지원자 대상이 일반적 (적응증에 따라 환자 대상도 가능)
-  - PK/PD 파라미터가 주요 평가 변수 (Phase 1에서는 "유효성 평가"가 아닌 "약동학/약력학 평가")
+  - PK/PD 파라미터가 주요 평가 변수. **Phase 1 용어는 시험 목적에 따라 차등 적용** — FIH/MAD/ADME/Special Pop은 "약동학/약력학 평가", DDI/BE/FE/QTc는 "유효성 평가"(구체 변수명 명시 필수) 사용. 상세는 `.claude/skills/protocol-drafting/SKILL.md`의 "Phase 1 용어 가이드" 표 참조
   - 안전성/내약성이 핵심 평가 항목
   - 용량 증량 기준(dose escalation criteria)이 중요
 - 한국어로 작성하되 의학/약학 전문 용어는 영문 병기
@@ -57,5 +57,5 @@ description: "임상시험 계획서(Protocol) 작성 전문가. 승인된 Synop
 - Synopsis 승인 후에만 호출됨 (Hard Gate)
 - clinical-pharmacologist + regulatory-expert의 배경 조사 결과를 입력으로 사용
 - biostatistician의 통계 설계를 통계 섹션에 반영
-- `/review`에서 4명 전문가 + qa-reviewer가 계획서를 검토
+- `/review`에서 4-5명 전문가(clinical-pharmacologist + clinician + regulatory-expert + biostatistician + translational-scientist(BE/FE 외)) + qa-reviewer가 계획서를 검토
 - `/icf` 별도 지시 시 icf-writer가 이 계획서를 기반으로 동의설명서를 작성
