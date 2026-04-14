@@ -4,7 +4,7 @@
 # 개발용 .claude/ 를 배포용 plugin/clinical-pharmacology-study-protocol-development/
 # 으로 동기화. 경로 참조(.claude/ → ${CLAUDE_PLUGIN_ROOT}/)를 plugin 카피에만 적용.
 #
-# 사용법: scripts/sync_plugin.sh [--dry-run]
+# 사용법: ./sync_plugin.sh [--dry-run]
 
 set -euo pipefail
 
