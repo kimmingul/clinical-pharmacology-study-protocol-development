@@ -91,11 +91,14 @@ Phase 3: 자료 종합 + ★ 사용자 검토 게이트 ★
          ▼
 Phase 4: 대화형 설계 협의
     수집 자료 기반 설계 옵션 제시 + 사용자 결정
-    - 연구설계 (parallel, crossover 유형 등)
-    - PK 채혈 시점
-    - 평가변수 (1차/2차)
-    - 안전성 평가 항목
-    - washout 기간, 투여 조건 등
+    Step 1 ★ 선정/제외기준 (최우선) — 표준 템플릿 기반 항목별 협의
+            └─ .claude/references/templates/inclusion_exclusion_criteria.md
+    Step 2 연구설계 (parallel, crossover 유형 등)
+    Step 3 세부 요소:
+            - PK 채혈 시점
+            - 평가변수 (1차/2차)
+            - 안전성 평가 항목
+            - washout 기간, 투여 조건 등
          │
          ▼
 Phase 5: 통계 설계 (biostatistician)
@@ -509,22 +512,24 @@ Synopsis가 작성되면 사용자의 **명시적 승인**이 있어야 Full Pro
 │   ├── memory/                            # 세션 간 메모리 (사용자 선호, 도메인 지식)
 │   │   ├── MEMORY.md                      # 메모리 인덱스
 │   │   └── *.md                           # 개별 메모리 파일
-│   ├── references/                        # 사전 수록 규제 가이드라인
-│   │   └── guidelines/
-│   │       ├── index.md                   # 마스터 인덱스
-│   │       ├── ich/                       # ICH (E6 R3, E8 R1, E14, M13A)
-│   │       ├── fda/                       # FDA (BE, DDI, FIH, FE, QTc, BMV)
-│   │       ├── ema/                       # EMA (BE, DDI, FIH, BMV)
-│   │       ├── mfds/                      # MFDS (BE, DDI, FIH, 임상약리, 통계)
-│   │       ├── regulations/               # 국내 법령 (약사법, KGCP, PIPA, 생명윤리법)
-│   │       ├── by_study_type/             # 시험 유형별 cross-agency 비교
-│   │       │   ├── be_cross_agency.md
-│   │       │   ├── ddi_cross_agency.md
-│   │       │   ├── fih_cross_agency.md
-│   │       │   ├── qtc_cross_agency.md
-│   │       │   ├── fe_cross_agency.md
-│   │       │   └── pk_general_cross_agency.md
-│   │       └── needs_user_input.md        # 사용자 PDF 제공 필요 항목
+│   ├── references/                        # 사전 수록 자료
+│   │   ├── guidelines/                    # 규제 가이드라인
+│   │   │   ├── index.md                   # 마스터 인덱스
+│   │   │   ├── ich/                       # ICH (E6 R3, E8 R1, E14, M13A)
+│   │   │   ├── fda/                       # FDA (BE, DDI, FIH, FE, QTc, BMV)
+│   │   │   ├── ema/                       # EMA (BE, DDI, FIH, BMV)
+│   │   │   ├── mfds/                      # MFDS (BE, DDI, FIH, 임상약리, 통계)
+│   │   │   ├── regulations/               # 국내 법령 (약사법, KGCP, PIPA, 생명윤리법)
+│   │   │   ├── by_study_type/             # 시험 유형별 cross-agency 비교
+│   │   │   │   ├── be_cross_agency.md
+│   │   │   │   ├── ddi_cross_agency.md
+│   │   │   │   ├── fih_cross_agency.md
+│   │   │   │   ├── qtc_cross_agency.md
+│   │   │   │   ├── fe_cross_agency.md
+│   │   │   │   └── pk_general_cross_agency.md
+│   │   │   └── needs_user_input.md        # 사용자 PDF 제공 필요 항목
+│   │   └── templates/                     # 표준 템플릿 (선정/제외기준 등)
+│   │       └── inclusion_exclusion_criteria.md
 │   └── scripts/                           # 실행 가능한 Python 스크립트
 │       ├── README.md                      # 스크립트 인덱스
 │       ├── sample_size/                   # Sample size 계산
