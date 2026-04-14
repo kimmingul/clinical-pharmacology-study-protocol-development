@@ -1,0 +1,41 @@
+{
+  "name": "clinical-pharmacology-marketplace",
+  "owner": {
+    "name": "Min-Gul Kim"
+  },
+  "metadata": {
+    "description": "한국 MFDS 환경 기준 임상약리 임상시험 문서 개발 하네스 marketplace. Protocol·ICF·Synopsis를 8개 전문 에이전트와 10단계 파이프라인으로 생성.",
+    "version": "2.0.0"
+  },
+  "plugins": [
+    {
+      "name": "clinical-pharmacology-study-protocol-development",
+      "source": "./plugin/clinical-pharmacology-study-protocol-development",
+      "description": "임상약리 임상시험(FIH, SAD/MAD, DDI 단방향·양방향, BA/BE, FE, QTc, ADME)의 배경 조사·Synopsis·계획서(Protocol)·동의설명서(ICF)를 8개 전문 에이전트와 10단계 파이프라인으로 개발. MFDS·FDA·EMA·ICH 가이드라인 라이브러리, Nexacro SOAP 기반 MFDS 의약품안전나라 2단계 크롤링, Williams 6×3 양방향 DDI 설계, ICH E6(R3) Appendix B 16-섹션 프로토콜 템플릿 포함.",
+      "version": "2.0.0",
+      "author": {
+        "name": "Min-Gul Kim"
+      },
+      "license": "MIT",
+      "keywords": [
+        "clinical-pharmacology",
+        "clinical-trial",
+        "protocol",
+        "ICF",
+        "ICH-E6-R3",
+        "MFDS",
+        "FDA",
+        "EMA",
+        "DDI",
+        "bioequivalence",
+        "FIH",
+        "QTc",
+        "ADME",
+        "Williams-6x3",
+        "pharmacogenomics",
+        "sample-size",
+        "Korean"
+      ]
+    }
+  ]
+}
