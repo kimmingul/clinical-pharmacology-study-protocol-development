@@ -106,6 +106,25 @@ Bash로 `ls _workspace/ 2>/dev/null` 실행하여 실행 모드를 결정한다:
 
 여러 조사 에이전트를 **병렬로** 호출한다. 검색 영역이 분리되어 중복이 없다. **clinical-pharmacologist, regulatory-expert, clinician은 항상 참여**하며, **translational-scientist는 BE/FE 외 시험에서만 참여**한다.
 
+#### Phase 2 실행 순서 (Dependency Edge)
+
+Phase 2는 병렬이지만 한 가지 dependency edge가 있습니다:
+
+```
+regulatory-expert (라벨 PG 추출 → _workspace/00_input/label_pgx.md 작성)
+        │
+        └──→ translational-scientist (PG 마커·라벨 PGx 의존)
+
+clinical-pharmacologist ────────────────→ (독립, 즉시 spawn)
+clinician ─────────────────────────────→ (독립, 즉시 spawn)
+```
+
+**2-wave 패턴**:
+- **Wave 1 (즉시 spawn)**: clinical-pharmacologist, regulatory-expert, clinician (BE/FE 외이면 regulatory-expert에게 label_pgx.md 작성 요청 포함)
+- **Wave 2 (regulatory-expert의 `_workspace/00_input/label_pgx.md` 완성 후)**: translational-scientist (BE/FE 외 시험인 경우에만)
+
+> **오케스트레이터 지시**: regulatory-expert 프롬프트에 "라벨 PG 섹션을 `_workspace/00_input/label_pgx.md`에 별도 저장하라"를 명시한다. regulatory-expert 완료 후 translational-scientist를 spawn하며, 이때 프롬프트에 "label_pgx.md가 존재하면 Read하여 활용하라"를 포함한다. BE/FE 시험이면 Wave 2 자체를 생략한다.
+
 **clinical-pharmacologist 호출:**
 ```
 Agent(
@@ -131,7 +150,7 @@ Agent(
 )
 ```
 
-**regulatory-expert 호출 (병렬):**
+**regulatory-expert 호출 (병렬, Wave 1):**
 ```
 Agent(
   description: "규제 자료 수집 및 가이드라인 분석",
@@ -151,6 +170,10 @@ Agent(
 - 적응증: {적응증}
 - 시험 단계: {단계}
 - 시험 유형: {유형}
+
+★ 라벨 PG 섹션 별도 저장 (translational-scientist 인계용):
+약물 라벨에 Pharmacogenomics(PGx) 섹션이 있으면 해당 내용을 _workspace/00_input/label_pgx.md에 별도 Write하라.
+(없으면 '본 약물 라벨에 PGx 섹션 없음' 1줄을 해당 파일에 Write하라 — translational-scientist가 파일 존재 여부로 완료를 확인한다.)
 
 산출물을 _workspace/01_research_reg.md에 Write하라."
 )
@@ -178,7 +201,9 @@ _workspace/01_references/safety/ 디렉토리에 개별 안전성 reference 파�
 )
 ```
 
-**translational-scientist 호출 (BE/FE 외 시험, 조건부):**
+**translational-scientist 호출 (BE/FE 외 시험, 조건부 — Wave 2):**
+
+> **Wave 2**: regulatory-expert가 완료되어 `_workspace/00_input/label_pgx.md`가 생성된 후에 호출한다. BE/FE 시험이면 이 에이전트 호출 자체를 생략한다.
 
 BE/FE 시험이 아닌 경우 (FIH/SAD/MAD/DDI/QTc/ADME/Special Pop)에 호출한다. 시험 유형별 조사 깊이는 `${CLAUDE_PLUGIN_ROOT}/skills/clinical-research/SKILL.md`의 "시험 유형별 오믹스/PD 우선순위" 표에 따른다:
 ```
@@ -195,6 +220,8 @@ Agent(
 - 수용체 점유율 자료 (PET tracer, 표적 결합; CNS/항암제 중심)
 - 약물유전체학: CYP/표적 다형성, 한국인 대립유전자 빈도, 라벨 PG 권고
 - 대사체학: 인체 특이 대사체(MIST), 내인성 바이오마커 (해당 시)
+
+★ 라벨 PG 선행 자료: _workspace/00_input/label_pgx.md가 존재하면 Read하여 regulatory-expert가 추출한 라벨 PGx 섹션을 활용하라. 중복 수집 불필요.
 
 시험 정보: {동일}
 
@@ -289,6 +316,32 @@ ${CLAUDE_PLUGIN_ROOT}/scripts/sample_size/ 디렉토리의 해당 코드 템플�
 > **이 게이트는 건너뛸 수 없다.** 사용자가 명시적으로 "승인", "진행", "OK" 등의 의사를 밝혀야 Phase 8로 진행한다.
 
 사용자가 수정을 요청하면 Synopsis를 수정하고 다시 검토를 요청한다. 승인될 때까지 반복.
+
+#### Sentinel 파일 정책 (Hard Gate 무결성 보장)
+
+사용자가 Synopsis를 **명시적으로 승인**하면 즉시 아래를 수행한다:
+
+```bash
+# sentinel 파일 생성 (부분 재실행 시 stale 검출용)
+mkdir -p _workspace
+echo "approved_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+synopsis_file: _workspace/02_synopsis.md
+synopsis_variant: {승인된 변형 ID, 기본이면 'default'}
+drug: {약물명}
+trial_type: {시험 유형}
+git_sha_or_hash: $(git rev-parse --short HEAD 2>/dev/null || md5sum _workspace/02_synopsis.md | cut -c1-8)" \
+> _workspace/.synopsis_approved
+```
+
+**하류 명령(protocol, review, icf)은 실행 시작 시 sentinel을 검사한다:**
+
+| 상태 | 조치 |
+|------|------|
+| `_workspace/.synopsis_approved` 미존재 | 실행 거부 — "Synopsis 승인이 필요합니다. `/synopsis` 실행 후 명시 승인해주세요" 안내 |
+| sentinel 존재, 단 `_workspace/02_synopsis.md`(또는 해당 변형 파일)의 수정시각이 sentinel보다 새로움 | 실행 거부 — "Synopsis가 sentinel 이후 수정되었습니다. `/synopsis` 재확인 후 다시 승인해주세요" 안내 |
+| sentinel 존재 + mtime 정상 | 정상 진행 |
+
+> **목적**: 자연어 응답에만 의존하던 Phase 7 게이트를 파일시스템 sentinel로 보강하여 부분 재실행 시 하류 산출물의 stale 상태를 자동 검출한다.
 
 ### Phase 8: Full Protocol 작성
 

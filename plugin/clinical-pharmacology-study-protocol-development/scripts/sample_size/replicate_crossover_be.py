@@ -21,10 +21,35 @@ RSABE (Reference-Scaled Average Bioequivalence)
 ------------------------------------------------
 For high-variability drugs with within-reference CV > 30%:
 - The equivalence limit is scaled by the within-reference variability
-- Criterion: (ln(T) - ln(R))^2 - theta * sigma_WR^2 <= 0
-  where theta = (ln(1.25) / sigma_0)^2
-  sigma_0 = regulatory constant (0.25 for FDA, log(1.25) for MFDS)
+- Criterion: (ln(T) - ln(R))^2 - theta_s * sigma_WR^2 <= 0
+  where theta_s = (ln(1.25) / sigma_0)^2
+  sigma_0 = regulatory switching constant (0.25 for FDA per 21 CFR 320.24
+            guidance; ln(1.25) ≈ 0.2231 for EMA/MFDS ABEL approach)
 - A point estimate constraint may also apply (e.g. 0.80-1.25)
+
+LIMITATION (IMPORTANT)
+----------------------
+The RSABE sample-size code below implements an **approximation** of the
+FDA linearized criterion using the scaled bound
+
+    L_scaled = sqrt(theta_s) * sigma_WR
+
+as the effective equivalence margin in a 2-period crossover normal-
+approximation formula.  This reproduces the qualitative behaviour
+(margin grows with sigma_WR, so high-CV drugs need fewer subjects)
+and is reasonable for planning purposes, but it is NOT the exact
+FDA linearized criterion (which compares the upper 95% bound of
+(Y_T-Y_R)^2 - theta_s * sigma_WR^2 to zero and is typically computed
+by simulation).
+
+**For regulatory submission, use a validated tool:**
+- R: ``PowerTOST::sampleN.scABEL`` (EMA) or ``sampleN.RSABE`` (FDA)
+- Python: ``pharmpy`` / dedicated simulation
+- SAS: FDA-published reference code
+
+TODO: Replace approximation with a simulation-based RSABE power
+calculation matching FDA Statistical Approaches to Establishing
+Bioequivalence (2001) and the Progesterone draft guidance methodology.
 
 Formula (standard, non-RSABE)
 ------------------------------
@@ -118,23 +143,25 @@ def calculate_sample_size(
     z_beta = normal_quantile(power)
 
     if use_rsabe and intra_cv > 30.0:
-        # RSABE: scaled equivalence limit
-        # Expanded limit: theta_s = regulatory_constant * (sigma_WR / sigma_0)
-        # But if sigma_WR > sigma_0, limit expands
-        # Linearised approach: treat the scaled limit as the effective theta
-        # For power calculation, the effective margin is sigma_0 * (sigma_WR / sigma_0) = sigma_WR
-        # Simplified power formula using the regulatory constant:
-        theta_scaled = regulatory_constant * sigma_w  # scaled limit on log scale
-        # In RSABE the margin increases with variability, making it easier to
-        # show equivalence for high-CV drugs.
-        # Effective margin for power calculation:
-        effective_margin = theta_scaled - delta
+        # APPROXIMATION ONLY — see module docstring "LIMITATION" block.
+        # FDA / EMA scaled limit on the log scale:
+        #     theta_s    = (ln(1.25) / sigma_0)^2          (FDA, sigma_0=0.25)
+        #     L_scaled   = sqrt(theta_s) * sigma_WR
+        #                = (ln(1.25) / sigma_0) * sigma_WR
+        # For high-variability drugs (sigma_WR > sigma_0) this expands
+        # the equivalence margin proportionally to within-reference SD.
+        theta_s = (math.log(1.25) / regulatory_constant) ** 2
+        scaled_limit = math.sqrt(theta_s) * sigma_w  # = (ln1.25/sigma_0)*sigma_WR
+        effective_margin = scaled_limit - delta
         if effective_margin <= 0:
             raise ValueError(
                 f"With RSABE scaling, the effective margin is non-positive. "
                 f"GMR={gmr} is too far from 1."
             )
-        rsabe_note = "RSABE (scaled limits)"
+        rsabe_note = (
+            "RSABE (scaled-ABEL approximation; "
+            "NOT the FDA linearized criterion — see module docstring)"
+        )
     else:
         theta = math.log(equivalence_limits[1])
         effective_margin = theta - delta
@@ -179,6 +206,11 @@ def calculate_sample_size(
         "effective_margin (log)": round(effective_margin, 4),
         "use_rsabe": use_rsabe,
         "regulatory_constant (sigma_0)": regulatory_constant if use_rsabe else "N/A",
+        "theta_s (scaled criterion)": (
+            round((math.log(1.25) / regulatory_constant) ** 2, 4)
+            if use_rsabe and intra_cv > 30.0
+            else "N/A"
+        ),
         "alpha (one-sided)": alpha,
         "power": power,
         "z_alpha": round(z_alpha, 4),

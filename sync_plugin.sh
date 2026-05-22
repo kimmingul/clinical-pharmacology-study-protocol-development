@@ -40,8 +40,10 @@ if [[ -z "$DRY_RUN" ]]; then
   echo "=== plugin/ 내부 경로 참조 치환 (.claude/ → \${CLAUDE_PLUGIN_ROOT}/) ==="
   find "$PLUGIN_DIR" -name "*.md" -exec sed -i '' 's|\.claude/|${CLAUDE_PLUGIN_ROOT}/|g' {} \;
 
-  LEFT=$(grep -rn "\.claude/" "$PLUGIN_DIR" --include="*.md" 2>/dev/null | wc -l | tr -d ' ')
-  ROOT_REFS=$(grep -rn "CLAUDE_PLUGIN_ROOT" "$PLUGIN_DIR" --include="*.md" 2>/dev/null | wc -l | tr -d ' ')
+  # grep returns exit 1 when no matches found; under `set -euo pipefail` that aborts
+  # the script even though "0 matches" is a normal outcome. Use `|| true` to neutralize.
+  LEFT=$( { grep -rn "\.claude/" "$PLUGIN_DIR" --include="*.md" 2>/dev/null || true; } | wc -l | tr -d ' ')
+  ROOT_REFS=$( { grep -rn "CLAUDE_PLUGIN_ROOT" "$PLUGIN_DIR" --include="*.md" 2>/dev/null || true; } | wc -l | tr -d ' ')
   echo "  .claude/ 잔재: $LEFT"
   echo "  \${CLAUDE_PLUGIN_ROOT}/ 참조: $ROOT_REFS"
   if [[ "$LEFT" != "0" ]]; then

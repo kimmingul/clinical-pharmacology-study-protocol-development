@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit
+#
+# .claude/ (개발 하네스) 와 plugin/clinical-pharmacology-study-protocol-development/
+# (배포 카피) 의 drift 를 방지하는 hook.
+#
+# 동작:
+#   1. staged 변경에 .claude/ 파일이 포함되어 있으면 sync_plugin.sh 자동 실행
+#   2. sync 결과(plugin/ 변경 + zip 재빌드)를 staged 영역에 추가
+#   3. zip 파일 차이가 클 경우 안내 (rebuild는 수동 결정)
+#
+# 설치 (한 번만):
+#   git config core.hooksPath .githooks
+#
+# 비활성화:
+#   git commit --no-verify  (단발성)
+#   git config --unset core.hooksPath  (영구)
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# 1) staged 파일 중 .claude/ 변경 여부 확인
+CLAUDE_CHANGES=$(git diff --cached --name-only --diff-filter=ACMR | grep -c '^\.claude/' || true)
+
+if [[ "$CLAUDE_CHANGES" == "0" ]]; then
+  # .claude/ 변경 없음 — sync 불필요
+  exit 0
+fi
+
+echo "[pre-commit] .claude/ 변경 ${CLAUDE_CHANGES}건 감지 → plugin/ 동기화 실행"
+
+# 2) sync_plugin.sh 실행
+if [[ ! -x ./sync_plugin.sh ]]; then
+  echo "[pre-commit] ERROR: ./sync_plugin.sh 가 실행 가능하지 않습니다." >&2
+  exit 1
+fi
+
+./sync_plugin.sh
+
+# 3) plugin/ 변경분이 staged 영역에 들어가도록 add
+PLUGIN_DIR="plugin/clinical-pharmacology-study-protocol-development"
+git add "$PLUGIN_DIR"
+
+# 4) zip 재빌드 안내 (자동 재빌드는 하지 않음 — 변경 폭이 커서 사용자 결정)
+ZIP_FILE="plugin/clinical-pharmacology-study-protocol-development.zip"
+if [[ -f "$ZIP_FILE" ]]; then
+  ZIP_AGE_DAYS=$(( ($(date +%s) - $(stat -f %m "$ZIP_FILE" 2>/dev/null || stat -c %Y "$ZIP_FILE")) / 86400 ))
+  if [[ "$ZIP_AGE_DAYS" -gt 0 ]]; then
+    echo "[pre-commit] 알림: $ZIP_FILE 가 ${ZIP_AGE_DAYS}일 전 파일입니다."
+    echo "[pre-commit]       배포용 zip을 갱신하려면 다음을 실행하세요:"
+    echo "[pre-commit]         cd plugin && rm -f clinical-pharmacology-study-protocol-development.zip && \\"
+    echo "[pre-commit]         zip -rq clinical-pharmacology-study-protocol-development.zip clinical-pharmacology-study-protocol-development \\"
+    echo "[pre-commit]           -x '*.DS_Store' -x '*__pycache__*' -x '*.pyc'"
+  fi
+fi
+
+echo "[pre-commit] plugin/ 동기화 완료 → staged 영역에 반영됨."
+exit 0

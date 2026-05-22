@@ -47,13 +47,21 @@ mkdir -p _workspace/01_references/metabolomics
 | QTc | ✅ 호출 | KCNH2 PG·C-QTc 모델링 |
 | ADME | ✅ 호출 | 대사체 프로파일·MIST |
 | Special Pop (신/간장애) | ✅ 호출 | PG 기반 용량 조절 |
-| **BE** | ❌ 불참 | 동등성만 평가, PG/PD 불필요 |
-| **FE** | ❌ 불참 | 식이 영향만 평가 |
+| **BE** | ❌ 기본 불참 (옵트인 조건 확인 필요) | 동등성만 평가, PG/PD 기본 불필요 |
+| **FE** | ❌ 기본 불참 (옵트인 조건 확인 필요) | 식이 영향만 평가 |
+
+**BE/FE 옵트인 조건 — 하나라도 해당하면 TS 호출**:
+1. 사용자가 "PG 분석 포함", "약물유전체 조사 필요", "translational scientist 참여" 등을 명시한 경우
+2. 약물명이 NTI 약물과 일치: warfarin, tacrolimus, digoxin, theophylline, levothyroxine, phenytoin, carbamazepine, lithium
+3. regulatory-expert가 수집한 라벨에 "PGx test recommended" 또는 "biomarker-based dosing" 명시 (Wave 2에서 label_pgx.md 확인 후 판단)
 
 **자가 검증 절차 (병렬 호출 직전)**:
 1. `_workspace/00_input/trial_info.md`의 "시험 유형" 필드 값을 확인
 2. 위 매트릭스와 매칭하여 TS 호출 여부 결정
-3. **BE/FE이면 TS Agent 호출 자체를 생략** — 그리고 사용자에게 "본 시험 유형(BE/FE)은 TS 불참, CP+REG+CLIN 3명 조사 진행" 명시적 안내
+3. **BE/FE이면**: 먼저 옵트인 조건 1(사용자 명시)과 조건 2(NTI 약물 매칭) 확인
+   - 조건 미충족 → TS 호출 생략, 사용자에게 "본 시험 유형(BE/FE)은 TS 기본 불참, CP+REG+CLIN 3명 조사 진행" 명시적 안내
+   - 조건 1 또는 2 충족 → TS 호출, 사유를 사용자에게 한 줄 보고
+   - 조건 3(라벨 PGx) → Wave 2 시점에 label_pgx.md 확인 후 추가 판단
 4. 매트릭스에 없는 시험 유형이면 사용자에게 확인 질문 (불확실 시 호출 쪽으로 보수적 결정)
 5. TS 호출 시 시험 유형을 프롬프트에 **명시적으로 전달**하여 TS가 자체 확인 후 참여 생략 메시지를 쓸 가능성을 제거
 

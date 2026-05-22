@@ -37,13 +37,25 @@ translational-scientist의 조사 깊이는 시험 유형에 따라 차등 적�
 | **FIH/SAD** | ★★★ | ★★ | ★ | **참여** (PD 마커 + 표적 다형성) |
 | **MAD** | ★★★ | ★★ | ★ | **참여** (정상상태 PD) |
 | **DDI** | ★★ | **★★★** | ★★ | **참여** (CYP PM/EM 분류 + 내인성 바이오마커) |
-| **BE** | ★ | ★ | — | **불참** (PG/PD 의미 낮음, 동등성이 1차 목적) |
-| **FE** | ★ | ★ | — | **불참** (식이 영향이 1차 목적) |
+| **BE** | ★ | ★ | — | **기본 불참** (동등성이 1차 목적) — 단, 아래 옵트인 조건 충족 시 참여 |
+| **FE** | ★ | ★ | — | **기본 불참** (식이 영향이 1차 목적) — 단, 아래 옵트인 조건 충족 시 참여 |
 | **QTc** | ★★ | ★★ | — | **참여** (C-QTc 모델 + KCNH2/SCN5A 다형성) |
 | **ADME** | ★★ | ★★ | **★★★** | **참여** (MIST 준수, 인체 특이 대사체 핵심) |
 | **Special Pop** | ★★ | ★★ | ★★ | **참여** (집단 차이 평가) |
 
 ★★★ 필수, ★★ 권장, ★ 선택, — 생략
+
+### BE/FE에서 translational-scientist 옵트인 조건
+
+BE/FE 시험은 기본적으로 TS 불참이나, 다음 조건 중 **하나라도** 해당하면 TS를 참여시킨다:
+
+| 조건 | 판단 방법 |
+|------|----------|
+| **사용자 명시 트리거** | 사용자가 "PG 분석 포함", "약물유전체 조사 필요", "translational scientist 참여" 등을 명시한 경우 |
+| **NTI 약물** | 약물명이 협소한 치료 지수(NTI) 약물과 일치하는 경우: warfarin, tacrolimus, digoxin, theophylline, levothyroxine, phenytoin, carbamazepine, lithium (이 8개는 예시이며, 향후 TODO §2 결정 시 확장) |
+| **FDA 라벨 PGx 권고** | regulatory-expert가 수집한 라벨(`label_pgx.md`)에 "PGx test recommended" 또는 "biomarker-based dosing" 명시 |
+
+> 옵트인 시 TS 참여 사유를 사용자에게 한 줄로 보고한다. (예: "본 BE 시험 약물이 NTI 약물(tacrolimus)이므로 translational-scientist를 추가 참여시킵니다.")
 
 ## Step 0: 시험 유형별 조사 전략
 
@@ -593,7 +605,7 @@ _workspace/01_references/
 - **Open Access 전문**: `get_full_text_article`은 OA 논문만 전문 반환. 대부분 초록만 사용 가능
 - **시험 유형 미확인**: Step 0에서 시험 유형을 반드시 확인하고 해당 전략을 선택해야 한다
 - **MCP 도구명**: 시스템에서 제공하는 실제 도구명(예: `mcp__claude_ai_ICD-10_Codes__search_codes`)을 사용한다. 이 문서의 약칭은 설명용
-- **clinician 호출 조건**: 건강한 성인 대상(DDI, BE, FE)에서는 clinician이 불참. 환자 대상 시험에서만 참여
+- **clinician 항상 참여 (시험 유형 무관)**: 건강한 성인 대상(DDI, BE, FE 포함) 시험에서도 안전성 프로파일 체계적 수집, 선정/제외 기준의 임상적 타당성 검토, 중지 기준 근거 마련이 필수이므로 clinician은 모든 시험 유형에서 참여한다
 
 ## References
 

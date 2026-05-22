@@ -46,7 +46,7 @@ FIH, SAD/MAD, DDI(단방향·양방향), BA/BE, FE, QTc, ADME 등 임상약리 P
 ```bash
 # Plugin 루트 디렉토리(본 README가 위치한 디렉토리)를
 # Claude Code plugin 디렉토리로 심볼릭 링크 또는 복사
-ln -s "$(pwd)" ~/.claude/plugins/clinical-pharmacology-study-protocol-development
+ln -s "$(pwd)" ~/${CLAUDE_PLUGIN_ROOT}/plugins/clinical-pharmacology-study-protocol-development
 
 # 재시작 후 활성화 확인
 claude plugin list

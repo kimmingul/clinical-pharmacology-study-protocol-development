@@ -87,6 +87,12 @@ def calculate_sample_size(
         Number of periods (default 2).  Typically 2 for a standard
         one-sequence DDI (substrate alone, then substrate + perpetrator).
         Some designs may have 3 periods (e.g. pre-dose, co-admin, post-washout).
+        When n_periods > 2 the script assumes additional periods provide
+        replicate observations of the two conditions in equal proportion;
+        the within-subject variance of the paired difference is then scaled
+        by 2/n_periods (averaging effect).  If your design uses extra
+        periods for some other purpose (washout-only, baseline-only),
+        pass n_periods=2 to avoid inflating power.
     dropout_rate : float
         Expected dropout proportion.
 
@@ -107,16 +113,23 @@ def calculate_sample_size(
             f"The study cannot demonstrate no effect."
         )
 
+    if n_periods < 2:
+        raise ValueError(f"n_periods must be >= 2, got {n_periods}")
+
     z_alpha = normal_quantile(1.0 - alpha)
     z_beta = normal_quantile(power)
 
     # One-sequence design: each subject provides a paired difference.
-    # The variance of the difference is 2 * sigma_w^2 / n (for 2 periods).
-    # For n_periods > 2, the variance per comparison decreases.
-    variance_factor = 2.0 / n_periods  # each period provides one observation
-    # Standard formula for paired design:
+    # For n_periods=2 the variance of the per-subject difference is
+    #     Var = 2 * sigma_w^2.
+    # For n_periods>2 we assume balanced replicates of the two conditions,
+    # so the within-subject difference is averaged across n_periods/2
+    # observations per condition, scaling the variance by 2/n_periods.
+    variance_factor = 2.0 / n_periods  # equals 1.0 at n_periods=2
     n_total = math.ceil(
-        (z_alpha + z_beta) ** 2 * 2.0 * sigma_w ** 2 / margin ** 2
+        (z_alpha + z_beta) ** 2
+        * 2.0 * sigma_w ** 2 * variance_factor
+        / margin ** 2
     )
 
     # No "groups" — all subjects receive the same sequence

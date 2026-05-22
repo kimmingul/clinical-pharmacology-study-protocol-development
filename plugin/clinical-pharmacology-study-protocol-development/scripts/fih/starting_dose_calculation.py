@@ -128,6 +128,10 @@ def noael_to_hed(noael_mg_kg: float, species: str) -> float:
     >>> round(noael_to_hed(10, "dog"), 2)
     5.56
     """
+    if noael_mg_kg <= 0:
+        raise ValueError(
+            f"noael_mg_kg must be positive, got {noael_mg_kg}"
+        )
     species_lower = species.lower().strip()
     factor = BSA_CONVERSION_FACTORS.get(species_lower)
     if factor is None:
@@ -159,6 +163,14 @@ def hed_to_mrsd(
     tuple of float
         (mrsd_mg_kg, mrsd_mg) — MRSD in mg/kg and total mg.
     """
+    if hed_mg_kg <= 0:
+        raise ValueError(f"hed_mg_kg must be positive, got {hed_mg_kg}")
+    if safety_factor <= 0:
+        raise ValueError(f"safety_factor must be positive, got {safety_factor}")
+    if body_weight_kg <= 0:
+        raise ValueError(
+            f"body_weight_kg must be positive, got {body_weight_kg}"
+        )
     mrsd_mg_kg = hed_mg_kg / safety_factor
     mrsd_mg = mrsd_mg_kg * body_weight_kg
     return mrsd_mg_kg, mrsd_mg
@@ -194,6 +206,14 @@ def calculate_mrsd(
     >>> round(result.mrsd_mg, 2)
     29.03
     """
+    if noael_mg_kg <= 0:
+        raise ValueError(f"noael_mg_kg must be positive, got {noael_mg_kg}")
+    if safety_factor <= 0:
+        raise ValueError(f"safety_factor must be positive, got {safety_factor}")
+    if body_weight_kg <= 0:
+        raise ValueError(
+            f"body_weight_kg must be positive, got {body_weight_kg}"
+        )
     hed = noael_to_hed(noael_mg_kg, species)
     mrsd_mg_kg, mrsd_mg = hed_to_mrsd(hed, safety_factor, body_weight_kg)
 
@@ -258,6 +278,8 @@ def calculate_mabel(
     >>> round(result.mabel, 2)
     11.11
     """
+    if ec50 <= 0:
+        raise ValueError(f"ec50 must be positive, got {ec50}")
     if not (0 < target_occupancy < 1):
         raise ValueError(
             f"target_occupancy must be in (0, 1), got {target_occupancy}"

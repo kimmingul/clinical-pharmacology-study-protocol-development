@@ -6,6 +6,29 @@ description: "다중 에이전트 병렬 리뷰. 4-5명의 전문가가 계획�
 # /review — 다중 에이전트 리뷰 (Phase 9)
 
 ## 전제 조건
+
+### Sentinel 검사 (실행 시작 시 필수)
+
+```bash
+python3 -c "
+import os
+s = '_workspace/.synopsis_approved'
+p = '_workspace/02_synopsis.md'
+if not os.path.exists(s):
+    print('SENTINEL_MISSING')
+elif os.path.exists(p) and os.path.getmtime(p) > os.path.getmtime(s):
+    print('SYNOPSIS_MODIFIED_AFTER_APPROVAL')
+else:
+    print('OK')
+"
+```
+
+| 결과 | 조치 |
+|------|------|
+| `SENTINEL_MISSING` | 실행 거부 — "Synopsis 승인이 필요합니다. `/synopsis` 실행 후 명시 승인해주세요" |
+| `SYNOPSIS_MODIFIED_AFTER_APPROVAL` | 실행 거부 — "Synopsis가 승인 이후 수정되었습니다. `/synopsis` 재확인 후 다시 승인해주세요" |
+| `OK` | 정상 진행 |
+
 - `_workspace/03_protocol_draft.md`가 존재해야 함
 - 미존재 시: "먼저 /protocol로 계획서를 작성해주세요"
 
@@ -17,9 +40,15 @@ description: "다중 에이전트 병렬 리뷰. 4-5명의 전문가가 계획�
 | clinician | 항상 |
 | regulatory-expert | 항상 |
 | biostatistician | 항상 |
-| **translational-scientist** | **조건부** — BE/FE **불참**, 그 외(FIH/SAD/MAD/DDI/QTc/ADME/Special Pop) **참여** |
+| **translational-scientist** | **조건부** — BE/FE **기본 불참** (옵트인 조건 충족 시 참여), 그 외(FIH/SAD/MAD/DDI/QTc/ADME/Special Pop) **항상 참여** |
 
-> translational-scientist 참여 조건은 자료 수집 단계의 참여 조건과 동일하다 (`${CLAUDE_PLUGIN_ROOT}/skills/clinical-research/SKILL.md`의 "시험 유형별 오믹스/PD 우선순위" 표 참조).
+> translational-scientist 참여 조건은 자료 수집 단계의 참여 조건과 동일하다 (`${CLAUDE_PLUGIN_ROOT}/skills/clinical-research/SKILL.md`의 "시험 유형별 오믹스/PD 우선순위" 표 및 BE/FE 옵트인 조건 참조).
+
+**BE/FE 리뷰에서 TS 옵트인 판단**:
+리뷰 시점에 BE/FE 시험이면 아래 조건 중 하나라도 해당하면 TS 리뷰어를 추가한다:
+1. 자료 수집 단계(`_workspace/01_research_ts.md`)에서 TS가 참여한 기록이 있음
+2. 계획서(`_workspace/03_protocol_draft.md`)에 PG 분석 또는 약물유전체 섹션이 포함되어 있음
+3. 약물명이 NTI 약물(warfarin, tacrolimus, digoxin, theophylline, levothyroxine, phenytoin, carbamazepine, lithium)에 해당함
 
 ## 워크플로우
 

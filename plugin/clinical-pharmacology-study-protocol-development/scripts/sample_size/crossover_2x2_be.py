@@ -21,10 +21,16 @@ For log-transformed data with equivalence limits (theta_L, theta_U):
     delta     = |ln(GMR)|               (expected deviation from ratio = 1)
     theta     = ln(theta_U)             (upper equivalence limit on log scale)
 
-    n_per_seq = (z_{alpha} + z_{beta})^2 * 2 * sigma_w^2 / (theta - delta)^2
+    N_total   = ceil( (z_{alpha} + z_{beta})^2 * 2 * sigma_w^2 / (theta - delta)^2 )
+    n_per_seq = N_total / 2  (with N_total rounded up to the next even integer)
 
 Note: alpha is one-sided (0.05) for each of the two one-sided tests (TOST),
 corresponding to an overall 90% CI approach.
+
+The formula returns the TOTAL sample size across BOTH sequences (Chow &
+Liu 2009, Eq. 5.5.4).  Earlier revisions of this script mistakenly named
+the formula's output ``n_per_seq`` and then doubled it, producing a
+2x overestimate.
 
 Reference
 ---------
@@ -100,17 +106,21 @@ def calculate_sample_size(
     z_alpha = normal_quantile(1.0 - alpha)
     z_beta = normal_quantile(power)
 
-    # n per sequence for 2x2 crossover
-    n_per_seq = math.ceil(
+    # Standard 2x2 crossover formula (Chow & Liu 2009, Eq. 5.5.4) returns the
+    # TOTAL number of subjects across both sequences.
+    n_total = math.ceil(
         (z_alpha + z_beta) ** 2 * 2.0 * sigma_w ** 2 / margin ** 2
     )
-    # Ensure even total (2 sequences)
-    if n_per_seq % 2 != 0:
-        pass  # Each sequence gets n_per_seq; total = 2*n_per_seq
-    n_total = 2 * n_per_seq
+    # Ensure even total for balanced allocation across the two sequences
+    if n_total % 2 == 1:
+        n_total += 1
+    n_per_seq = n_total // 2
 
-    n_per_seq_adj = adjust_for_dropout(n_per_seq, dropout_rate)
-    n_total_adj = 2 * n_per_seq_adj
+    # Dropout adjustment: inflate the TOTAL N, then split evenly.
+    n_total_adj = adjust_for_dropout(n_total, dropout_rate)
+    if n_total_adj % 2 == 1:
+        n_total_adj += 1
+    n_per_seq_adj = n_total_adj // 2
 
     params = {
         "design": "2x2 Crossover BE (TOST)",

@@ -74,6 +74,8 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from scipy.stats import norm
+
 from utils.power_analysis import (
     normal_quantile,
     adjust_for_dropout,
@@ -130,6 +132,28 @@ def _n_one_direction(
     return n_total, margin
 
 
+def _power_at_n(
+    *,
+    n_total: int,
+    sigma_w: float,
+    margin: float,
+    z_alpha: float,
+) -> float:
+    """Return achieved (normal-approximation) power for a paired comparison
+    at the given sample size, using the same variance structure as
+    ``_n_one_direction``.
+
+        Var(diff on log scale) ≈ 2 * sigma_w^2 / n_total
+        z_beta_achieved        = margin / sqrt(Var) - z_alpha
+        power                  = Phi(z_beta_achieved)
+    """
+    if n_total <= 0:
+        return 0.0
+    se = math.sqrt(2.0 * sigma_w ** 2 / n_total)
+    z_beta_achieved = margin / se - z_alpha
+    return float(norm.cdf(z_beta_achieved))
+
+
 def calculate_sample_size(
     *,
     # Direction 1 — effect on drug X's PK
@@ -152,6 +176,13 @@ def calculate_sample_size(
     the MAXIMUM (so that both directions meet the target power; IUT
     preserves family-wise α without adjustment).  Total n is rounded up
     to the nearest multiple of 6 for sequence balance.
+
+    In addition to per-direction marginal power, a JOINT power
+    ``power_AB * power_BA`` is reported under the (conservative)
+    assumption that the two directional tests are independent. The true
+    within-subject correlation in a Williams crossover typically inflates
+    joint power above this product; reporting the independence value
+    avoids overstating power when planning for "both directions succeed".
 
     Parameters
     ----------
@@ -220,6 +251,19 @@ def calculate_sample_size(
     n_per_seq_adj = adjust_for_dropout(n_per_seq, dropout_rate)
     n_total_adj = n_per_seq_adj * N_SEQUENCES
 
+    # Joint (two-direction) power at the chosen n_total.
+    # Assumes the two directional tests are INDEPENDENT — a simplification
+    # because both share the same subjects. The within-subject correlation
+    # between the X-arm and Y-arm contrasts typically increases joint power
+    # above this product, so this value is a CONSERVATIVE lower bound.
+    power_x = _power_at_n(
+        n_total=n_total, sigma_w=sigma_x, margin=margin_x, z_alpha=z_alpha
+    )
+    power_y = _power_at_n(
+        n_total=n_total, sigma_w=sigma_y, margin=margin_y, z_alpha=z_alpha
+    )
+    joint_power = power_x * power_y
+
     params = {
         "design": "Williams 6x3 Crossover (bidirectional DDI)",
         "n_sequences": N_SEQUENCES,
@@ -245,6 +289,7 @@ def calculate_sample_size(
             "expected_gmr": expected_gmr_x,
             "margin (log)": round(margin_x, 4),
             "n_required": n_x,
+            "achieved_power_at_final_n": round(power_x, 4),
         },
         "direction_y": {
             "cv (%)": cv_y,
@@ -252,10 +297,19 @@ def calculate_sample_size(
             "expected_gmr": expected_gmr_y,
             "margin (log)": round(margin_y, 4),
             "n_required": n_y,
+            "achieved_power_at_final_n": round(power_y, 4),
         },
+        "joint_power (independence assumed)": round(joint_power, 4),
+        "joint_power_note": (
+            "Computed as power_AB * power_BA assuming the two directional "
+            "tests are independent. Within-subject correlation typically "
+            "increases the true joint power above this value, so this is a "
+            "CONSERVATIVE lower bound on the probability of declaring BE "
+            "in BOTH directions."
+        ),
         "multiplicity": (
             "Intersection-Union Test (IUT): both directions must pass; "
-            "no α adjustment required."
+            "no α adjustment required for type I error."
         ),
     }
 

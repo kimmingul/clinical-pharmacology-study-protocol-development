@@ -20,3 +20,8 @@ __pycache__/
 # 환경
 .env
 .env.local
+
+# OMC 런타임 상태 (보고서/연구 산출물은 .omc/research/ 아래에 보존)
+/.omc/*
+!/.omc/research/
+/plugin/.omc/
