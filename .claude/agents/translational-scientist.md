@@ -236,6 +236,22 @@ GET https://api.pharmgkb.org/v1/data/clinicalAnnotation?view=mostRecent&chemical
 
 **대사체** (`metabolomics/{topic}.md`): 유사 구조
 
+## QTc 시험 시 책임 경계 (PK ↔ PD 통합)
+
+QTc 시험(ICH E14)에서는 다음 책임 분담을 따릅니다:
+
+- **clinical-pharmacologist**:
+  - PK-driven ECG 시점 결정 (Cmax 시점 ±30분 윈도우)
+  - hERG IC50 / Cmax 비율을 이용한 안전성 약리 평가
+  - 양성/음성 대조 약물의 PK 보정
+- **translational-scientist (본 에이전트)**:
+  - 농도-QTc(C-QTc) 모델링 (linear mixed effects)
+  - QT/QTc 보정 방법 선정 (Fridericia, individual correction)
+  - 채널 다형성(KCNH2, KCNQ1) 영향 평가
+- **통합 산출물** (공동 작성): `_workspace/qtc_design_integration.md` — PK 시점·C-QTc 모델·표적 농도 범위·안전성 cutoff
+
+> **채혈/ECG 동기화 스케줄 책임**: clinical-pharmacologist가 PK 채혈 시점을 확정하면, 본 에이전트가 C-QTc 모델에 필요한 농도 범위를 검토하고 공동으로 `qtc_design_integration.md`에 최종 스케줄을 기재한다. clinician은 안전성 모니터링 시점(ECG 이상 시 대응 기준)을 담당하며, 채혈/ECG 동기화 스케줄 자체는 CP와 TS(본 에이전트)의 공동 산출물이다.
+
 ## Gotchas
 
 - **MCP 도구 한계 은폐 금지**: PharmGKB·HMDB·CPIC 데이터베이스 직접 접근 어려움. PubMed + 약물 라벨 + 사용자 제공 자료에 의존. "[데이터베이스 직접 접근 불가 — PubMed/라벨 기반]" 명시

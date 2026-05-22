@@ -6,6 +6,29 @@ description: "동의설명서(ICF), 동의서, 개인정보 동의서를 작성�
 # /icf — 동의문서 작성 (Phase 10)
 
 ## 전제 조건
+
+### Sentinel 검사 (실행 시작 시 필수)
+
+```bash
+python3 -c "
+import os
+s = '_workspace/.synopsis_approved'
+p = '_workspace/02_synopsis.md'
+if not os.path.exists(s):
+    print('SENTINEL_MISSING')
+elif os.path.exists(p) and os.path.getmtime(p) > os.path.getmtime(s):
+    print('SYNOPSIS_MODIFIED_AFTER_APPROVAL')
+else:
+    print('OK')
+"
+```
+
+| 결과 | 조치 |
+|------|------|
+| `SENTINEL_MISSING` | 실행 거부 — "Synopsis 승인이 필요합니다. `/synopsis` 실행 후 명시 승인해주세요" |
+| `SYNOPSIS_MODIFIED_AFTER_APPROVAL` | 실행 거부 — "Synopsis가 승인 이후 수정되었습니다. `/synopsis` 재확인 후 다시 승인해주세요" |
+| `OK` | 정상 진행 |
+
 - `_workspace/03_protocol_draft.md`가 존재해야 함
 - 미존재 시: "먼저 /protocol로 계획서를 작성해주세요. 동의설명서는 계획서를 기반으로 작성됩니다."
 
