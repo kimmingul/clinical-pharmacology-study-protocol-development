@@ -72,6 +72,8 @@ def modified_fibonacci(
     >>> [round(l.dose, 1) for l in levels]
     [5.0, 10.0, 16.7, 25.0, 33.3, 44.3]
     """
+    if start_dose <= 0:
+        raise ValueError(f"start_dose must be positive, got {start_dose}")
     if n_levels < 1:
         raise ValueError("n_levels must be >= 1")
 
@@ -128,6 +130,8 @@ def constant_ratio(
     >>> [round(l.dose, 1) for l in levels]
     [10.0, 20.0, 40.0, 80.0, 160.0]
     """
+    if start_dose <= 0:
+        raise ValueError(f"start_dose must be positive, got {start_dose}")
     if n_levels < 1:
         raise ValueError("n_levels must be >= 1")
     if ratio <= 0:

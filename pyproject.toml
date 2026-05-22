@@ -1,0 +1,12 @@
+[project]
+name = "clinical-pharmacology-study-protocol-development"
+version = "2.0.0"
+description = "Clinical pharmacology study protocol development scripts"
+requires-python = ">=3.10"
+dependencies = [
+    "scipy>=1.11",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
