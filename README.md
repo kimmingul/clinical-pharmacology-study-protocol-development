@@ -4,6 +4,39 @@
 
 Plugin 파일: /plugin 폴더 내에 있는 clinical-pharmacology-study-protocol-development.zip 파일을 이용하면 됩니다.
 
+---
+
+## 5분 요약 (TL;DR)
+
+**무엇**: 임상약리 임상시험(FIH/SAD/MAD, DDI, BE/FE, QTc, ADME)의 계획서·동의설명서를 LLM 에이전트로 자동 생성하는 Claude Code 플러그인.
+
+**누구**: 임상약리 연구자, 임상시험 코디네이터, 컨설팅 사이트.
+
+**입력**: 약물명 + 시험 유형 (FIH는 IB 첨부 필수)
+**출력**: 배경 조사 보고서 → Synopsis → Full Protocol (ICH E6(R3)) → ICF + 개인정보 동의서
+
+**핵심 워크플로우** (10 Phase):
+1. 입력 → 2. 병렬 자료 수집 → 3. ★사용자 검토 게이트★ → 4. 대화형 설계 → 5. 통계 설계 → 6. Synopsis → 7. ★Hard Gate★ → 8. Full Protocol → 9. 다중 리뷰 → 10. ICF (별도 지시)
+
+**필수 명령**: `/research` → `/design` → `/synopsis` → `/protocol` → `/review` → `/icf`
+
+**자세히는 아래 섹션 참조 ↓**
+
+---
+
+## ⚠️ 사용 전 필수 확인 — Disclaimer
+
+본 도구는 **임상시험 문서 초안 생성 보조 도구**입니다. 다음을 반드시 인지·준수하세요:
+
+1. **AI 생성물의 최종 책임은 사용자(연구자)에게 있습니다.** 생성된 모든 문서는 의학·통계·규제 전문가의 검토를 거쳐야 합니다.
+2. **IRB(임상시험심사위원회) 승인 없이 임상시험을 시작할 수 없습니다.** 본 도구가 생성한 계획서·동의설명서는 IRB 심의를 위한 초안입니다.
+3. **실제 시험대상자에게 배포·사용 금지** — 검토되지 않은 동의설명서는 어떠한 경우에도 시험대상자에게 사용해서는 안 됩니다.
+4. **규제 제출 전 검증**: MFDS/FDA/EMA 제출 전 반드시 약사·통계·임상 전문가가 모든 통계 산출, 약물 정보, 가이드라인 인용을 검증해야 합니다.
+5. **개인정보**: 본 도구는 시험대상자 식별정보를 처리하지 않습니다. 단 사용자가 IB·결과 데이터를 입력 시 PIPA(개인정보 보호법) 및 생명윤리법 준수 책임은 사용자에게 있습니다.
+6. **약물 정보 시점**: 약물 정보·라벨·가이드라인은 조회 시점 기준입니다. 인용된 자료의 최신성을 항상 재확인하세요.
+
+이 도구는 MIT 라이선스로 제공되며, 사용으로 인한 어떠한 결과에 대해서도 개발자는 책임지지 않습니다.
+
 
 7개의 전문 에이전트가 역할 기반으로 협업하여 **배경 조사**, **시험 설계**, **Synopsis**, **계획서(Protocol)**, **동의설명서/동의서(ICF)**를 생성합니다. 시험 유형에 따라 두 가지 워크플로우로 분기합니다:
 
@@ -165,6 +198,47 @@ IB 입력 (필수)
     → 통계 설계 (sample size 등)
     → Synopsis → Protocol → Review → (ICF)
 ```
+
+---
+
+## Quickstart (3분 시작)
+
+### 1. 입력 파일 준비
+
+프로젝트 루트에 `TRIAL_INFO.md` 생성:
+
+```markdown
+# Trial Info
+
+- 약물명: Metformin + Rifampin
+- 시험 유형: DDI
+- 대상자: 건강한 성인 남성
+- 시험 단계: Phase 1
+- (FIH인 경우) IB 첨부 경로: ./IB/investigator_brochure.pdf
+```
+
+표준 템플릿: `.claude/references/templates/trial_info_input.md` (복사해서 사용)
+
+### 2. 전체 파이프라인 실행
+
+```
+Metformin과 Rifampin의 DDI 시험 문서를 작성해줘
+```
+
+또는 단계별:
+```bash
+/research        # Phase 2-3
+/design          # Phase 4-5
+/synopsis        # Phase 6
+# (Hard Gate: 명시 승인)
+/protocol        # Phase 8
+/review          # Phase 9
+/icf             # Phase 10
+```
+
+### 3. 산출물 위치
+
+`_workspace/` 디렉토리 — 각 Phase의 산출물이 단계별 markdown으로 저장됩니다.
 
 ---
 
