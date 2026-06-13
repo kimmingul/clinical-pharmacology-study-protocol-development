@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    name: Sample-size tests (pytest + doctest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r .claude/scripts/requirements.txt
+      - name: Run pytest
+        working-directory: .claude/scripts
+        run: python -m pytest tests/ -q
+      - name: Run doctests
+        working-directory: .claude/scripts
+        run: |
+          python -m doctest \
+            sample_size/crossover_2x2_be.py \
+            sample_size/utils/power_analysis.py \
+            fih/starting_dose_calculation.py
+
+  lint:
+    name: Python lint (critical errors only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - name: Ruff (syntax + undefined names)
+        run: ruff check --select E9,F63,F7,F82,F821 .claude/scripts .github/scripts
+
+  validate-plugin:
+    name: Plugin manifests + harness consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate manifests + sync invariants
+        run: python .github/scripts/validate_manifests.py
+      - name: Check internal references resolve
+        run: python .github/scripts/check_internal_refs.py
+      - name: claude plugin validate (best effort)
+        continue-on-error: true
+        run: |
+          npm install -g @anthropic-ai/claude-code || { echo "CLI install skipped"; exit 0; }
+          claude plugin validate plugin/clinical-pharmacology-study-protocol-development || true
+          claude plugin validate . || true
+
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
