@@ -13,15 +13,22 @@ When to use
 - PK endpoints: AUC_0-t, AUC_0-inf, Cmax (log-transformed)
 - Equivalence limits: typically 80.00%-125.00% (MFDS / FDA / EMA)
 
-Formula (TOST-based)
---------------------
+Method (exact TOST power, noncentral-t)
+---------------------------------------
 For log-transformed data with equivalence limits (theta_L, theta_U):
 
     sigma_w^2 = ln(1 + CV_w^2)          (within-subject variance on log scale)
     delta     = |ln(GMR)|               (expected deviation from ratio = 1)
-    theta     = ln(theta_U)             (upper equivalence limit on log scale)
 
-    n_per_seq = (z_{alpha} + z_{beta})^2 * 2 * sigma_w^2 / (theta - delta)^2
+The estimated treatment contrast has variance sigma_w^2 / n_per_seq (i.e.
+2*sigma_w^2 / N_total) with df = N_total - 2.  The sample size is the smallest
+even N_total whose **exact** TOST power (the probability that the 90% CI lies
+entirely within the limits) reaches the target.  Exact power is obtained by
+integrating the conditional normal coverage over the chi-square distribution
+of the variance estimate — this matches the PowerTOST package and is the
+regulatory-grade approach (the earlier closed form 2*sigma_w^2*(z_a+z_b)^2/m^2
+is only a normal approximation of the TOTAL N and was previously mis-applied
+as the per-sequence count, doubling the result).
 
 Note: alpha is one-sided (0.05) for each of the two one-sided tests (TOST),
 corresponding to an overall 90% CI approach.
@@ -30,6 +37,9 @@ Reference
 ---------
 Chow S-C, Liu J-P. Design and Analysis of Bioavailability and Bioequivalence
 Studies, 3rd ed. CRC Press, 2009, Chapter 5.
+Diletti E, Hauschke D, Steinijans VW. Sample size determination for
+bioequivalence assessment by means of confidence intervals. Int J Clin
+Pharmacol Ther Toxicol 1991; 29:1-8.
 MFDS. Guidance on Bioequivalence Studies (생물학적동등성시험 기준).
 """
 
@@ -40,7 +50,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from utils.power_analysis import (
-    normal_quantile,
+    solve_n_2x2_tost,
     adjust_for_dropout,
     print_result,
 )
@@ -60,8 +70,12 @@ def calculate_sample_size(
     alpha: float = 0.05,
     gmr: float = 1.00,
     dropout_rate: float = 0.0,
+    max_n: int = 4000,
 ) -> dict:
-    """Calculate sample size for a 2x2 crossover BE study (TOST).
+    """Calculate sample size for a 2x2 crossover BE study (exact TOST).
+
+    Finds the smallest even total N whose exact TOST power (``tost_power``)
+    reaches ``power``.  The result matches the PowerTOST package.
 
     Parameters
     ----------
@@ -79,11 +93,23 @@ def calculate_sample_size(
         Expected geometric mean ratio T/R (default 1.00).
     dropout_rate : float
         Expected dropout proportion.
+    max_n : int
+        Upper bound for the search (raises if exceeded).
 
     Returns
     -------
     dict
-        n_per_sequence, n_total, adjusted values, and all parameters.
+        n_per_sequence, n_total, adjusted values, achieved power, and all
+        parameters.
+
+    Examples
+    --------
+    >>> r = calculate_sample_size(intra_cv=25.0, gmr=0.95, power=0.80)
+    >>> r["n_total"]
+    28
+    >>> r = calculate_sample_size(intra_cv=20.0, gmr=0.95, power=0.80)
+    >>> r["n_total"]
+    20
     """
     sigma_w = _cv_to_sigma_w(intra_cv)
     delta = abs(math.log(gmr))
@@ -96,24 +122,17 @@ def calculate_sample_size(
             f"{equivalence_limits}. No finite sample size exists."
         )
 
-    # One-sided alpha for TOST
-    z_alpha = normal_quantile(1.0 - alpha)
-    z_beta = normal_quantile(power)
-
-    # n per sequence for 2x2 crossover
-    n_per_seq = math.ceil(
-        (z_alpha + z_beta) ** 2 * 2.0 * sigma_w ** 2 / margin ** 2
+    # Exact TOST sample size (single source of truth in utils.power_analysis).
+    n_total, achieved = solve_n_2x2_tost(
+        sigma_w, gmr, power, alpha, equivalence_limits, max_n
     )
-    # Ensure even total (2 sequences)
-    if n_per_seq % 2 != 0:
-        pass  # Each sequence gets n_per_seq; total = 2*n_per_seq
-    n_total = 2 * n_per_seq
+    n_per_seq = n_total // 2
 
     n_per_seq_adj = adjust_for_dropout(n_per_seq, dropout_rate)
     n_total_adj = 2 * n_per_seq_adj
 
     params = {
-        "design": "2x2 Crossover BE (TOST)",
+        "design": "2x2 Crossover BE (exact TOST)",
         "intra_cv (%)": intra_cv,
         "sigma_w (log-scale)": round(sigma_w, 4),
         "equivalence_limits": equivalence_limits,
@@ -121,9 +140,9 @@ def calculate_sample_size(
         "gmr": gmr,
         "delta (|ln(GMR)|)": round(delta, 4),
         "alpha (one-sided)": alpha,
-        "power": power,
-        "z_alpha": round(z_alpha, 4),
-        "z_beta": round(z_beta, 4),
+        "power (target)": power,
+        "power (achieved)": round(achieved, 4),
+        "method": "exact TOST (noncentral-t / chi-square integration)",
         "dropout_rate": dropout_rate,
     }
 
@@ -132,6 +151,7 @@ def calculate_sample_size(
         "n_total": n_total,
         "n_per_group_adjusted": n_per_seq_adj,
         "n_total_adjusted": n_total_adj,
+        "achieved_power": achieved,
         "params": params,
     }
 

@@ -92,6 +92,7 @@ GET https://api.cpicpgx.org/v1/recommendation_view?drugname=eq.{drug}&genesymbol
 GET https://api.pharmgkb.org/v1/data/clinicalAnnotation?view=mostRecent&chemical.name={drug}&gene.symbol={gene}
 ```
 → Level 1A~4 근거 등급, 관련 PMID 목록
+→ **HTTP 400 시**: `name` 필터가 거부될 수 있다. `/data/chemical?name=`·`/data/gene?symbol=`로 **accessionId(PA ID)를 먼저 얻어** `chemical.accessionId=`·`gene.accessionId=`로 재호출한다. 그래도 실패하면 **Step 1–2의 CPIC 결과만으로 진행**하고 산출물에 `[PharmGKB 접근 실패 — CPIC 기반]` 명시 (상세: `${CLAUDE_PLUGIN_ROOT}/references/api_reference/pharmgkb.md §실패 처리`). PG 조사 자체는 중단하지 않는다.
 
 **Step 4 (한국인 빈도)**: PubMed MCP로 보완 조사
 - `"{gene} polymorphism Korean"`, `"{gene} allele frequency Korean"` 쿼리

@@ -23,8 +23,20 @@ For high-variability drugs with within-reference CV > 30%:
 - The equivalence limit is scaled by the within-reference variability
 - Criterion: (ln(T) - ln(R))^2 - theta * sigma_WR^2 <= 0
   where theta = (ln(1.25) / sigma_0)^2
-  sigma_0 = regulatory constant (0.25 for FDA, log(1.25) for MFDS)
+  sigma_0 = regulatory constant (0.25 for FDA; EMA uses 0.294)
+- The widened limit on the log scale is therefore
+  sqrt(theta) * sigma_WR = (ln(1.25) / sigma_0) * sigma_WR
+  (FDA: k = ln(1.25)/0.25 = 0.8926; EMA: k = ln(1.25)/0.294 = 0.760)
 - A point estimate constraint may also apply (e.g. 0.80-1.25)
+
+.. WARNING::
+   The RSABE sample size below is a **linearised normal approximation** of the
+   FDA reference-scaled criterion. It is **NOT validated for regulatory
+   submission**. The actual FDA method combines the scaled criterion, a 95%
+   upper confidence bound (Howe approximation), a point-estimate constraint,
+   and the replicate-design variance structure — best evaluated by simulation
+   or a validated RSABE power package (e.g. Tothfalusi-Endrenyi). Confirm any
+   result against FDA-published examples before use.
 
 Formula (standard, non-RSABE)
 ------------------------------
@@ -50,6 +62,7 @@ MFDS. 고변동 약물의 생물학적동등성시험 평가 가이드라인.
 import math
 import sys
 import os
+import warnings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -118,23 +131,35 @@ def calculate_sample_size(
     z_beta = normal_quantile(power)
 
     if use_rsabe and intra_cv > 30.0:
-        # RSABE: scaled equivalence limit
-        # Expanded limit: theta_s = regulatory_constant * (sigma_WR / sigma_0)
-        # But if sigma_WR > sigma_0, limit expands
-        # Linearised approach: treat the scaled limit as the effective theta
-        # For power calculation, the effective margin is sigma_0 * (sigma_WR / sigma_0) = sigma_WR
-        # Simplified power formula using the regulatory constant:
-        theta_scaled = regulatory_constant * sigma_w  # scaled limit on log scale
-        # In RSABE the margin increases with variability, making it easier to
-        # show equivalence for high-CV drugs.
-        # Effective margin for power calculation:
+        # RSABE: reference-scaled equivalence limit.
+        # FDA criterion:  (ln T - ln R)^2 <= theta * sigma_WR^2,
+        #   theta = (ln(1.25) / sigma_0)^2   (sigma_0 = regulatory_constant).
+        # The widened limit on the log scale is therefore
+        #   theta_scaled = sqrt(theta) * sigma_WR = (ln(1.25) / sigma_0) * sigma_WR.
+        #   FDA sigma_0 = 0.25  -> k = ln(1.25)/0.25  = 0.8926
+        #   EMA sigma_0 = 0.294 -> k = ln(1.25)/0.294 = 0.760
+        warnings.warn(
+            "RSABE sample size uses a LINEARISED normal approximation of the "
+            "FDA reference-scaled criterion and is NOT validated for regulatory "
+            "submission. Confirm against FDA-published examples or a simulation-"
+            "based RSABE method before use.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        scaling_factor = math.log(1.25) / regulatory_constant  # = k
+        theta_scaled = scaling_factor * sigma_w  # widened limit on log scale
+        # The margin widens with variability, making equivalence easier to show
+        # for high-CV drugs (the intended RSABE behaviour).
         effective_margin = theta_scaled - delta
         if effective_margin <= 0:
             raise ValueError(
                 f"With RSABE scaling, the effective margin is non-positive. "
                 f"GMR={gmr} is too far from 1."
             )
-        rsabe_note = "RSABE (scaled limits)"
+        rsabe_note = (
+            "RSABE (reference-scaled, linearised approximation — "
+            "NOT for regulatory submission)"
+        )
     else:
         theta = math.log(equivalence_limits[1])
         effective_margin = theta - delta

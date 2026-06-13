@@ -36,6 +36,8 @@ Synopsis: _workspace/02_synopsis.md를 Read하라. Synopsis의 설계 결정을 
 설계 결정: _workspace/00_input/design_decisions.md를 Read하라.
 통계 설계: _workspace/00_input/statistical_design.md를 Read하라.
 
+★ 규제 상수·용어 준수: protocol-writer.md의 '규제 상수' 표(KGCP 보존 15년, SAE 7/15일, 종료 90일, BE/DDI 90% CI 80.00–125.00%, IND 승인 후 개시)와 protocol-drafting SKILL.md의 'Phase 1 용어 가이드'를 그대로 적용하라. regulatory-expert 조사가 약물 특이 요건을 제시하지 않으면 이 기본값을 사용한다.
+
 산출물을 _workspace/03_protocol_draft.md에 Write하라.
 문서가 매우 길면 여러 번의 Write/Edit 호출로 나누어 작성해도 된다."
 )
