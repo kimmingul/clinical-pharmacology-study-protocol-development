@@ -11,6 +11,7 @@ FDA가 운영하는 공식 데이터 API. 약물 라벨·이상반응(FAERS)·�
 | API Key 발급 | https://open.fda.gov/apis/authentication/ (무료, 이메일 등록만 필요) |
 | Rate Limit | 무키: 240 req/min + 1,000/day; 유키: 240/min + 120,000/hour |
 | 형식 | JSON |
+| 라이선스 | **U.S. Government work — Public Domain** (FDA). 단 데이터는 "no warranty"; FAERS는 인과성 미확립 신고자료이므로 **빈도는 참고용**으로만 인용. 출처 표기: `openFDA, FDA. {endpoint}. 조회일 YYYY-MM-DD` |
 | 문서 | https://open.fda.gov/apis/drug/ |
 
 > **API key 사용 시**: 모든 요청 URL 끝에 `&api_key={KEY}` 추가. key가 없어도 대부분 조사는 무키로 충분.
