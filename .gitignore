@@ -7,6 +7,14 @@ __pycache__/
 *.pyo
 *.egg-info/
 .pytest_cache/
+.venv/
+venv/
+
+# Build artifacts — the deployable plugin zip is published as a GitHub Release
+# asset, not committed. (The plugin/ tree itself is the build output of
+# sync_plugin.sh; keep it tracked only if distributing via git source.)
+plugin/**/*.zip
+*.zip
 
 # 런타임 워크스페이스 (실행 시 생성/갱신되는 산출물)
 /_workspace/
@@ -20,3 +28,6 @@ __pycache__/
 # 환경
 .env
 .env.local
+
+# OMC 런타임 상태 (세션별 생성)
+.omc/
