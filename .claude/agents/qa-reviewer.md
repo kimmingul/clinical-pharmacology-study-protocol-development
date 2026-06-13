@@ -31,7 +31,7 @@ description: "QA 검토 전문가. 참여한 전문가 리뷰(4명 또는 5명)�
 
 ### 자동 결정적 체크 (CI 린터와 동일 기준 — 먼저 확인)
 
-계획서(`_workspace/03_protocol_draft.md`)에서 다음 결정적 기준을 우선 확인한다. CI의 `.github/scripts/protocol_lint.py`가 golden fixture에 대해 동일 기준을 강제하므로, 신규 계획서도 이를 통과해야 한다:
+계획서(`_workspace/03_protocol_draft.md`)에서 다음 결정적 기준을 우선 확인한다. 공유 린터 `.claude/scripts/qa/doc_lint.py`가 동일 기준을 인코딩하며, CI는 golden fixture에 `--strict`로, PostToolUse advisory hook(`.claude/hooks/draft_advisory_hook.py`)은 초안 작성 직후 경고로 적용한다. 신규 계획서도 이를 통과해야 한다:
 
 - **ICH E6(R3) Appendix B 16개 섹션(B.1~B.16) 전부 존재** — 누락 시 **Critical**
 - **필수 문서 보존 기간 = 최소 15년** (KGCP, 의약품등의 안전에 관한 규칙 별표 4). "3년" 등 축소 기재 시 **Critical** (재발 빈번 오류)

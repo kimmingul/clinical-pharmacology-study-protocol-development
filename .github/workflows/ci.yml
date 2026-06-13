@@ -55,7 +55,7 @@ jobs:
       - name: Check internal references resolve
         run: python .github/scripts/check_internal_refs.py
       - name: Protocol output lint (golden fixture)
-        run: python .github/scripts/protocol_lint.py e2e/v2_2026_04_14_DDI/_workspace/03_protocol_draft.md --strict
+        run: python .claude/scripts/qa/doc_lint.py e2e/v2_2026_04_14_DDI/_workspace/03_protocol_draft.md --strict
       - name: claude plugin validate (best effort)
         continue-on-error: true
         run: |

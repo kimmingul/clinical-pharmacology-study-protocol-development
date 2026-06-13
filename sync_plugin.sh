@@ -9,7 +9,7 @@
 set -euo pipefail
 
 PLUGIN_DIR="plugin/clinical-pharmacology-study-protocol-development"
-SUBDIRS=(agents commands skills scripts references)
+SUBDIRS=(agents commands skills scripts references hooks)
 
 DRY_RUN=""
 if [[ "${1:-}" == "--dry-run" ]]; then
@@ -31,6 +31,9 @@ for sub in "${SUBDIRS[@]}"; do
       --exclude='__pycache__/' \
       --exclude='.DS_Store' \
       --exclude='*.pyc' \
+      --exclude='.venv/' \
+      --exclude='venv/' \
+      --exclude='.pytest_cache/' \
       ".claude/$sub/" "$PLUGIN_DIR/$sub/"
   fi
 done

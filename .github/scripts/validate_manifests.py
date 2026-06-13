@@ -84,20 +84,21 @@ for pj in glob.glob(os.path.join(ROOT, "plugin", "*", ".claude-plugin", "plugin.
     if pjson.get("name") != dirname:
         err(f"plugin name {pjson.get('name')!r} != directory {dirname!r}")
 
-# 3. sync substitution invariant — only the synced subdirs are sed-processed;
-#    the hand-written plugin README (with a legitimate ~/.claude/plugins/ path)
-#    is intentionally out of scope.
-SYNCED_SUBDIRS = ("agents", "commands", "skills", "scripts", "references")
+# 3. sync substitution invariant — sed only rewrites *.md, so the check is
+#    scoped to Markdown (where a leftover '.claude/' is a real broken path).
+#    Python keeps relative __file__ paths (verified by pytest in CI), and a
+#    '.claude/' in a .py docstring is documentation, not a runtime path. The
+#    hand-written plugin README (legitimate ~/.claude/plugins/) is also skipped.
+SYNCED_SUBDIRS = ("agents", "commands", "skills", "scripts", "references", "hooks")
 for plugin_dir in glob.glob(os.path.join(ROOT, "plugin", "*")):
     if not os.path.isdir(plugin_dir):
         continue
     for sub in SYNCED_SUBDIRS:
-        for ext in ("*.md", "*.py"):
-            for f in glob.glob(os.path.join(plugin_dir, sub, "**", ext), recursive=True):
-                n = len(DOTCLAUDE.findall(open(f, encoding="utf-8").read()))
-                if n:
-                    err(f"{rel(f)} contains {n} literal '.claude/' path(s) "
-                        f"-> sync substitution to ${{CLAUDE_PLUGIN_ROOT}} incomplete")
+        for f in glob.glob(os.path.join(plugin_dir, sub, "**", "*.md"), recursive=True):
+            n = len(DOTCLAUDE.findall(open(f, encoding="utf-8").read()))
+            if n:
+                err(f"{rel(f)} contains {n} literal '.claude/' path(s) "
+                    f"-> sync substitution to ${{CLAUDE_PLUGIN_ROOT}} incomplete")
 
 # 4. filename parity
 for sub in ("agents", "commands"):
