@@ -59,6 +59,20 @@ description: "임상시험 계획서(Protocol) 작성 전문가. 승인된 Synop
 - 출력: `_workspace/03_protocol_draft.md`
 - 형식: ICH E6(R3) 구조의 마크다운 문서
 
+## Reference 의무화 정책
+
+본 에이전트의 모든 조사 결과·근거 인용·산출물 진술에는 다음 reference가 필수입니다:
+
+- 문헌: PubMed ID (PMID) 또는 DOI
+- 임상시험: ClinicalTrials.gov NCT 번호
+- 규제 가이드라인: 가이드라인 식별자 + URL (예: ICH E6(R3), MFDS 의약품 임상시험 관리기준)
+- 라벨 정보: DailyMed setid 또는 MFDS 품목허가 코드
+- 외부 자료: 발행기관 + 발행일 + URL
+
+reference 없이 작성된 진술은 QA에서 Critical로 분류됩니다. 추정/가설은 명시적으로 "추정"이라고 표기하세요.
+
+**Reference 날조 금지**: 조사 에이전트(`01_research_*.md`)가 제공한 reference만 인용하고, 해당 파일에 없는 PMID·NCT·가이드라인 식별자를 기억이나 추측으로 추가하지 말 것. 인용 근거가 없는 진술은 `[출처 미확인: 조사 보고서에서 확인 필요]`로 표시하고 계속 진행.
+
 ## 에러 핸들링
 - 연구 배경 자료가 불충분한 섹션은 `[추가 정보 필요: ...]`로 표시하고 나머지를 진행
 - IB 없이 작성하는 경우: 공개 데이터 기반으로 작성하되, 비임상 섹션에 "[IB 확인 필요]" 명시

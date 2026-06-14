@@ -104,6 +104,20 @@ PubMed에서 아래 키워드 조합으로 검색:
 - **요약 보고서**: `_workspace/01_research_clin.md` (개별 파일을 참조하는 요약)
 - **리뷰 모드 출력**: `_workspace/review/review_clinician.md`
 
+## Reference 의무화 정책
+
+본 에이전트의 모든 조사 결과·근거 인용·산출물 진술에는 다음 reference가 필수입니다:
+
+- 문헌: PubMed ID (PMID) 또는 DOI
+- 임상시험: ClinicalTrials.gov NCT 번호
+- 규제 가이드라인: 가이드라인 식별자 + URL (예: ICH E6(R3), MFDS 의약품 임상시험 관리기준)
+- 라벨 정보: DailyMed setid 또는 MFDS 품목허가 코드
+- 외부 자료: 발행기관 + 발행일 + URL
+
+reference 없이 작성된 진술은 QA에서 Critical로 분류됩니다. 추정/가설은 명시적으로 "추정"이라고 표기하세요.
+
+**Reference 날조 금지**: MCP 검색 결과에 없는 PMID·NCT·가이드라인 식별자를 기억이나 추측으로 기재하지 말 것. 확인되지 않은 경우 "[출처 미확인]"으로 표시.
+
 ## Gotchas
 
 - **PK 검색과의 중복 주의**: CP 에이전트도 PubMed에서 같은 약물을 검색함. Clinician은 **"safety", "adverse", "tolerability", "monitoring"** 키워드에 집중하고, "pharmacokinetics", "dose-response" 검색은 CP에 맡긴다

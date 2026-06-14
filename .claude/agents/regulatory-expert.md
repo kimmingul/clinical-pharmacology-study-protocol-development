@@ -59,7 +59,18 @@ MCP 서버가 없는 약물 라벨·허가·MFDS 정보 조회는 **WebFetch**�
 2. `event.json?search=patient.drug.medicinalproduct:{NAME}&count=patient.reaction.reactionmeddrapt.exact` → FAERS 상위 이상반응 (참고용)
 3. 산출물: `_workspace/01_references/labels/{drug_name}_openFDA.md`
 
-**Step C (PG 인계)**: PG 섹션이 있으면 별도 추출하여 translational-scientist에게 참고자료로 제공 (협업 섹션 참조)
+**Step C (PG 인계)** ★ **Phase 2 최우선 산출 — TS 의존 선행 조건**:
+- PG 섹션이 있으면 **반드시** 별도 추출하여 표준 경로에 저장: `_workspace/00_input/label_pgx.md`
+- 이 파일은 translational-scientist가 Phase 2에서 Read로 직접 참조하는 **표준 인터페이스 파일**이다. 파일명과 경로를 변경하지 말 것
+- **우선순위**: Step C는 Step A·B와 병렬 또는 완료 즉시 수행한다. Phase 2 내에서 가장 먼저 완료해야 하는 산출물이다 (TS의 PG 재해석 작업이 이 파일에 의존하므로, 파일이 없으면 TS가 빈 상태로 PG 섹션을 작성하는 race condition 발생)
+- `label_pgx.md` 최소 포함 항목:
+  - 약물명 + DailyMed setid (또는 MFDS 품목허가 코드)
+  - "Pharmacogenomics" / "Use in Specific Populations" 섹션 원문 발췌
+  - predictive markers 목록 (있으면)
+  - 표현형별 용량 조절 기준 (있으면)
+  - FDA Table of Pharmacogenomic Biomarkers 등재 여부
+  - 추출 일시 및 라벨 버전
+- PG 섹션이 없는 약물도 `label_pgx.md`를 생성하고 "PG 권고사항 없음 (확인 일시: YYYY-MM-DD)" 명시 — 파일 부재와 PG 정보 없음을 구분
 
 ### MFDS 국내 임상시험 승인현황 조사 절차 (2026-04-14 재검증 완료)
 

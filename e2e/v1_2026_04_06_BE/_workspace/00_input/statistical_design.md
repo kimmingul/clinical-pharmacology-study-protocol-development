@@ -1,3 +1,20 @@
+> ## ⚠️ ERRATUM — 2026-05-22
+>
+> 본 문서의 40-42줄에 인용된 sample size 공식 `n_total = 2 × n_per_seq` 는 **표기 오류**입니다.
+>
+> **올바른 표준 공식 (Chow & Liu 2008, Patterson & Jones 2017)**:
+> ```
+> N_total = ⌈(z_α + z_β)² · 2 · σ_w² / margin²⌉
+> n_per_sequence = N_total / 2 (짝수 보정 적용)
+> ```
+>
+> 잘못된 공식은 `crossover_2x2_be.py` 의 코드 결함(2배 과대 산출)에서 비롯되었으며, 2026-05-22에 다중 모델 코드 리뷰로 발견·정정되었습니다. 본 v1 BE 시험의 protocol draft에 보고된 표본수(36명)는 별도 수동 검증을 거쳤으나, 본 statistical_design.md의 공식 표기는 후속 BE 시험의 참조용으로 사용 금지입니다.
+>
+> 정정된 코드: `.claude/scripts/sample_size/crossover_2x2_be.py` (커밋 2026-05-22)
+> 관련 보고서: `.omc/research/team_review_2026_05_22/SYNTHESIS.md` (C1)
+
+---
+
 # 통계 설계 보고서
 ## Amlodipine Besylate 5mg 정제 생물학적동등성(BE) 시험
 

@@ -183,3 +183,30 @@ Synopsis 초안 완성 후 사용자에게 제시하기 전에 다음을 자체 
 - 모든 설계 결정에 근거 명시 (연구 보고서 reference)
 - Sample size 근거에 Python 코드 결과 인용
 - 변형 synopsis 작성 시: 변형 사유와 기본 설계와의 차이점을 명시
+
+## Phase 7 Hard Gate — Sentinel 파일 생성
+
+Synopsis를 사용자에게 제시한 후 **사용자가 명시적으로 "승인", "진행", "OK" 등의 의사를 밝히면** 즉시 아래 sentinel 파일을 생성한다. 승인 전에는 생성하지 않는다.
+
+```bash
+mkdir -p _workspace
+SYNOPSIS_FILE="_workspace/02_synopsis.md"
+VARIANT_ID="${SYNOPSIS_VARIANT:-default}"   # 인자 있으면 변형 ID (예: crossover_2x2)
+DRUG_NAME="${DRUG_NAME}"
+TRIAL_TYPE="${TRIAL_TYPE}"
+APPROVED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+GIT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo 'no-git')"
+SYNOPSIS_HASH="$(md5sum ${SYNOPSIS_FILE} 2>/dev/null | cut -c1-8 || echo 'no-hash')"
+
+cat > _workspace/.synopsis_approved << EOF
+approved_at: ${APPROVED_AT}
+synopsis_file: ${SYNOPSIS_FILE}
+synopsis_variant: ${VARIANT_ID}
+drug: ${DRUG_NAME}
+trial_type: ${TRIAL_TYPE}
+git_sha: ${GIT_SHA}
+synopsis_hash: ${SYNOPSIS_HASH}
+EOF
+```
+
+> **주의**: Bash 변수를 직접 실행하는 대신, 실제 값(약물명, 시험 유형, 변형 ID)을 채워서 실행한다. sentinel 생성 후 사용자에게 "Synopsis가 승인되었습니다. `/protocol`로 계획서 작성을 진행할 수 있습니다." 안내한다.

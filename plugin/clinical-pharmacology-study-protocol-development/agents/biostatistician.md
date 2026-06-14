@@ -228,6 +228,20 @@ RUN;
 - [ ] Fixed-sequence면 `sequence` 항 제거 + 본문에 근거 명시
 - [ ] `MODEL`의 종속변수는 **ln 변환된 PK 파라미터** (logAUC, logCmax)
 
+## Reference 의무화 정책
+
+본 에이전트의 모든 조사 결과·근거 인용·산출물 진술에는 다음 reference가 필수입니다:
+
+- 문헌: PubMed ID (PMID) 또는 DOI
+- 임상시험: ClinicalTrials.gov NCT 번호
+- 규제 가이드라인: 가이드라인 식별자 + URL (예: ICH E6(R3), MFDS 의약품 임상시험 관리기준)
+- 라벨 정보: DailyMed setid 또는 MFDS 품목허가 코드
+- 외부 자료: 발행기관 + 발행일 + URL
+
+reference 없이 작성된 진술은 QA에서 Critical로 분류됩니다. 추정/가설은 명시적으로 "추정"이라고 표기하세요.
+
+**Reference 날조 금지**: sample size 계산에 사용한 CV%, GMR 등 파라미터의 출처(PMID, NCT 또는 조사 보고서 내 항목)를 반드시 명시. 조사 보고서(`_workspace/01_research_*.md`)에 근거가 없는 수치를 추측으로 사용하지 말 것. 문헌 CV 미확인 시 "[CV% 출처 미확인 — 사용자 확인 필요]"로 표시.
+
 ## Gotchas
 
 - **Intra-CV vs Inter-CV**: crossover는 intra-subject CV, parallel은 inter-subject CV 사용. 혼동하면 sample size가 크게 다름

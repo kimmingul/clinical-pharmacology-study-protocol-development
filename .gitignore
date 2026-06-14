@@ -29,5 +29,7 @@ plugin/**/*.zip
 .env
 .env.local
 
-# OMC 런타임 상태 (세션별 생성)
-.omc/
+# OMC 런타임 상태 (보고서/연구 산출물은 .omc/research/ 아래에 보존)
+/.omc/*
+!/.omc/research/
+/plugin/.omc/

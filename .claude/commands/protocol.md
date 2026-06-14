@@ -6,12 +6,43 @@ description: "승인된 Synopsis를 기반으로 Full Protocol을 작성한다. 
 # /protocol — Full Protocol 작성 (Phase 8)
 
 ## 전제 조건 (Hard Gate)
+
+### Sentinel 검사 (실행 시작 시 필수)
+
+아래 순서로 sentinel 상태를 확인한다. 하나라도 실패하면 실행을 거부한다.
+
+```bash
+# Step 1: sentinel 파일 존재 여부
+ls _workspace/.synopsis_approved 2>/dev/null || echo "MISSING"
+
+# Step 2: synopsis mtime vs sentinel mtime (sentinel이 존재하는 경우)
+# synopsis 파일이 sentinel보다 최신이면 재승인 필요
+python3 -c "
+import os, sys
+s = '_workspace/.synopsis_approved'
+p = '_workspace/02_synopsis.md'
+if not os.path.exists(s):
+    print('SENTINEL_MISSING')
+elif os.path.exists(p) and os.path.getmtime(p) > os.path.getmtime(s):
+    print('SYNOPSIS_MODIFIED_AFTER_APPROVAL')
+else:
+    print('OK')
+"
+```
+
+| 결과 | 조치 |
+|------|------|
+| `SENTINEL_MISSING` | 실행 거부 — "Synopsis 승인이 필요합니다. `/synopsis` 실행 후 명시 승인해주세요" |
+| `SYNOPSIS_MODIFIED_AFTER_APPROVAL` | 실행 거부 — "Synopsis가 승인 이후 수정되었습니다. `/synopsis` 재확인 후 다시 승인해주세요" |
+| `OK` | 정상 진행 |
+
+추가 조건:
 1. `_workspace/02_synopsis.md`가 존재해야 함
-2. Synopsis가 사용자에 의해 **명시적으로 승인**되어야 함
+2. Synopsis가 사용자에 의해 **명시적으로 승인**되어야 함 (sentinel 파일로 확인)
 
 미충족 시:
 - Synopsis 미존재 → "/synopsis로 먼저 Synopsis를 생성해주세요"
-- Synopsis 미승인 → "Synopsis를 검토하시고 승인해주세요. 승인 후 /protocol을 다시 실행합니다"
+- Sentinel 미존재 → "Synopsis 승인이 필요합니다. Synopsis 검토 후 승인해주세요. 승인 후 /protocol을 다시 실행합니다"
 
 ## 워크플로우
 
