@@ -29,6 +29,15 @@ description: "QA 검토 전문가. 참여한 전문가 리뷰(4명 또는 5명)�
 
 ## 검토 영역별 세부 기준
 
+### 자동 결정적 체크 (CI 린터와 동일 기준 — 먼저 확인)
+
+계획서(`_workspace/03_protocol_draft.md`)에서 다음 결정적 기준을 우선 확인한다. 공유 린터 `.claude/scripts/qa/doc_lint.py`가 동일 기준을 인코딩하며, CI는 golden fixture에 `--strict`로, PostToolUse advisory hook(`.claude/hooks/draft_advisory_hook.py`)은 초안 작성 직후 경고로 적용한다. 신규 계획서도 이를 통과해야 한다:
+
+- **ICH E6(R3) Appendix B 16개 섹션(B.1~B.16) 전부 존재** — 누락 시 **Critical**
+- **필수 문서 보존 기간 = 최소 15년** (KGCP, 의약품등의 안전에 관한 규칙 별표 4). "3년" 등 축소 기재 시 **Critical** (재발 빈번 오류)
+- **BE/DDI 동등성·no-effect 경계 = 90% CI 80.00–125.00%** 명시 — 누락 시 **Major**
+- **미해결 placeholder 부재**([추가 정보 필요], TODO, FIXME 등). 단 `[시험기관명]`은 IRB 확정 후 치환하는 **의도된** placeholder로 허용
+
 ### 규제 준수
 - **ICH E6(R3) Annex 1**: 프로토콜 필수 항목 포함 여부. R3는 R2와 구조가 다르다 — Annex 1(비기술적)과 Annex 2(기술적)로 나뉘며, 프로토콜 필수 요소는 Annex 1에 기술되어 있다
 - **헬싱키 선언** 윤리 원칙 반영 여부

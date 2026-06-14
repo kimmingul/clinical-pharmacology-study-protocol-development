@@ -174,6 +174,18 @@ WebFetch(
 - **MFDS 라벨 PGx**: `/label?source=MFDS`는 **미지원**. 한국 라벨의 PGx 정보는 의약품안전나라 별도 조사 필요
 - **CPIC 가이드라인은 PharmGKB에도 등록**: PharmGKB `/guideline?source=CPIC`로 조회 가능하나, CPIC 고유 데이터(diplotype→phenotype lookup 등)는 CPIC API가 더 직접적 (`cpic.md` 참조)
 
+## 실패 처리 — HTTP 400 및 CPIC 폴백 (공식 정책)
+
+`clinicalAnnotation` 엔드포인트가 **HTTP 400 Bad Request**를 반환하는 사례가 실측됨 (E2E v2 DDI, `TODO.md §0-2`). 원인은 필터 파라미터 형식 불일치로 추정된다.
+
+**진단·복구 순서:**
+1. **`name` 대신 `accessionId` 사용**: `clinicalAnnotation`은 `chemical.accessionId`/`gene.accessionId`(PA ID)를 기대한다. 먼저 `/v1/data/chemical?name={drug}`와 `/v1/data/gene?symbol={GENE}`로 PA ID를 얻은 뒤(예: `PA449053`, `PA124`) 그 ID로 재호출한다. `chemical.name=...&gene.symbol=...` 직접 필터는 400을 유발할 수 있다.
+2. **엔드포인트 도메인 재확인**: 2026 ClinPGx 전환으로 `api.pharmgkb.org` ↔ `api.clinpgx.org` 중 하나가 변경되었을 수 있다. 400/404 지속 시 https://blog.clinpgx.org 공지를 확인하고 두 도메인을 모두 시도한다.
+3. **CPIC 단독 폴백 (공식)**: 위 1–2로도 실패하면 **CPIC API(`cpic.md`)를 1차 소스로 전환**한다. CPIC는 동등한 Level A 약물-유전자 쌍·표현형별 권고를 무인증·CC0로 제공하므로 임상시험 PG 조사에 충분하다. 산출물에 `[PharmGKB 접근 실패 — CPIC 기반]`을 명시한다.
+4. **429 (rate limit)**: 2 req/sec 초과. 지수 백오프(1→2→4초)로 재시도, 호출 간 최소 500ms 간격 유지. 4회 실패 시 CPIC 폴백.
+
+> 요약: **PharmGKB는 메커니즘·근거등급·라벨 PGx 교차검증에 우선 사용**하되, 접근 실패 시 **CPIC가 공식 폴백**이며 PG 조사 자체는 중단하지 않는다.
+
 ## 참고 링크
 
 - Swagger 문서: https://api.pharmgkb.org/swagger/

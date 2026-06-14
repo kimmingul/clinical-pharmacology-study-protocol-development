@@ -1,8 +1,23 @@
-# Clinical Pharmacology Study Protocol Development Plugin for Claude Cowork/Code
+# Clinical Pharmacology Study Protocol Development Plugin for Claude Code
 
-임상약리 임상시험 문서를 체계적으로 개발하는 Claude Cowork/Code 하네스 프로젝트.
+임상약리 임상시험 문서를 체계적으로 개발하는 Claude Code 하네스 프로젝트.
 
-Plugin 파일: /plugin 폴더 내에 있는 clinical-pharmacology-study-protocol-development.zip 파일을 이용하면 됩니다.
+## 설치 (Installation)
+
+이 저장소는 Claude Code 플러그인 마켓플레이스로 구성되어 있습니다 (루트 `.claude-plugin/marketplace.json`).
+
+```
+# 1) 마켓플레이스 등록 (로컬 클론 기준)
+/plugin marketplace add /path/to/clinical-trial-protocol-development
+
+# 2) 플러그인 설치
+/plugin install clinical-pharmacology-study-protocol-development
+
+# 3) 확인 — 커맨드(/research, /design, /synopsis, /protocol, /review, /icf)와
+#    8개 에이전트, 스킬이 로드되었는지 /plugin 으로 확인
+```
+
+> 배포용 zip은 GitHub Release 자산으로 제공됩니다(저장소에 커밋하지 않음). 개발본(`.claude/`)을 배포본(`plugin/`)으로 동기화하려면 루트 `./sync_plugin.sh`를 실행합니다.
 
 ---
 
@@ -38,7 +53,7 @@ Plugin 파일: /plugin 폴더 내에 있는 clinical-pharmacology-study-protocol
 이 도구는 MIT 라이선스로 제공되며, 사용으로 인한 어떠한 결과에 대해서도 개발자는 책임지지 않습니다.
 
 
-7개의 전문 에이전트가 역할 기반으로 협업하여 **배경 조사**, **시험 설계**, **Synopsis**, **계획서(Protocol)**, **동의설명서/동의서(ICF)**를 생성합니다. 시험 유형에 따라 두 가지 워크플로우로 분기합니다:
+8개의 전문 에이전트(조사 5 + 작성 2 + 검토 1)가 역할 기반으로 협업하여 **배경 조사**, **시험 설계**, **Synopsis**, **계획서(Protocol)**, **동의설명서/동의서(ICF)**를 생성합니다. 시험 유형에 따라 두 가지 워크플로우로 분기합니다:
 
 - **FIH/SAD/MAD (신약)**: IB(시험자자료집) 기반 — 초기 용량 산출 포함
 - **DDI/BE/FE/QTc/ADME (허가 약물)**: 약물명 기반 — 문헌·공개 DB 조사로 충분
@@ -107,17 +122,21 @@ Phase 1: 입력
     사용자: 약물명 + 시험 유형 (+ 선택적 자료)
          │
          ▼
-Phase 2: 병렬 자료 수집
-    ┌─ clinical-pharmacologist
-    │   PubMed: PK, 대사, 약물상호작용
-    │   ClinicalTrials.gov: 기존 유사 시험
+Phase 2: 병렬 자료 수집 (4–5개 조사 에이전트)
+    ┌─ clinical-pharmacologist  (항상)
+    │   PubMed: PK, 대사, 약물상호작용 / ClinicalTrials.gov
     │   [FIH: IB 분석, 초기 용량 산출]
     │
-    └─ regulatory-expert
-        MFDS 승인현황 + 가이드라인
-        FDA/EMA 가이드라인
-        약물 라벨 정보
-    
+    ├─ regulatory-expert  (항상)
+    │   MFDS 승인현황 + FDA/EMA/ICH 가이드라인, 약물 라벨, ICD-10
+    │
+    ├─ clinician  (항상)
+    │   선정/제외 기준, 안전성 프로파일, AE/SAE, 중지 기준
+    │
+    └─ translational-scientist  (BE/FE 외 시험만)
+        PD 바이오마커, PK-PD 모델, 약물유전체(PG), 대사체
+
+    ※ biostatistician는 Phase 5(통계 설계)에서 참여
     ※ 모든 자료에 reference 필수 (PMID, NCT, URL)
          │
          ▼

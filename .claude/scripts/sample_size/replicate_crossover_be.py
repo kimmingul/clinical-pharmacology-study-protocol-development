@@ -21,35 +21,22 @@ RSABE (Reference-Scaled Average Bioequivalence)
 ------------------------------------------------
 For high-variability drugs with within-reference CV > 30%:
 - The equivalence limit is scaled by the within-reference variability
-- Criterion: (ln(T) - ln(R))^2 - theta_s * sigma_WR^2 <= 0
-  where theta_s = (ln(1.25) / sigma_0)^2
-  sigma_0 = regulatory switching constant (0.25 for FDA per 21 CFR 320.24
-            guidance; ln(1.25) ≈ 0.2231 for EMA/MFDS ABEL approach)
+- Criterion: (ln(T) - ln(R))^2 - theta * sigma_WR^2 <= 0
+  where theta = (ln(1.25) / sigma_0)^2
+  sigma_0 = regulatory constant (0.25 for FDA; EMA uses 0.294)
+- The widened limit on the log scale is therefore
+  sqrt(theta) * sigma_WR = (ln(1.25) / sigma_0) * sigma_WR
+  (FDA: k = ln(1.25)/0.25 = 0.8926; EMA: k = ln(1.25)/0.294 = 0.760)
 - A point estimate constraint may also apply (e.g. 0.80-1.25)
 
-LIMITATION (IMPORTANT)
-----------------------
-The RSABE sample-size code below implements an **approximation** of the
-FDA linearized criterion using the scaled bound
-
-    L_scaled = sqrt(theta_s) * sigma_WR
-
-as the effective equivalence margin in a 2-period crossover normal-
-approximation formula.  This reproduces the qualitative behaviour
-(margin grows with sigma_WR, so high-CV drugs need fewer subjects)
-and is reasonable for planning purposes, but it is NOT the exact
-FDA linearized criterion (which compares the upper 95% bound of
-(Y_T-Y_R)^2 - theta_s * sigma_WR^2 to zero and is typically computed
-by simulation).
-
-**For regulatory submission, use a validated tool:**
-- R: ``PowerTOST::sampleN.scABEL`` (EMA) or ``sampleN.RSABE`` (FDA)
-- Python: ``pharmpy`` / dedicated simulation
-- SAS: FDA-published reference code
-
-TODO: Replace approximation with a simulation-based RSABE power
-calculation matching FDA Statistical Approaches to Establishing
-Bioequivalence (2001) and the Progesterone draft guidance methodology.
+.. WARNING::
+   The RSABE sample size below is a **linearised normal approximation** of the
+   FDA reference-scaled criterion. It is **NOT validated for regulatory
+   submission**. The actual FDA method combines the scaled criterion, a 95%
+   upper confidence bound (Howe approximation), a point-estimate constraint,
+   and the replicate-design variance structure — best evaluated by simulation
+   or a validated RSABE power package (e.g. Tothfalusi-Endrenyi). Confirm any
+   result against FDA-published examples before use.
 
 Formula (standard, non-RSABE)
 ------------------------------
@@ -75,6 +62,7 @@ MFDS. 고변동 약물의 생물학적동등성시험 평가 가이드라인.
 import math
 import sys
 import os
+import warnings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -143,24 +131,34 @@ def calculate_sample_size(
     z_beta = normal_quantile(power)
 
     if use_rsabe and intra_cv > 30.0:
-        # APPROXIMATION ONLY — see module docstring "LIMITATION" block.
-        # FDA / EMA scaled limit on the log scale:
-        #     theta_s    = (ln(1.25) / sigma_0)^2          (FDA, sigma_0=0.25)
-        #     L_scaled   = sqrt(theta_s) * sigma_WR
-        #                = (ln(1.25) / sigma_0) * sigma_WR
-        # For high-variability drugs (sigma_WR > sigma_0) this expands
-        # the equivalence margin proportionally to within-reference SD.
-        theta_s = (math.log(1.25) / regulatory_constant) ** 2
-        scaled_limit = math.sqrt(theta_s) * sigma_w  # = (ln1.25/sigma_0)*sigma_WR
-        effective_margin = scaled_limit - delta
+        # RSABE: reference-scaled equivalence limit.
+        # FDA criterion:  (ln T - ln R)^2 <= theta * sigma_WR^2,
+        #   theta = (ln(1.25) / sigma_0)^2   (sigma_0 = regulatory_constant).
+        # The widened limit on the log scale is therefore
+        #   theta_scaled = sqrt(theta) * sigma_WR = (ln(1.25) / sigma_0) * sigma_WR.
+        #   FDA sigma_0 = 0.25  -> k = ln(1.25)/0.25  = 0.8926
+        #   EMA sigma_0 = 0.294 -> k = ln(1.25)/0.294 = 0.760
+        warnings.warn(
+            "RSABE sample size uses a LINEARISED normal approximation of the "
+            "FDA reference-scaled criterion and is NOT validated for regulatory "
+            "submission. Confirm against FDA-published examples or a simulation-"
+            "based RSABE method before use.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        scaling_factor = math.log(1.25) / regulatory_constant  # = k
+        theta_scaled = scaling_factor * sigma_w  # widened limit on log scale
+        # The margin widens with variability, making equivalence easier to show
+        # for high-CV drugs (the intended RSABE behaviour).
+        effective_margin = theta_scaled - delta
         if effective_margin <= 0:
             raise ValueError(
                 f"With RSABE scaling, the effective margin is non-positive. "
                 f"GMR={gmr} is too far from 1."
             )
         rsabe_note = (
-            "RSABE (scaled-ABEL approximation; "
-            "NOT the FDA linearized criterion — see module docstring)"
+            "RSABE (reference-scaled, linearised approximation — "
+            "NOT for regulatory submission)"
         )
     else:
         theta = math.log(equivalence_limits[1])
@@ -206,11 +204,6 @@ def calculate_sample_size(
         "effective_margin (log)": round(effective_margin, 4),
         "use_rsabe": use_rsabe,
         "regulatory_constant (sigma_0)": regulatory_constant if use_rsabe else "N/A",
-        "theta_s (scaled criterion)": (
-            round((math.log(1.25) / regulatory_constant) ** 2, 4)
-            if use_rsabe and intra_cv > 30.0
-            else "N/A"
-        ),
         "alpha (one-sided)": alpha,
         "power": power,
         "z_alpha": round(z_alpha, 4),

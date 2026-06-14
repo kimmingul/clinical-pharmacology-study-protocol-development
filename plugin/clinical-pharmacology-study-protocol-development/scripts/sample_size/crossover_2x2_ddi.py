@@ -38,6 +38,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from utils.power_analysis import (
     normal_quantile,
+    solve_n_2x2_tost,
     adjust_for_dropout,
     print_result,
 )
@@ -91,48 +92,37 @@ def calculate_sample_size(
         Sample size results and parameters.
     """
     sigma_w = _cv_to_sigma_w(intra_cv)
+    achieved = None
 
     if approach == "equivalence":
-        delta = abs(math.log(expected_gmr))
-        theta = math.log(equivalence_limits[1])
-        margin = theta - delta
-        if margin <= 0:
-            raise ValueError(
-                f"Expected GMR ({expected_gmr}) exceeds equivalence limits "
-                f"{equivalence_limits}. Cannot demonstrate no effect."
-            )
-        z_alpha = normal_quantile(1.0 - alpha)
-        z_beta = normal_quantile(power)
-        # Standard 2x2 crossover formula returns the TOTAL N across both sequences.
-        n_total = math.ceil(
-            (z_alpha + z_beta) ** 2 * 2.0 * sigma_w ** 2 / margin ** 2
+        # Exact TOST sizing (single source of truth in utils.power_analysis).
+        # NOTE: the previous version doubled an already-total formula, which
+        # over-stated N by a factor of two.  2x2 crossover Var(contrast) =
+        # 2*sigma_w^2 / n_total, so the formula gives the TOTAL N directly.
+        n_total, achieved = solve_n_2x2_tost(
+            sigma_w, expected_gmr, power, alpha, equivalence_limits
         )
+        n_per_seq = n_total // 2
 
     elif approach == "fold_change":
         if precision_margin is None:
             precision_margin = math.log(1.25)
         z_alpha = normal_quantile(1.0 - alpha)
         z_beta = normal_quantile(power)
-        # Precision-based: ensure 90% CI half-width <= precision_margin.
-        # Formula returns the TOTAL N across both sequences.
+        # Precision-based TOTAL N so the 90% CI half-width <= precision_margin.
+        # Var(contrast) = 2*sigma_w^2 / n_total.
         n_total = math.ceil(
-            (z_alpha + z_beta) ** 2 * 2.0 * sigma_w ** 2
-            / precision_margin ** 2
+            2.0 * (z_alpha + z_beta) ** 2 * sigma_w ** 2 / precision_margin ** 2
         )
+        if n_total % 2 != 0:
+            n_total += 1
+        n_per_seq = n_total // 2
 
     else:
         raise ValueError(f"Unknown approach: {approach!r}")
 
-    # Ensure even total for balanced allocation across the two sequences
-    if n_total % 2 == 1:
-        n_total += 1
-    n_per_seq = n_total // 2
-
-    # Dropout adjustment: inflate the TOTAL N, then split evenly.
-    n_total_adj = adjust_for_dropout(n_total, dropout_rate)
-    if n_total_adj % 2 == 1:
-        n_total_adj += 1
-    n_per_seq_adj = n_total_adj // 2
+    n_per_seq_adj = adjust_for_dropout(n_per_seq, dropout_rate)
+    n_total_adj = 2 * n_per_seq_adj
 
     params = {
         "design": f"2x2 Crossover DDI ({approach})",
@@ -140,14 +130,17 @@ def calculate_sample_size(
         "sigma_w (log-scale)": round(sigma_w, 4),
         "expected_gmr": expected_gmr,
         "approach": approach,
+        "method": (
+            "exact TOST (noncentral-t)" if approach == "equivalence"
+            else "precision-based (normal approximation)"
+        ),
         "equivalence_limits": equivalence_limits if approach == "equivalence" else "N/A",
         "precision_margin (log)": (
             round(precision_margin, 4) if approach == "fold_change" else "N/A"
         ),
         "alpha": alpha,
-        "power": power,
-        "z_alpha": round(z_alpha, 4),
-        "z_beta": round(z_beta, 4),
+        "power (target)": power,
+        "power (achieved)": round(achieved, 4) if achieved is not None else "N/A",
         "dropout_rate": dropout_rate,
     }
 
@@ -156,6 +149,7 @@ def calculate_sample_size(
         "n_total": n_total,
         "n_per_group_adjusted": n_per_seq_adj,
         "n_total_adjusted": n_total_adj,
+        "achieved_power": achieved,
         "params": params,
     }
 

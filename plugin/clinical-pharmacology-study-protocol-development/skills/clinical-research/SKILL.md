@@ -605,7 +605,7 @@ _workspace/01_references/
 - **Open Access 전문**: `get_full_text_article`은 OA 논문만 전문 반환. 대부분 초록만 사용 가능
 - **시험 유형 미확인**: Step 0에서 시험 유형을 반드시 확인하고 해당 전략을 선택해야 한다
 - **MCP 도구명**: 시스템에서 제공하는 실제 도구명(예: `mcp__claude_ai_ICD-10_Codes__search_codes`)을 사용한다. 이 문서의 약칭은 설명용
-- **clinician 항상 참여 (시험 유형 무관)**: 건강한 성인 대상(DDI, BE, FE 포함) 시험에서도 안전성 프로파일 체계적 수집, 선정/제외 기준의 임상적 타당성 검토, 중지 기준 근거 마련이 필수이므로 clinician은 모든 시험 유형에서 참여한다
+- **clinician은 항상 참여 (시험 유형 무관)**: 건강인 대상(DDI, BE, FE 포함)이든 환자 대상(FIH, Special Pop, QTc)이든 **모든 시험**에서 참여한다. 안전성 프로파일 체계적 수집, 선정/제외 기준의 임상적 타당성 검토, 중지 기준 근거 마련이 시험 유형과 무관하게 필수이기 때문이다 (clinician.md, trial-doc-orchestrator/SKILL.md와 일치). BE/FE에서 불참하는 것은 **translational-scientist**다 — 혼동 금지
 
 ## References
 

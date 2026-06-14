@@ -1,0 +1,7 @@
+# Runtime dependencies for the clinical-pharmacology sample-size / FIH scripts.
+# Pinned to lower bounds known to work; CI installs the latest compatible.
+scipy>=1.10
+numpy>=1.24
+
+# Development / test only
+pytest>=7.0

@@ -50,8 +50,14 @@ def test_c1_regression_2x2_be_no_double_counting():
 
 
 def test_2x2_be_cv30_gmr1_power80():
-    """PowerTOST sampleN.TOST(CV=0.30, theta0=1.00, power=0.80) = 22 (z) /
-    24 (t). Allow ±4 to span the normal vs t approximation gap."""
+    """Exact TOST: CV=0.30, theta0=1.00, power=0.80 -> N=32 (achieved 0.815).
+
+    Monte-Carlo verified: N=30 reaches only 0.78, N=32 reaches 0.82. The one-
+    sided normal approximation is strongly over-optimistic at theta0=1.0 (it
+    suggested ~24, which is actually ~0.64 power -- underpowered); the exact
+    noncentral-t value is 32. This test was corrected when the calculator moved
+    from the normal approximation to the exact-TOST engine.
+    """
     result = be_n(
         intra_cv=30.0,
         gmr=1.00,
@@ -59,9 +65,10 @@ def test_2x2_be_cv30_gmr1_power80():
         alpha=0.05,
         dropout_rate=0.0,
     )
-    assert 20 <= result["n_total"] <= 28, (
-        f"PowerTOST reference ~22-24, got {result['n_total']}"
+    assert result["n_total"] == 32, (
+        f"exact-TOST reference 32 (MC-verified), got {result['n_total']}"
     )
+    assert result["achieved_power"] >= 0.80
 
 
 def test_2x2_be_cv40_gmr95_power90():

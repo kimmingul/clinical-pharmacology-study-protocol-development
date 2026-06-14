@@ -10,6 +10,7 @@ NIH/NLM가 운영하는 미국 FDA 승인 의약품 라벨 DB. **Structured Prod
 | 인증 | 불필요 (공개 API) |
 | Rate Limit | 공식 명시 없음 (상식적 수준의 요청 권장) |
 | 형식 | JSON (기본) / XML |
+| 라이선스 | **U.S. Government work — Public Domain** (NIH/NLM, 자유 이용). 출처 표기 예: `DailyMed, NLM. SPL setid={setid}. https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid={setid}` |
 | 문서 | https://dailymed.nlm.nih.gov/dailymed/app-support-mapping-guide.cfm |
 
 ## 주요 엔드포인트
