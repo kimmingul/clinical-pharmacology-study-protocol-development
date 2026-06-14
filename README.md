@@ -1,14 +1,19 @@
 # Clinical Pharmacology Study Protocol Development Plugin for Claude Code
 
-임상약리 임상시험 문서를 체계적으로 개발하는 Claude Code 하네스 프로젝트.
+[![release](https://img.shields.io/github/v/release/kimmingul/clinical-pharmacology-study-protocol-development?label=version&color=blue)](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/releases/latest)
+[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![CI](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/actions/workflows/ci.yml/badge.svg)](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/actions/workflows/ci.yml)
+
+임상약리 임상시험 문서를 체계적으로 개발하는 Claude Code 하네스 프로젝트. **현재 버전: v2.1.0** ([CHANGELOG](CHANGELOG.md))
 
 ## 설치 (Installation)
 
-이 저장소는 Claude Code 플러그인 마켓플레이스로 구성되어 있습니다 (루트 `.claude-plugin/marketplace.json`).
+이 저장소는 Claude Code 플러그인 마켓플레이스로 구성되어 있습니다 (루트 `.claude-plugin/marketplace.json`). 최신 릴리스: **v2.1.0**.
 
 ```
-# 1) 마켓플레이스 등록 (로컬 클론 기준)
-/plugin marketplace add /path/to/clinical-trial-protocol-development
+# 1) 마켓플레이스 등록 — GitHub 저장소에서 직접
+/plugin marketplace add kimmingul/clinical-pharmacology-study-protocol-development
+#    (또는 로컬 클론 경로: /plugin marketplace add /path/to/clinical-trial-protocol-development)
 
 # 2) 플러그인 설치
 /plugin install clinical-pharmacology-study-protocol-development
@@ -17,7 +22,9 @@
 #    8개 에이전트, 스킬이 로드되었는지 /plugin 으로 확인
 ```
 
-> 배포용 zip은 GitHub Release 자산으로 제공됩니다(저장소에 커밋하지 않음). 개발본(`.claude/`)을 배포본(`plugin/`)으로 동기화하려면 루트 `./sync_plugin.sh`를 실행합니다.
+> **대안 (zip 직접 설치)**: [Releases](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/releases/latest)에서 `clinical-pharmacology-study-protocol-development-v2.1.0.zip`을 받아 `~/.claude/plugins/`에 압축 해제합니다. 배포용 zip은 저장소에 커밋하지 않고 **GitHub Release 자산**으로만 제공됩니다.
+>
+> 개발본(`.claude/`)을 배포본(`plugin/`)으로 동기화하려면 루트 `./sync_plugin.sh`를 실행합니다.
 
 ---
 
