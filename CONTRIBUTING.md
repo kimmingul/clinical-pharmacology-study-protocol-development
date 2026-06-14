@@ -3,6 +3,9 @@
 This is a Claude Code plugin/harness for developing clinical-pharmacology trial
 documents. Contributions are welcome — please keep the following in mind.
 
+> Extending the harness (new trial type, sample-size design, agent, or Web API)?
+> Follow the file-by-file checklist in [`.claude/EXTENSION_GUIDE.md`](.claude/EXTENSION_GUIDE.md).
+
 ## Repository layout
 
 - `.claude/` — **the single source of truth** (agents, commands, skills,

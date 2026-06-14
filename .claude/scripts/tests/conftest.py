@@ -9,6 +9,8 @@ import os
 import sys
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_SAMPLE_SIZE = os.path.join(os.path.dirname(_HERE), "sample_size")
-if _SAMPLE_SIZE not in sys.path:
-    sys.path.insert(0, _SAMPLE_SIZE)
+_SCRIPTS = os.path.dirname(_HERE)
+for _sub in ("sample_size", "qa"):
+    _p = os.path.join(_SCRIPTS, _sub)
+    if _p not in sys.path:
+        sys.path.insert(0, _p)

@@ -61,6 +61,25 @@ description: "임상약리 임상시험 문서(계획서, 동의설명서, 동�
 | `_workspace/04_icf_draft.md` | 동의설명서/동의서/개인정보 동의서 |
 | `_workspace/review/review_{agent}.md` | 에이전트별 리뷰 |
 | `_workspace/review/qa_review_report.md` | QA 통합 리뷰 보고서 |
+| `_workspace/pipeline_manifest.json` | 재현성 매니페스트 (단계별 provenance) |
+
+## 재현성 매니페스트 (provenance — 권장)
+
+규제 문서의 추적성을 위해, 각 산출물 생성 단계 직후 `.claude/scripts/qa/pipeline_manifest.py`로 실행 이력을 기록한다. 매니페스트는 단계·에이전트·모델·입력/출력 파일과 그 SHA-256·UTC 타임스탬프·하네스 버전을 남겨, "어느 모델·버전이 어떤 입력으로 어떤 산출물을 만들었는가"를 사후에 확인할 수 있게 한다.
+
+```bash
+# Phase 1 입력 확정 직후 1회
+python3 .claude/scripts/qa/pipeline_manifest.py init --trial "{약물}+{시험유형}"
+
+# 산출물을 만드는 각 Phase(2/3 조사, 5 통계, 6 synopsis, 8 protocol, 9 review, 10 icf) 직후
+python3 .claude/scripts/qa/pipeline_manifest.py record \
+  --phase 8 --agent protocol-writer --model opus \
+  --output _workspace/03_protocol_draft.md \
+  --inputs _workspace/02_synopsis.md _workspace/01_research_report.md \
+  --note "{선택: 수정/재실행 사유}"
+```
+
+> 부분 재실행 시에도 record를 추가하면 출력 SHA-256 변화로 어떤 산출물이 갱신되었는지 추적된다. 스키마: `.claude/references/schemas/pipeline_manifest.schema.json`.
 
 ## 워크플로우
 
