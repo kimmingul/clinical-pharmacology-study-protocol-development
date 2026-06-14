@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "trial_goal_spec/v1",
+  "title": "Trial Goal Spec",
+  "description": "에이전트가 최적화 목표로 삼는 기계가독(machine-readable) 시험 목표 명세. doc_lint.score_file()이 goal_spec으로 읽어 점수·Critical/Major/Minor 판정을 보강한다. (A machine-readable 'goal spec' the agents optimize toward; consumed by doc_lint.score_file.)",
+  "type": "object",
+  "required": ["schema", "drug", "trial_type", "primary_objective"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "trial_goal_spec/v1" },
+    "drug": {
+      "type": "string",
+      "description": "시험약(병용 포함) 이름 (Investigational drug(s), incl. combination)"
+    },
+    "trial_type": {
+      "type": "string",
+      "description": "시험 유형 — FIH/SAD/MAD/DDI/BE/FE/QTc/ADME 등 (Trial type)"
+    },
+    "primary_objective": {
+      "type": "string",
+      "description": "1차 목적 서술 (Primary objective statement)"
+    },
+    "estimand": {
+      "type": "object",
+      "description": "ICH E9(R1) estimand 5요소 (모두 선택). (ICH E9(R1) estimand attributes — all optional)",
+      "additionalProperties": false,
+      "properties": {
+        "treatment": {
+          "type": "string",
+          "description": "처치 (Treatment condition of interest)"
+        },
+        "population": {
+          "type": "string",
+          "description": "대상 집단 (Target population)"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "변수/평가변수 (Variable / endpoint)"
+        },
+        "intercurrent_events": {
+          "type": "string",
+          "description": "중간발생사건 처리 전략 (Intercurrent-event handling strategy)"
+        },
+        "summary_measure": {
+          "type": "string",
+          "description": "요약 측도 (Population-level summary measure)"
+        }
+      }
+    },
+    "acceptable_ci_bounds": {
+      "type": "object",
+      "description": "동등성 90% CI 허용 한계 (Acceptable equivalence CI bounds)",
+      "additionalProperties": false,
+      "properties": {
+        "lower": {
+          "type": "number",
+          "default": 80.00,
+          "description": "하한 (Lower bound, %)"
+        },
+        "upper": {
+          "type": "number",
+          "default": 125.00,
+          "description": "상한 (Upper bound, %)"
+        }
+      }
+    },
+    "target_power": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.8,
+      "description": "목표 검정력 (Target statistical power, 0-1)"
+    },
+    "required_ich_sections": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["B.1", "B.2", "B.3", "B.4", "B.5", "B.6", "B.7", "B.8", "B.9", "B.10", "B.11", "B.12", "B.13", "B.14", "B.15", "B.16"],
+      "description": "필수 ICH E6(R3) Appendix B 섹션 (Required Appendix B sections)"
+    },
+    "retention_years_min": {
+      "type": "integer",
+      "default": 15,
+      "description": "최소 기록 보존 연수 — KGCP 15년 (Minimum record-retention years)"
+    },
+    "pg_or_biobank_required": {
+      "type": "boolean",
+      "description": "약물유전체/인체유래물 동의 필요 여부 — 생명윤리법 (PG/biobank consent required)"
+    },
+    "icf_readability_target": {
+      "type": "string",
+      "description": "ICF 가독성 목표 (예: '중학교 3학년 수준') (ICF readability target)"
+    },
+    "must_cite_types": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "필수 인용 출처 유형 (예: ['PMID','NCT','label']) (Required citation source types)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "자유 서술 메모 (Free-text notes)"
+    }
+  }
+}

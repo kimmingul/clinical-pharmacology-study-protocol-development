@@ -164,3 +164,9 @@ MCP 서버가 없는 약물 라벨·허가·MFDS 정보 조회는 **WebFetch**�
 - 약물 라벨의 PG 섹션은 추출 후 **translational-scientist**에게 전달 (해석 및 한국인 빈도 분석은 translational-scientist 담당)
 - **protocol-writer**가 이 조사 결과의 규제 요건을 계획서에 반영
 - **qa-reviewer**에게 규제 관점 리뷰 결과 제공
+
+## v3 역할 (loop · goal · zero-trust · guardrail)
+
+- **goal_spec 필수 섹션**: required_ich_sections(B.1~B.16) 충족을 리뷰 기준으로 매핑한다.
+- **zero-trust 라벨·승인현황**: 라벨·MFDS 승인현황 인용은 source_snapshot.py로 스냅샷한 출처에 근거한다(조회일·SHA·URL).
+- **보존연한 T0**: 필수문서 보존기간 15년(KGCP)을 T0 불변식으로 확인한다.

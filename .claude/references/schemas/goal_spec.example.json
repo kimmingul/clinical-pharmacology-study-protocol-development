@@ -1,0 +1,24 @@
+{
+  "schema": "trial_goal_spec/v1",
+  "drug": "Clopidogrel + Omeprazole",
+  "trial_type": "DDI",
+  "primary_objective": "건강한 성인에서 클로피도그렐과 오메프라졸 병용 시 양방향 약물상호작용(CYP2C19 매개)을 활성대사체 노출(클로피도그렐) 및 오메프라졸 노출 변화로 평가한다.",
+  "estimand": {
+    "treatment": "클로피도그렐 단독 대비 클로피도그렐+오메프라졸 병용 (그리고 오메프라졸 단독 대비 병용)",
+    "population": "CYP2C19 정상대사자 중심의 건강한 성인 시험대상자",
+    "endpoint": "클로피도그렐 활성대사체 AUC0-inf 및 Cmax, 오메프라졸 AUC0-inf 및 Cmax",
+    "intercurrent_events": "중도 탈락·구토 등 흡수 영향 사건은 PK 평가 가능 집단에서 제외(per-protocol)하여 처리",
+    "summary_measure": "병용/단독 기하평균비(GMR)와 90% 신뢰구간"
+  },
+  "acceptable_ci_bounds": {
+    "lower": 80.00,
+    "upper": 125.00
+  },
+  "target_power": 0.9,
+  "required_ich_sections": ["B.1", "B.2", "B.3", "B.4", "B.5", "B.6", "B.7", "B.8", "B.9", "B.10", "B.11", "B.12", "B.13", "B.14", "B.15", "B.16"],
+  "retention_years_min": 15,
+  "pg_or_biobank_required": true,
+  "icf_readability_target": "중학교 3학년 수준",
+  "must_cite_types": ["PMID", "NCT", "label"],
+  "notes": "CYP2C19 기질-저해 양방향 가능성을 고려한 Williams 6x3 교차설계 권장. 약물유전체(CYP2C19 유전형) 분석 계획이 있으므로 ICF Part 4(선택 동의) 및 생명윤리법 검토 필요."
+}

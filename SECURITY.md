@@ -14,13 +14,35 @@ secret scanning).
 - Do not place keys in `settings.json` / `settings.local.json` or any tracked
   file. CI should run a secret scanner (e.g. gitleaks) on every push.
 
-## Reference integrity (no fabrication)
+## Reference integrity (zero-trust, v3)
 
-- Every PMID / NCT / guideline citation in a generated document must be
-  **verified** from an actual tool/API result, never produced from memory.
-- Unverified items must be marked `[출처 미확인 — 검증 필요]` rather than guessed.
-- Planned enforcement: a PreToolUse/Stop hook validating citations before a
-  document is written (Phase 6, EA-4).
+- Every PMID / NCT / guideline citation in a generated document is **untrusted by
+  default** and must be **verified** from an actual tool/API result, never
+  produced from memory.
+- Independent verification is enforced by `.claude/scripts/qa/citation_verify.py`
+  (PMID via NCBI eutils, NCT via ClinicalTrials.gov v2), which writes
+  `_workspace/verification/citation_audit.json`. Items that fail format or
+  resolution are marked `[출처 미확인 — 검증 필요]` and must **not** be used as
+  load-bearing evidence (dose justification, safety claims).
+- External fetches (MFDS / DailyMed / openFDA / PharmGKB) are snapshotted by
+  `.claude/scripts/qa/source_snapshot.py` (content SHA-256 + retrieval URL + UTC),
+  so a document's provenance does not depend on a live, mutable website.
+
+## Confidential IB (least-privilege, v3 — FIH/SAD/MAD)
+
+- A new-drug Investigator's Brochure (IB) is **confidential** and is the only
+  primary source for FIH dosing. Treat it as least-privilege data:
+  - Record only its hash + allowed sections per agent in
+    `_workspace/00_input/ib_manifest.json`; do not duplicate raw IB text into
+    multiple outputs.
+  - Pass each agent **only the IB sections it needs** (e.g. clinical-pharmacologist
+    → nonclinical PK/tox/pharmacology only).
+  - **Never** send raw IB content to external tools/APIs (WebFetch, openFDA,
+    PharmGKB, etc.). External calls use only the non-confidential drug name/class.
+  - Cloud-LLM exposure of confidential IB is the operator's risk decision; keep
+    IB local where organizational policy requires.
+- Stated FIH starting/escalation doses are checked against the independently
+  computed MRSD by `.claude/scripts/qa/dose_safety_guard.py` (T0-blocking).
 
 ## Participant data / PII (생명윤리·개인정보)
 

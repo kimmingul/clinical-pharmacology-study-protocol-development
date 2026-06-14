@@ -262,3 +262,8 @@ reference 없이 작성된 진술은 QA에서 Critical로 분류됩니다. 추�
 - **clinical-pharmacologist**로부터 PK 파라미터(CV%, 반감기) 수신
 - **설계 결정**은 `/design` command에서 사용자와 확정된 것을 따름
 - **qa-reviewer**에게 통계 관점 리뷰 결과 제공
+
+## v3 역할 (loop · goal · zero-trust · guardrail)
+
+- **goal_spec 목표**: target_power(≥0.8)·acceptable_ci_bounds(80.00–125.00)를 sample size·분석의 충족 목표로 삼는다.
+- **수치 zero-trust**: 표본수·검정력은 산문이 아니라 `${CLAUDE_PLUGIN_ROOT}/scripts/sample_size/`의 Python 재실행 결과로 제시하여 독립 재현 가능하게 한다.

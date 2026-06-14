@@ -62,14 +62,16 @@ MCP 서버 없이 WebFetch로 직접 공개 API를 호출. 쿼리 레시피는 `
 
 | 에이전트 | model | 역할 | 참여 |
 |---------|-------|------|------|
-| clinical-pharmacologist | sonnet | PK 자료(반감기, 변동성), 대사 경로 정성, 약물상호작용 기전, 용량 근거, FIH 초기 용량 | 항상 |
-| translational-scientist | sonnet | PD 바이오마커, PK-PD 모델링, 약물유전체학(PG), 대사체학, 수용체 점유율 | **조건부** (BE/FE 불참, 그 외 시험에 우선순위 차등 참여) |
-| regulatory-expert | sonnet | MFDS/FDA/EMA 가이드라인, 승인현황, 약물 라벨(PG 섹션 포함), ICD-10 | 항상 |
-| clinician | sonnet | 선정/제외 기준, 안전성 프로파일 조사, 임상 절차, 이상반응 관리 | **항상** |
-| biostatistician | sonnet | 연구설계, sample size (Python), 무작위화, 통계분석 | 항상 |
+| clinical-pharmacologist | **opus** | PK 자료(반감기, 변동성), 대사 경로 정성, 약물상호작용 기전, 용량 근거, FIH 초기 용량 | 항상 |
+| translational-scientist | **opus** | PD 바이오마커, PK-PD 모델링, 약물유전체학(PG), 대사체학, 수용체 점유율 | **조건부** (BE/FE 불참, 그 외 시험에 우선순위 차등 참여) |
+| regulatory-expert | **opus** | MFDS/FDA/EMA 가이드라인, 승인현황, 약물 라벨(PG 섹션 포함), ICD-10 | 항상 |
+| clinician | **opus** | 선정/제외 기준, 안전성 프로파일 조사, 임상 절차, 이상반응 관리 | **항상** |
+| biostatistician | **opus** | 연구설계, sample size (Python), 무작위화, 통계분석 | 항상 |
 | protocol-writer | opus | Synopsis + 자료 기반 Full Protocol 작성 | Phase 8 |
 | icf-writer | opus | 계획서 기반 동의문서 작성 (PG/오믹스 별도 동의 포함) | Phase 10 (별도 지시) |
-| qa-reviewer | opus | 다중 리뷰 취합, Critical/Major/Minor 분류, 수정 조율 | Phase 9 |
+| qa-reviewer | opus | 다중 리뷰 취합, Critical/Major/Minor 분류, 수정 조율 (v3: actor-critic critic) | Phase 9 |
+
+> **v3.0.0 모델 정책**: 모든 에이전트는 **opus(최신)**로 작동한다. 환각 위험이 자원자 안전에 직결되는 임상시험 문서 도메인에서 조사·작성·검토 전 단계에 최고 추론 모델을 사용한다.
 
 **Commands:**
 
@@ -86,7 +88,7 @@ MCP 서버 없이 WebFetch로 직접 공개 API를 호출. 쿼리 레시피는 `
 **실행 규칙:**
 - 임상시험 문서 작성/수정 요청 시 `trial-doc-orchestrator` 스킬 또는 개별 command로 처리
 - 단순 질문(규제 용어, 개념 설명 등)은 에이전트 없이 직접 응답해도 무방
-- 조사 에이전트(clinical-pharmacologist, translational-scientist, regulatory-expert, clinician, biostatistician)는 sonnet, 작성/검토 에이전트(protocol-writer, icf-writer, qa-reviewer)는 opus 사용
+- **모든 에이전트(조사·작성·검토 8종)는 opus(최신) 사용** (v3.0.0). 임상시험 문서의 환각·누락 위험이 자원자 안전·규제 적합성에 직결되므로 전 단계 최고 추론 모델 적용
 - translational-scientist 참여 조건은 `.claude/skills/clinical-research/SKILL.md`의 "시험 유형별 오믹스/PD 우선순위" 표를 따른다 (BE/FE 불참, 그 외 참여)
 - 모든 에이전트는 `general-purpose` 타입으로 호출 (커스텀 subagent_type 미지원)
 - 에이전트 정의(`.claude/agents/*.md`)와 스킬은 서브 에이전트가 Read로 직접 로드
@@ -117,3 +119,4 @@ MCP 서버 없이 WebFetch로 직접 공개 API를 호출. 쿼리 레시피는 `
 | 2026-04-14 | **v2 DDI E2E 실행 후 하네스 강화**: (1) protocol-writer/regulatory-expert에 **규제 상수 표** 추가 — KGCP 기록 보존 **15년** (3년 오기 방지), SAE 7/15일, 종료 90일, 90% CI 80–125% 기본값. (2) clinician에 **약물 계열별 안전성 체크리스트** 추가 — Thienopyridine TTP 4종 세트(혈소판·LDH 정기·Haptoglobin·말초혈구도말). (3) biostatistician에 **SAS PROC MIXED 표준 문법 3종** + **Co-primary IUT 판정 로직**. (4) protocol-template §10.1에 **AUC 시간 범위 선택 표** (AUC₀₋∞/AUC₀₋ₜ/AUC₀₋₇₂ₕ/AUC₀₋τ 가이드라인 정합성). (5) `/synopsis`에 design_decisions.md **강제 반영 Step A/B/C**. (6) `/research`에 **TS 참여 매트릭스 + 자가 검증 절차**. A군 Web API 결함(MFDS JS 렌더링, PharmGKB HTTP 400)은 `TODO.md §0`에 이관 | E2E v2 DDI(`e2e/v2_2026_04_14_DDI/`) 5명 리뷰 중 Major 8건 분석 → 재발 방지용 상수·체크리스트·검증 단계를 에이전트·템플릿·커맨드에 주입 |
 | 2026-04-14 | **양방향 DDI 지원 신설**: (1) clinical-pharmacologist에 "DDI 방향성 평가 매트릭스" (기질/저해/유도 역할 표 + 양방향 가능성 체크리스트). (2) `/design` Step 2에 방향성 결정 절차. (3) `/synopsis` §3·§6.1에 role·방향성·co-primary 표기. (4) **Williams 6×3 crossover 신설** (3 treatments: A 단독, B 단독, A+B, 6 sequences=3!, carry-over 균형) + `.claude/scripts/sample_size/williams_6x3_ddi.py` (IUT 기반 양방향 n 계산). (5) biostatistician에 양방향 분석 로직 (PROC MIXED ESTIMATE 2개, IUT 원리 — α 조정 불필요) | 두 약물 모두 CYP 기질일 때 한쪽 방향만 평가하는 결함 방지. FDA DDI(2020) + ICH M12(2024) 권고 정합 |
 | 2026-04-15 | **Claude Code plugin 배포 구조 v2.0.0**: `.claude/` 기반 개발 하네스는 그대로 유지하고, 별도 `plugin/clinical-pharmacology-study-protocol-development/` 하위에 배포용 복사본 신설(경로 `.claude/` → `${CLAUDE_PLUGIN_ROOT}/` 치환, 109곳). 루트 `.claude-plugin/marketplace.json` 신설(name=`clinical-pharmacology-marketplace`, owner·metadata·plugins[1] 구조, 단일 plugin 배포). `plugin.json`·marketplace.json 버전 **2.0.0**. 루트 `sync_plugin.sh`로 `.claude/` → `plugin/<이름>/` rsync 자동 동기화 + 경로 치환. MIT 라이선스 명시 | Claude Code marketplace/로컬 플러그인 배포 지원. 개발 continuation과 배포 아티팩트 동시 보존 |
+| 2026-06-14 | **v3.0.0 — 최신 에이전트 엔지니어링 동향 반영 (loop·goal·zero-trust·guardrail)**: 3-모델 리뷰(Claude·Codex 0.139·Gemini 0.46) 후 3방향 동시 구현. (1) **Goal+Loop**: `trial_goal_spec.schema.json`(+example) 신설 — estimand·CI 경계·검정력·필수 ICH 섹션·보존연한을 기계 판독형 성공명세로 정의. `doc_lint.py`에 결정적 채점(`score_file`) 추가. Phase 9를 `max 1 revision` → **예산형 actor-critic 수렴 루프**(Critical=0 & score≥90 또는 budget·plateau 종료)로 재설계. (2) **Zero-trust**: `citation_verify.py`(PMID/NCT/setid/URL 독립 재조회·offline-graceful·`citation_audit.json`) + `source_snapshot.py`(외부 fetch SHA-256 provenance) 신설. IB least-privilege(섹션 제한 + `ib_manifest.json`). (3) **Guardrail**: advisory hook을 **3-tier**로 승격 — T0 차단(보존<15년, MRSD 초과 용량, ICF PII, 최종화 시 섹션 누락), T1 권고, T2 사람 게이트. `dose_safety_guard.py` + `/finalize` 커맨드(`doc_lint --strict` 실서류 적용). (4) **전 에이전트 opus(최신) 전환** + 8개 페르소나에 v3 역할(goal_spec·zero-trust·loop) 주입 | 사용자(임상약리 교수) 지시: harness를 넘어 loop·goal·zero-trust·guardrail 동향을 반영해 환자안전·규제·재현성을 아키텍처로 강제 |

@@ -4,11 +4,11 @@
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![CI](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/actions/workflows/ci.yml/badge.svg)](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/actions/workflows/ci.yml)
 
-임상약리 임상시험 문서를 체계적으로 개발하는 Claude Code 하네스 프로젝트. **현재 버전: v2.1.0** ([CHANGELOG](CHANGELOG.md))
+임상약리 임상시험 문서를 체계적으로 개발하는 Claude Code 하네스 프로젝트. **현재 버전: v3.0.0** ([CHANGELOG](CHANGELOG.md))
 
 ## 설치 (Installation)
 
-이 저장소는 Claude Code 플러그인 마켓플레이스로 구성되어 있습니다 (루트 `.claude-plugin/marketplace.json`). 최신 릴리스: **v2.1.0**.
+이 저장소는 Claude Code 플러그인 마켓플레이스로 구성되어 있습니다 (루트 `.claude-plugin/marketplace.json`). 최신 릴리스: **v3.0.0**.
 
 ```
 # 1) 마켓플레이스 등록 — GitHub 저장소에서 직접
@@ -22,7 +22,7 @@
 #    8개 에이전트, 스킬이 로드되었는지 /plugin 으로 확인
 ```
 
-> **대안 (zip 직접 설치)**: [Releases](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/releases/latest)에서 `clinical-pharmacology-study-protocol-development-v2.1.0.zip`을 받아 `~/.claude/plugins/`에 압축 해제합니다. 배포용 zip은 저장소에 커밋하지 않고 **GitHub Release 자산**으로만 제공됩니다.
+> **대안 (zip 직접 설치)**: [Releases](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/releases/latest)에서 `clinical-pharmacology-study-protocol-development-v3.0.0.zip`을 받아 `~/.claude/plugins/`에 압축 해제합니다. 배포용 zip은 저장소에 커밋하지 않고 **GitHub Release 자산**으로만 제공됩니다.
 >
 > 개발본(`.claude/`)을 배포본(`plugin/`)으로 동기화하려면 루트 `./sync_plugin.sh`를 실행합니다.
 
@@ -85,11 +85,11 @@
 
 | 에이전트 | model | 역할 |
 |---------|-------|------|
-| **clinical-pharmacologist** | sonnet | PK 자료 수집(반감기, 변동성, 생체이용률), 대사 경로 정성적 기여, 약물상호작용 기전, 용량 근거, FIH 초기 용량 산출 |
-| **translational-scientist** | sonnet | PD 바이오마커, PK-PD 모델링, 약물유전체학(CYP·표적 다형성), 대사체학(인체 특이 대사체, 내인성 바이오마커), 수용체 점유율 (**조건부 참여** — BE/FE 불참, 그 외 시험 유형별 우선순위 차등) |
-| **regulatory-expert** | sonnet | MFDS/FDA/EMA 가이드라인, 임상시험 승인현황, 약물 라벨(PG 섹션 포함), 규제 전략 |
-| **clinician** | sonnet | 선정/제외 기준, 안전성 모니터링, 임상 절차, 이상반응 관리 (**항상 참여**) |
-| **biostatistician** | sonnet | 연구설계 옵션, sample size 계산 (Python 코드), 무작위화, 통계분석방법 |
+| **clinical-pharmacologist** | opus | PK 자료 수집(반감기, 변동성, 생체이용률), 대사 경로 정성적 기여, 약물상호작용 기전, 용량 근거, FIH 초기 용량 산출 |
+| **translational-scientist** | opus | PD 바이오마커, PK-PD 모델링, 약물유전체학(CYP·표적 다형성), 대사체학(인체 특이 대사체, 내인성 바이오마커), 수용체 점유율 (**조건부 참여** — BE/FE 불참, 그 외 시험 유형별 우선순위 차등) |
+| **regulatory-expert** | opus | MFDS/FDA/EMA 가이드라인, 임상시험 승인현황, 약물 라벨(PG 섹션 포함), 규제 전략 |
+| **clinician** | opus | 선정/제외 기준, 안전성 모니터링, 임상 절차, 이상반응 관리 (**항상 참여**) |
+| **biostatistician** | opus | 연구설계 옵션, sample size 계산 (Python 코드), 무작위화, 통계분석방법 |
 
 ### 작성 에이전트 (Writing Agents)
 

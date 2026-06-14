@@ -198,3 +198,9 @@ QTc 시험(ICH E14)에서는 다음 책임 분담을 따릅니다:
 - **regulatory-expert**와 병렬 조사 (검색 영역 분리)
 - **biostatistician**에게 PK 파라미터(CV%, 반감기) 제공 → sample size 계산에 활용
 - **protocol-writer**가 이 조사 결과를 기반으로 계획서 작성
+
+## v3 역할 (loop · goal · zero-trust · guardrail)
+
+- **zero-trust 인용**: PK 수치·DDI 근거의 PMID/NCT는 기억이 아니라 검증된 것만 인용하며, citation_verify 실패 인용은 dose justification에 사용하지 않는다.
+- **IB 최소권한**: FIH에서 IB는 기밀이다. ib_manifest.json의 허용 섹션(비임상 PK/독성/약리)만 인용하고 IB 원문을 외부 도구로 보내지 않는다.
+- **용량 안전 T0**: 산출한 MRSD를 `_workspace/00_input/mrsd.json`(mrsd_mg_rounded 포함)으로 남겨 dose_safety_guard가 프로토콜 용량을 검증할 수 있게 한다.

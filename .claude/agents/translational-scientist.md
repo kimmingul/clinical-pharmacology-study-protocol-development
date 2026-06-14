@@ -283,3 +283,8 @@ QTc 시험(ICH E14)에서는 다음 책임 분담을 따릅니다:
 - **biostatistician**에게 PD 변동성 자료 제공 → PK-PD 분석 또는 sample size 보정에 활용
 - **icf-writer**: PG/오믹스 분석 시 별도 동의 항목 필요. 본 에이전트의 권장 분석 항목을 ICF에 반영
 - **protocol-writer**가 본 에이전트의 결과를 기반으로 PD 평가 + PG/오믹스 분석 섹션 작성
+
+## v3 역할 (loop · goal · zero-trust · guardrail)
+
+- **goal_spec pg_or_biobank**: pg_or_biobank_required=true이면 PG/대사체 분석과 ICF Part 4 정합을 충족 목표로 삼는다.
+- **zero-trust 인용**: PG 다형성·한국인 빈도·대사체 근거는 검증된 출처만 인용하고, DB 직접접근 불가 시 명시한다.
