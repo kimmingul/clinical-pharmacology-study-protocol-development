@@ -11,9 +11,9 @@
 | 원문 URL | https://database.ich.org/sites/default/files/ICH_E6(R3)_Step4_FinalGuideline_2025_0106.pdf |
 | 원문 PDF (로컬) | `docs/guidance/ICH_E6(R3)_Step4_FinalGuideline_2025_0106.pdf` |
 | **원문 MD (섹션별)** | **`.claude/references/guidelines/ich/e6_r3_full/`** — 10개 파일 (Introduction + Principles + Annex 1 × 4 + Appendix A/B/C + Glossary) |
-| 마지막 검증일 | 2026-04-14 (PDF 전문 MD 변환 완료) |
+| 마지막 검증일 | 2026-06-14 (Annex 2 상태 재확인) / 2026-04-14 (PDF 전문 MD 변환) |
 | 이전 버전 | E6(R2) — 2016년 (R1 addendum 포함) |
-| 상태 | Step 4 최종본 (Annex 2는 Step 2 초안 단계, 2025년 말 예정) |
+| 상태 | Principles + Annex 1: **Step 4 (2025-01-06)**. Annex 2(상호작용형 임상시험 추가 고려사항 — 분산형/디지털 등): **Step 4 채택 2026-06-03** ([원문](https://database.ich.org/sites/default/files/ICH_E6%28R3%29_Annex%202_Guideline_Step%204_2026_0603_0.pdf)) — 본 파일은 Principles+Annex 1 기준 |
 
 > **본 파일은 요약·빠른 참조용**이다. 정확한 원문 인용·QA 체크리스트 근거가 필요하면 `e6_r3_full/` 하위 파일을 참조:
 > - 프로토콜 QA 기준: `e6_r3_full/07_appendix_b_protocol.md` (B.1~B.16 16개 필수 섹션)
@@ -38,8 +38,8 @@ ICH E6(R3) 문서 구성
 │       ├── Appendix A: 연구자 자료집 (Investigator's Brochure)
 │       ├── Appendix B: 임상시험 계획서 및 계획서 수정 [핵심]
 │       └── Appendix C: 임상시험 필수 기록
-├── Annex 2: 비전통적 개입 임상시험 [Step 2 초안, 미발효]
-│   ← 분산형(DCT), 디지털, 적응형 등
+├── Annex 2: 상호작용형 임상시험 추가 고려사항 [Step 4 채택 2026-06-03]
+│   ← 분산형(DCT), 디지털, 적응형 등 비전통적 설계
 └── 용어집 (Glossary)
     ← "디지털 도구", "전자 서명" 등 신규 용어 포함
 ```
@@ -163,7 +163,7 @@ E6(R3)에서 명문화된 핵심 원칙:
 
 | 구분 | E6(R2) | E6(R3) |
 |------|--------|--------|
-| 문서 구조 | 단일 통합 문서 (addendum 형식) | Principles + Annex 1 + Annex 2 (미발효) |
+| 문서 구조 | 단일 통합 문서 (addendum 형식) | Principles + Annex 1 + Annex 2 (Step 4, 2026-06-03) |
 | 시험 유형 | 전통적 임상시험 중심 | 전통적(Annex 1) + 비전통적(Annex 2) 분리 |
 | GCP 정의 | "계획, 수행, 모니터링, 감사, 기록, 분석 및 보고" | "계획, 개시, 수행, 기록, 감독, 평가, 분석 및 보고"로 확장 |
 | 데이터 거버넌스 | 별도 섹션 없음 | 신설 섹션 (의뢰자-시험자 공유 책임) |
@@ -183,7 +183,7 @@ E6(R3)에서 명문화된 핵심 원칙:
 
 - **데이터 거버넌스 섹션**: 전자 기록, 감사 추적, 컴퓨터 시스템 검증 요건 명문화
 - **비례적 시험 감독**: 시험의 위험도와 복잡성에 따라 절차, 감독, 문서화 수준을 조정
-- **분산형 임상시험(DCT) 지원**: Annex 2에서 상세 다룰 예정이나 Annex 1에서도 원칙 제시
+- **분산형 임상시험(DCT) 지원**: Annex 2(Step 4 채택 2026-06-03)에서 상세 규정하며 Annex 1에서도 원칙 제시
 - **용어집 확장**: "디지털 도구", "전자 서명" 등 신규 용어 정의
 
 ---

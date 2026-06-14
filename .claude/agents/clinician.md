@@ -60,7 +60,7 @@ PubMed에서 아래 키워드 조합으로 검색:
 
 - **임계값 일치 필수**: 계획서 B.6(중단 기준)과 참조 자료(SAE_cases·safety_monitoring_rationale)의 LDH·혈소판 임계값을 **동일한 수치로 표준화**. 불일치는 Major로 지적
 - **응급 처치**: TTP 의심 시 → 즉시 약물 중단 → 혈액내과 자문 → 혈장교환 평가
-- **아나필락시스 대응**: 계획서 본문에 에피네프린 **0.3–0.5 mg IM** 구체 용량·경로 명시 (safety_monitoring_rationale에만 있고 계획서 미반영 빈발)
+- **아나필락시스 대응**: 계획서 본문에 에피네프린 **0.3–0.5 mg IM**(성인, 대퇴 외측, 필요 시 5–15분 간격 반복) 구체 용량·경로 명시 — 근거: AAAAI/WAO Anaphylaxis Practice Parameter, KGCP 응급처치 구비 요건. (safety_monitoring_rationale에만 있고 계획서 미반영 빈발)
 
 ### P2Y12 억제제 일반 (Thienopyridine + Ticagrelor + Cangrelor)
 - 출혈 시간 연장, TIMI Major/Minor 출혈 정의 사용

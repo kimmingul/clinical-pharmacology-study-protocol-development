@@ -155,9 +155,11 @@ GET https://api.pharmgkb.org/v1/data/clinicalAnnotation?view=mostRecent&chemical
 
 ## 3. 약물유전체학 자료
 ### 3.1 시험약 대사 관련 CYP 다형성
-| 효소 | 시험약 기여도 | 주요 대립유전자 | 한국인 빈도 | PM 빈도 |
+| 효소 | 시험약 기여도 | 주요 대립유전자 | 한국인 빈도(범위) | PM 빈도 |
 |------|-----------|-------------|----------|--------|
-| CYP2C19 | Major | *2, *3 | *2 28%, *3 9% | ~15% |
+| CYP2C19 | Major | *2, *3 | *2 ~26–28%, *3 ~9–11% | ~12–15% |
+
+> 빈도는 **점추정이 아닌 범위**로 기재한다(연구·코호트마다 차이). 정확한 한국인 빈도는 개별 reference 파일(`_workspace/01_references/pharmacogenomics/{gene}.md`)에 PubMed 출처(PMID)와 함께 기록하고, 위 표는 빠른 참조용 근사치다.
 
 ### 3.2 표적 유전자 다형성
 ### 3.3 라벨의 PG 권고사항
