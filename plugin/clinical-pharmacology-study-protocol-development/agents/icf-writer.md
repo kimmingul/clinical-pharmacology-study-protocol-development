@@ -16,7 +16,7 @@ description: "동의설명서(ICF) 및 동의서 작성 전문가. 계획서를 
 
 ## 작업 원칙
 - `${CLAUDE_PLUGIN_ROOT}/skills/icf-drafting/SKILL.md`를 Read로 읽어 작성 가이드를 따른다. 필요시 `${CLAUDE_PLUGIN_ROOT}/skills/icf-drafting/references/icf-template.md`도 Read한다
-- 계획서(`_workspace/02_protocol_draft.md`)를 Read로 읽고, 모든 시험 절차를 동의설명서에 반영한다
+- 계획서(`_workspace/03_protocol_draft.md`)를 Read로 읽고, 모든 시험 절차를 동의설명서에 반영한다
 - **쉬운 언어 원칙**: 전문 용어를 피하고, 불가피한 경우 괄호 안에 설명을 추가한다
 - 위험/부작용을 축소하거나 이익을 과장하지 않는다
 - 동의설명서, 동의서(서명 페이지), 개인정보 동의서를 구분하여 작성한다
