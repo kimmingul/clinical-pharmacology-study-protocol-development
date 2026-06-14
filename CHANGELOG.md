@@ -4,10 +4,15 @@ All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/). The detailed design-evolution
 log lives in `CLAUDE.md` (진화 로그); this file tracks user-facing releases.
 
-## [Unreleased] — enterprise-grade hardening
+## [Unreleased]
 
-Merged to `main` via **PR #1** on 2026-06-14 (CI green). Integrates this cycle's
-hardening with parallel work already on `main`; see "Integration" below.
+_No unreleased changes._
+
+## [2.1.0] — 2026-06-14 — enterprise-grade hardening
+
+Released as **v2.1.0** (`plugin.json` / `marketplace.json`). Merged to `main`
+via **PR #1** (CI green). Integrates this cycle's hardening with parallel work
+already on `main`; see "Integration" below.
 
 ### Added
 
