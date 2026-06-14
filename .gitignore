@@ -16,6 +16,9 @@ venv/
 plugin/**/*.zip
 *.zip
 
+# Generated presentation deck (rebuild: python docs/build_presentation_pptx.py)
+*.pptx
+
 # 런타임 워크스페이스 (실행 시 생성/갱신되는 산출물)
 /_workspace/
 
