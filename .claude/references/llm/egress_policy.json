@@ -1,0 +1,17 @@
+{
+  "schema": "egress_policy/v1",
+  "as_of": "2026-06-15",
+  "notes": "데이터 분류 → 허용 provider. 벤더명을 하드코딩하지 않는다('host'=현재 호스트 provider, '*'=검증된 모든 provider). fail_closed=true이면 분류 불명/마커 모호 시 외부 전송 차단. host가 누구든(Claude/Codex/Gemini) 동일하게 동작. 기밀 정책은 sponsor DPA에 따라 allowed_providers를 교체한다.",
+  "fail_closed": true,
+  "default_classification": "SPONSOR_CONFIDENTIAL",
+  "classifications": {
+    "PUBLIC": {"allowed_providers": ["*"], "description": "공개 문헌·일반 지식"},
+    "REGULATORY_PUBLIC": {"allowed_providers": ["*"], "description": "공개 가이드라인·라벨·승인현황"},
+    "SPONSOR_CONFIDENTIAL": {"allowed_providers": ["host"], "description": "의뢰자 비공개(IB 등). 기본 host만."},
+    "SAFETY_CRITICAL": {"allowed_providers": ["host"], "description": "FIH 용량 산출 근거(NOAEL/HED/MRSD/독성). 기본 host만, 결정적 dose_safety_guard 우선."}
+  },
+  "markers": {
+    "SAFETY_CRITICAL": ["NOAEL", "MRSD", "MABEL", "HED", "독성", "tox", "starting dose", "초기 용량", "용량 증량", "dose escalation"],
+    "SPONSOR_CONFIDENTIAL": ["Investigator's Brochure", "IB ", "시험자 자료", "비공개", "confidential", "unpublished", "proprietary"]
+  }
+}
