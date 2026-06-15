@@ -1,12 +1,13 @@
 {
   "schema": "model_profiles/v1",
-  "as_of": "2026-06-15",
+  "as_of": "2026-06-16",
   "staleness_warn_days": 90,
   "sources": [
     "Anthropic / OpenAI / Google / xAI public model docs (as_of date)",
-    "4-model consultation 2026-06-15 (codex 0.139, gemini 0.46, grok 0.2.51, claude opus-4-8)"
+    "4-model consultation 2026-06-15~16 (codex 0.139, gemini 0.46, grok 0.2.51, claude opus-4-8)"
   ],
   "notes": "강점은 코드가 아니라 이 DATA에 둔다. 모델이 진화하면 capability_scores와 resolved_model을 갱신하고 as_of를 올린다. route_select는 점수를 랭킹에 사용하고, 호스트 LLM은 as_of가 staleness_warn_days보다 오래되면 자기 최신 지식으로 재검토하도록 경고한다. 점수는 0-10, 역할별 상대 비교용(절대치 아님).",
+  "resolved_model_note": "resolved_model은 작성 시점(as_of)의 best-known 식별자다. AUTHORITATIVE한 실제 모델은 /llm-health(health_check.py)가 각 CLI에서 보고하는 값이며, 라우팅·provenance는 그 값을 사용한다. 외부 모델은 학습 cutoff 때문에 자기 최신 모델명을 stale하게 답할 수 있으므로 이 파일을 신뢰원으로 둔다.",
   "role_keys": ["authoring", "regulatory_cross_check", "citation_integrity", "biostat_adversarial", "judge_synth"],
   "providers": {
     "anthropic": {
@@ -24,7 +25,7 @@
       "cli": "codex",
       "probe_cmd": ["codex", "exec", "--sandbox", "read-only", "--skip-git-repo-check", "-"],
       "version_cmd": ["codex", "--version"],
-      "resolved_model": "gpt-5-class (codex-cli)",
+      "resolved_model": "gpt-5.5 (OpenAI; codex-cli)",
       "capability_scores": {"authoring": 8, "regulatory_cross_check": 7, "citation_integrity": 7, "biostat_adversarial": 8, "judge_synth": 9},
       "context_window": "large",
       "known_failure_modes": ["verbose structured output"],
@@ -35,7 +36,7 @@
       "cli": "gemini",
       "probe_cmd": ["gemini", "-p"],
       "version_cmd": ["gemini", "--version"],
-      "resolved_model": "gemini-class (gemini-cli)",
+      "resolved_model": "gemini-3-pro (Google; gemini-cli)",
       "capability_scores": {"authoring": 7, "regulatory_cross_check": 9, "citation_integrity": 9, "biostat_adversarial": 5, "judge_synth": 7},
       "context_window": "very large (best for bulk guideline/IB sweep)",
       "known_failure_modes": ["authoring nuance < Claude"],
@@ -46,7 +47,7 @@
       "cli": "grok",
       "probe_cmd": ["grok", "-p"],
       "version_cmd": ["grok", "--version"],
-      "resolved_model": "grok-class (grok-cli)",
+      "resolved_model": "grok-4.3 (xAI; grok-cli)",
       "capability_scores": {"authoring": 6, "regulatory_cross_check": 5, "citation_integrity": 5, "biostat_adversarial": 9, "judge_synth": 6},
       "context_window": "large",
       "known_failure_modes": ["long-form regulatory prose 약함", "단독 host 비권장"],

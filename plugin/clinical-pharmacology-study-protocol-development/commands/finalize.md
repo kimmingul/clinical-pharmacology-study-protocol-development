@@ -25,24 +25,25 @@ WS=_workspace
 PY=${CLAUDE_PLUGIN_ROOT}/scripts/.venv/bin/python      # 없으면 python3
 GOAL=$WS/00_input/goal_spec.json         # 있으면 사용
 
-# (a) doc_lint --strict (+ goal_spec): 섹션 누락(최종화 시 T0)·보존 15년·CI 경계·placeholder
-$PY ${CLAUDE_PLUGIN_ROOT}/scripts/qa/doc_lint.py "$WS/03_protocol_draft.md" --strict \
-    ${GOAL:+--goal-spec "$GOAL"}; LINT=$?
+# Step 1에서 결정한 대상으로 TARGET 설정 (인자에 icf 포함 여부)
+case "$ARGUMENTS" in *icf*) TARGET="$WS/04_icf_draft.md"; IS_ICF=1;; *) TARGET="$WS/03_protocol_draft.md"; IS_ICF=0;; esac
+
+# (a) doc_lint --strict (+ goal_spec): protocol=섹션 누락·보존 15년·CI 경계·placeholder / icf=보존 15년·PIPA·Part 4·placeholder
+$PY ${CLAUDE_PLUGIN_ROOT}/scripts/qa/doc_lint.py "$TARGET" --strict ${GOAL:+--goal-spec "$GOAL"}; LINT=$?
 
 # (b) 채점 (참고용 — score≥90 권장)
-$PY ${CLAUDE_PLUGIN_ROOT}/scripts/qa/doc_lint.py "$WS/03_protocol_draft.md" --score \
-    ${GOAL:+--goal-spec "$GOAL"}
+$PY ${CLAUDE_PLUGIN_ROOT}/scripts/qa/doc_lint.py "$TARGET" --score ${GOAL:+--goal-spec "$GOAL"}
 
-# (c) zero-trust 인용 검증 (네트워크 가능 시 --online, 실패는 unverified로 표시)
-$PY ${CLAUDE_PLUGIN_ROOT}/scripts/qa/citation_verify.py audit \
-    "$WS/03_protocol_draft.md" "$WS/01_research_report.md" --workspace "$WS"
+# (c) zero-trust 인용 검증
+$PY ${CLAUDE_PLUGIN_ROOT}/scripts/qa/citation_verify.py audit "$TARGET" --workspace "$WS"
 
-# (d) FIH 용량 안전 가드 (MRSD JSON 있을 때만 의미; 없으면 skipped)
-$PY ${CLAUDE_PLUGIN_ROOT}/scripts/qa/dose_safety_guard.py "$WS/03_protocol_draft.md" \
-    --mrsd-json "$WS/00_input/mrsd.json" --strict; DOSE=$?
+# (d) FIH 용량 안전 가드 — protocol 대상일 때만 (ICF는 생략)
+DOSE=0
+if [ "$IS_ICF" = "0" ]; then
+  $PY ${CLAUDE_PLUGIN_ROOT}/scripts/qa/dose_safety_guard.py "$TARGET" \
+      --mrsd-json "$WS/00_input/mrsd.json" --strict; DOSE=$?
+fi
 ```
-
-(ICF 대상이면 (a)·(c)를 `04_icf_draft.md`로 바꾸고 (d)는 생략.)
 
 ### Step 3 — 판정 (T0 게이트)
 

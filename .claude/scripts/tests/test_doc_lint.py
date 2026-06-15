@@ -157,3 +157,14 @@ def test_load_goal_spec_missing_returns_none(tmp_path):
     bad = tmp_path / "bad.json"
     bad.write_text("{ not json", encoding="utf-8")
     assert doc_lint.load_goal_spec(str(bad)) is None
+
+
+def test_icf_retention_3year_is_error():
+    # ICF with 보관 기간 3년 must be flagged (statutory min 15년).
+    errs, _warns = doc_lint.lint_icf("개인정보 보관 기간은 최소 3년으로 한다.")
+    assert any("retention" in e.lower() or "15년" in e for e in errs)
+
+
+def test_retention_legal_basis_present():
+    _e = doc_lint._retention_errors("필수문서 보존 기간은 3년으로 한다.")
+    assert _e and "별표 4" in _e[0]

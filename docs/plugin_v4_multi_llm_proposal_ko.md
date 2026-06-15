@@ -2,10 +2,10 @@
 
 | 항목 | 내용 |
 |------|------|
-| 대상 | `clinical-pharmacology-study-protocol-development` (현 v3.0.0 → v4 방향) |
-| 작성일 | 2026-06-15 |
+| 대상 | `clinical-pharmacology-study-protocol-development` (v3.0.0 → **v4.0.0**) |
+| 작성일 | 2026-06-15 (구현 2026-06-16) |
 | 자문(실제 병렬 실행) | **Claude Opus 4.8** · **GPT(codex 0.139)** · **Gemini 0.46** · **Grok 0.2.51** |
-| 상태 | 제안 (검토용) — 구현 전 |
+| 상태 | ✅ **구현 완료 (v4.0.0)** — `scripts/llm/`·`references/llm/`·`/llm-health`·`/review` 패널로 릴리스됨 ([CHANGELOG](../CHANGELOG.md)) |
 
 > **자문 방법**: 동일 프롬프트로 GPT·Gemini·Grok을 병렬 호출하고, Claude(본인)의 독립 설계와 대조했다. 네 관점이 거의 동일한 결론에 수렴했다.
 
