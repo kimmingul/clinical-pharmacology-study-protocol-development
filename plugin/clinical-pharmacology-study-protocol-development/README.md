@@ -19,7 +19,7 @@ FIH, SAD/MAD, DDI(단방향·양방향), BA/BE, FE, QTc, ADME 등 임상약리 P
 | icf-writer | opus | 계획서 기반 동의문서 (Part 1–3 + Part 4 PG/대사체/보관/결과통보) | Phase 10 |
 | qa-reviewer | opus | 다중 리뷰 통합·Critical/Major/Minor 분류·수정 조율 | Phase 9 |
 
-## Commands (7)
+## Commands (8)
 
 | Command | Phase | 기능 |
 |---|---|---|
@@ -28,7 +28,8 @@ FIH, SAD/MAD, DDI(단방향·양방향), BA/BE, FE, QTc, ADME 등 임상약리 P
 | `/synopsis` | 6 | Synopsis 생성. 설계 변형을 인자로 지정(`/synopsis crossover 6x3` 등) |
 | `/compare` | 6 | 여러 Synopsis를 비교표로 제시 |
 | `/protocol` | 8 | Full Protocol 작성 (Synopsis 승인 필수) |
-| `/review` | 9 | 4–5명 병렬 리뷰 + QA 취합 |
+| `/review` | 9 | 4–5명 병렬 리뷰 + QA 취합 + actor-critic 수렴 루프 |
+| `/finalize` | 9.5 | T0 최종 가드레일 (doc_lint --strict + 인용 검증 + 용량 안전) |
 | `/icf` | 10 | 동의문서 작성 (Protocol 필수) |
 
 ## Skills (5)

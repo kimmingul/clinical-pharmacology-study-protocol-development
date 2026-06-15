@@ -1,3 +1,5 @@
+> 🗄️ **[ARCHIVED — 2026-04-06]** 플러그인 전환은 v2.0.0에서 완료되었다. 현행 구조는 `.claude-plugin/`·`plugin/`·`sync_plugin.sh` 및 `CLAUDE.md` 참조. 히스토리 보존용.
+
 # Clinical Pharmacology Study Protocol Development — Plugin Design
 
 프로젝트 레벨 하네스를 Claude Code 플러그인으로 전환하는 설계 문서.

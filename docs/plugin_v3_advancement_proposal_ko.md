@@ -1,5 +1,7 @@
 # 플러그인 고도화 제안서 v3.0.0 — loop · goal · zero-trust · guardrail
 
+> ✅ **구현 완료 (v3.0.0, 2026-06-14)** — 본 제안서의 제안 1·2·3이 모두 구현·머지되었다([CHANGELOG v3.0.0](../CHANGELOG.md), PR #2). 본 문서는 v3.0.0의 설계 근거로 유효하다.
+
 | 항목 | 내용 |
 |------|------|
 | 대상 | `clinical-pharmacology-study-protocol-development` → **v3.0.0** |

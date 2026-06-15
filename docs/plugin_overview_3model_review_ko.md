@@ -1,5 +1,7 @@
 # 플러그인 종합 설명 — 작동원리·프로세스·자료조사·에이전트·출처 (3-모델 리뷰)
 
+> ⚠️ **[HISTORICAL — v2.1.0 기준]** 이 문서는 v2.1.0 시점의 구조를 설명한다. 본문의 에이전트 모델 표(조사=sonnet)·Phase 9 설명은 **v2.1.0 설정**이며, **v3.0.0에서는 전 에이전트 opus + actor-critic 수렴 루프 + zero-trust 검증 + 3-tier 가드레일**로 변경되었다. 현재 구조는 [`docs/plugin_v3_advancement_proposal_ko.md`](plugin_v3_advancement_proposal_ko.md)·[`CLAUDE.md`](../CLAUDE.md)·[`CHANGELOG.md`](../CHANGELOG.md) 참조.
+
 | 항목 | 내용 |
 |------|------|
 | 대상 | `clinical-pharmacology-study-protocol-development` **v2.1.0** |

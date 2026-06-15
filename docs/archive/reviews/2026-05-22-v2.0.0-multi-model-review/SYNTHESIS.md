@@ -1,3 +1,5 @@
+> 🗄️ **[ARCHIVED — v2.0.0 기준, 2026-05-22]** 지적사항 대부분은 v3.0.0에서 해결되었다. 현행 상태는 `CHANGELOG.md`·`docs/plugin_v3_advancement_proposal_ko.md` 참조. 히스토리 보존용.
+
 # 3-Model 협력 리뷰 종합 보고서 — clinical-pharmacology-study-protocol-development
 
 **Date**: 2026-05-22
