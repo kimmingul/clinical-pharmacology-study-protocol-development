@@ -38,9 +38,11 @@
 **출력**: 배경 조사 보고서 → Synopsis → Full Protocol (ICH E6(R3)) → ICF + 개인정보 동의서
 
 **핵심 워크플로우** (10 Phase):
-1. 입력 → 2. 병렬 자료 수집 → 3. ★사용자 검토 게이트★ → 4. 대화형 설계 → 5. 통계 설계 → 6. Synopsis → 7. ★Hard Gate★ → 8. Full Protocol → 9. 다중 리뷰 → 10. ICF (별도 지시)
+1. 입력 → 2. 병렬 자료 수집 → 3. ★사용자 검토 게이트★ → 4. 대화형 설계 → 5. 통계 설계 → 6. Synopsis → 7. ★Hard Gate★ → 8. Full Protocol → 9. 다중 리뷰 + 수렴 루프 → 9.5 최종 가드레일 → 10. ICF (별도 지시)
 
-**필수 명령**: `/research` → `/design` → `/synopsis` → `/protocol` → `/review` → `/icf`
+**필수 명령**: `/research` → `/design` → `/synopsis` → `/protocol` → `/review` → `/finalize` → `/icf`
+
+> **v3.0.0 핵심**: 모든 에이전트 opus, 기계 판독형 **goal_spec**(성공명세), **zero-trust 인용 검증**(`citation_verify`)·외부 fetch provenance(`source_snapshot`)·**용량 안전 가드**(`dose_safety_guard`), **3-tier 가드레일**(T0 차단/T1 권고), Phase 9 **actor-critic 수렴 루프**(Critical=0 & score≥90까지 반복). 설계 근거: [`docs/plugin_v3_advancement_proposal_ko.md`](docs/plugin_v3_advancement_proposal_ko.md).
 
 **자세히는 아래 섹션 참조 ↓**
 
@@ -258,7 +260,8 @@ Metformin과 Rifampin의 DDI 시험 문서를 작성해줘
 /synopsis        # Phase 6
 # (Hard Gate: 명시 승인)
 /protocol        # Phase 8
-/review          # Phase 9
+/review          # Phase 9  (actor-critic 수렴 루프)
+/finalize        # Phase 9.5 (T0 최종 가드레일)
 /icf             # Phase 10
 ```
 
@@ -279,7 +282,8 @@ Metformin과 Rifampin의 DDI 시험 문서를 작성해줘
 | `/synopsis` | 6 | Synopsis 생성 (인자로 변형 지정) | 설계 협의 완료 |
 | `/compare` | 6 | 여러 Synopsis를 비교표로 제시 | Synopsis 2개 이상 |
 | `/protocol` | 8 | Full Protocol 작성 | Synopsis 승인 완료 |
-| `/review` | 9 | 다중 에이전트 리뷰 실행 | Protocol 작성 완료 |
+| `/review` | 9 | 다중 에이전트 리뷰 + **actor-critic 수렴 루프** (Critical=0 & score≥90까지) | Protocol 작성 완료 |
+| `/finalize` | 9.5 | **T0 최종 가드레일** — `doc_lint --strict` + 인용 검증 + 용량 안전 검사 | Protocol/ICF 초안 존재 |
 | `/icf` | 10 | ICF 작성 (동의설명서 + 동의서 + 개인정보 동의서) | Protocol 존재 |
 
 ### Command 사용 예시

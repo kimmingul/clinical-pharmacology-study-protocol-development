@@ -2,9 +2,13 @@
 
 This project generates **regulatory clinical-trial documents** (Protocol, ICF,
 Synopsis) and queries public biomedical APIs. The following policies apply.
-They are partly enforced by tooling and partly by agent instruction; see the
-roadmap (Phase 6) for the planned automated enforcement (validation hooks, CI
-secret scanning).
+They are enforced both by tooling and by agent instruction. As of **v3.0.0**
+the automated enforcement is implemented: a **3-tier guardrail hook**
+(`.claude/hooks/draft_advisory_hook.py` — T0 blocking / T1 advisory),
+deterministic `doc_lint.py` (CI `--strict` gate), independent citation
+verification (`citation_verify.py`), source provenance (`source_snapshot.py`),
+and a dose-safety guard (`dose_safety_guard.py`). CI also runs a secret scanner
+(gitleaks) on every push.
 
 ## Secrets & API keys
 

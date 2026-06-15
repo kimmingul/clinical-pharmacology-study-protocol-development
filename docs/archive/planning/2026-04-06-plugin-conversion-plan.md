@@ -1,3 +1,5 @@
+> 🗄️ **[ARCHIVED — 2026-04-06]** 플러그인 전환은 v2.0.0에서 완료되었다. 현행 구조는 `.claude-plugin/`·`plugin/`·`sync_plugin.sh` 및 `CLAUDE.md` 참조. 히스토리 보존용.
+
 # Plugin Conversion Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

@@ -95,7 +95,7 @@ MCP 서버 없이 WebFetch로 직접 공개 API를 호출. 쿼리 레시피는 `
 - 중간 산출물: `_workspace/` 디렉토리
 - **사용자 검토 게이트 2개**: Phase 3 (자료 조사 후), Phase 7 (Synopsis 승인 — Hard Gate)
 - 부분 재실행 시 하류 의존성 전파
-- QA에서 Critical 발견 시 자동 1회 수정 후 재검토
+- QA(Phase 9)는 **예산형 actor-critic 수렴 루프**(v3.0.0): protocol-writer(actor) ↔ qa-reviewer + `doc_lint` 채점(critic)이 `Critical=0 AND score≥90`까지 반복하되, `max_iterations`/score plateau 시 사람에게 에스컬레이션. synopsis·design_decisions는 불변 입력으로 락
 - ICF는 메인 파이프라인에서 분리. `/icf` 별도 지시로 실행
 - 모든 조사 자료에 reference 필수 (PMID, NCT, URL, 가이드라인 인용)
 - Sample size 계산은 `.claude/scripts/sample_size/` Python 코드로 수행, 코드와 결과를 모두 산출물에 포함
