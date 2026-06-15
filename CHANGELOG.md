@@ -8,6 +8,42 @@ log lives in `CLAUDE.md` (진화 로그); this file tracks user-facing releases.
 
 _No unreleased changes._
 
+## [4.0.0] — 2026-06-16 — Multi-LLM + Multi-Persona 하이브리드 (벤더 중립)
+
+Single-LLM(Multi-Persona) → **Multi-LLM + Multi-Persona 하이브리드**로의 메이저 릴리스.
+4-모델 자문(Claude Opus · GPT/codex · Gemini · Grok)에 기반. 설계 근거:
+`docs/plugin_v4_multi_llm_proposal_ko.md`. **단일-LLM 사용자는 v3와 동작 동등**
+(`multi_llm=false`); 다중 보유자는 환경에 맞는 조합으로 작동.
+
+### Added — 벤더 중립 Multi-LLM 라우팅 (`.claude/scripts/llm/`)
+- **`health_check.py`** + **`/llm-health`** — 각 LLM CLI에 nonce+산술 probe로
+  **로그인/키 실동작** 검증(존재 확인 ❌), 재실행 가능(세션 중 만료 대비), 자동 폴딩.
+- **`route_select.py`** — `health × capability_scores`로 결정적 **벤더 중립** 배정.
+  authoring=host, biostat=Grok 1순위, judge≠author. 호스트는 제안만.
+- **`egress_gate.py`** — **fail-closed** 데이터 분류 게이트. 선언 floor + 마커는
+  상향만. 벤더명 하드코딩 없음(`host`/`*`/literal). 기밀 IB/안전핵심은 호스트 무관 차단.
+- **`ask_model.sh`** — 모든 외부 호출 단일 게이트(egress→dispatch→manifest).
+- 데이터: `.claude/references/llm/{model_profiles,combination_profiles,egress_policy,review_roles}.json`
+  — 강점을 **편집 가능 데이터**로(모델 진화 대응, `as_of`).
+
+### Added — Phase 9 cross-vendor critic 패널
+- **`review_panel.py`** — `build_panel`(역할→비-host 배정) + `synthesize`(결정적
+  우선·출처 태깅·상충 플래그·다수결 ❌) + `_extract_json`(산문 래핑 JSON 회수) +
+  `collect_deterministic`(doc_lint/citation/dose findings 합류) + `fixplan`
+  (synthesis→`qa_fix_plan.md`, 수렴 루프 actor 입력).
+- **`run_review_panel.sh`** — 패널 드라이버(egress 경유). `/review` Step 2.5 +
+  SKILL Phase 9에 배선. 미가용/host 역할·기밀은 host qa-reviewer로 폴딩.
+
+### Changed
+- `/review`·orchestrator Phase 9가 `multi_llm` + routing_plan 존재 시 이종 패널 실행.
+- `plugin.json` / `marketplace.json` 버전 **4.0.0**.
+
+### Verified (live, 실제 4개 CLI)
+- `/llm-health` 4/4 ok; 라우팅 벤더 중립(Grok=biostat); egress fail-closed 허용/차단/상향.
+- Phase 9 라이브 패널(clopidogrel+omeprazole 공개 DDI): Gemini+Grok critic 실호출,
+  **Grok이 Gemini가 놓친 5개 Critical 포착**(이종 교차검증 가치). 결정적 우선이 벤더
+  오판(보존 "3년") 방어. `pytest 146 passed`, ruff clean.
+
 ## [3.0.0] — 2026-06-14 — loop · goal · zero-trust · guardrail
 
 3-모델 리뷰(Claude · Codex 0.139 · Gemini 0.46)에 기반해 최신 에이전트 엔지니어링

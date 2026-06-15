@@ -172,13 +172,16 @@ $PY ${CLAUDE_PLUGIN_ROOT}/scripts/llm/review_panel.py plan --routing "$WS/llm/ro
     --roles ${CLAUDE_PLUGIN_ROOT}/references/llm/review_roles.json \
     --draft "$WS/03_protocol_draft.md" --host "$HOST" --workspace "$WS"
 # 허가약물(공개) 연구는 REGULATORY_PUBLIC로 선언 → cross-vendor 허용. 기밀/안전핵심 마커가 섞이면 egress가 상향·차단.
-${CLAUDE_PLUGIN_ROOT}/scripts/llm/run_review_panel.sh --workspace "$WS" --host "$HOST" --classification REGULATORY_PUBLIC
+# --draft 전달 시 결정적 도구(doc_lint/citation/dose) findings를 먼저 수집해 synthesize에 합류하고 qa_fix_plan.md를 자동 생성한다.
+${CLAUDE_PLUGIN_ROOT}/scripts/llm/run_review_panel.sh --workspace "$WS" --host "$HOST" \
+    --classification REGULATORY_PUBLIC --draft "$WS/03_protocol_draft.md" \
+    ${GOAL:+--goal-spec "$WS/00_input/goal_spec.json"} ${MRSD:+--mrsd-json "$WS/00_input/mrsd.json"}
 ```
 
 - 역할별 적대적 critic(regulatory_cross_check, biostat_adversarial, citation_integrity)이 능력 기반으로 비‑host 벤더에 배정되어 `_workspace/review/vendor_<provider>_<role>.json`을 생성한다(동일 프롬프트 복제 금지 — 역할별 관점 분리).
 - **egress 게이트가 모든 외부 호출을 fail‑closed로 검사** — 기밀 IB/안전핵심(NOAEL/MRSD)은 호스트가 누구든 차단되고 해당 역할은 host qa-reviewer가 대체.
 - 누락/차단된 critic은 SKIPPED로 표기되고 파이프라인은 중단 없이 진행.
-- 산출물 `_workspace/review/review_synthesis.json`은 **결정적 도구(doc_lint/citation_verify/dose_safety) 우선 + 벤더 critic 출처 태깅 + 상충 플래그**(다수결 ❌).
+- 산출물 `_workspace/review/review_synthesis.json`은 **결정적 도구(doc_lint/citation_verify/dose_safety) findings 우선(소스 태깅) + 벤더 critic 출처 태깅 + 상충 플래그**(다수결 ❌). `_workspace/review/qa_fix_plan.md`는 Critical/Major를 actor(protocol-writer)용 수정 계획으로 렌더한다 → **Phase 9 수렴 루프의 다음 반복 입력**.
 
 ### Step 3: QA 취합
 모든 리뷰 완료 후:

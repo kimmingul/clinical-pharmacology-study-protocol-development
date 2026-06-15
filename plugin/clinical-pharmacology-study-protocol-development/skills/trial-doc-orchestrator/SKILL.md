@@ -451,8 +451,10 @@ Agent(
 > $PY ${CLAUDE_PLUGIN_ROOT}/scripts/llm/review_panel.py plan --routing _workspace/llm/routing_plan.json \
 >     --roles ${CLAUDE_PLUGIN_ROOT}/references/llm/review_roles.json --draft _workspace/03_protocol_draft.md \
 >     --host "$(${PY} -c "import json;print(json.load(open('_workspace/llm/routing_plan.json'))['host'])")" --workspace _workspace
-> ${CLAUDE_PLUGIN_ROOT}/scripts/llm/run_review_panel.sh --workspace _workspace --classification REGULATORY_PUBLIC
+> ${CLAUDE_PLUGIN_ROOT}/scripts/llm/run_review_panel.sh --workspace _workspace --classification REGULATORY_PUBLIC \
+>     --draft _workspace/03_protocol_draft.md --goal-spec _workspace/00_input/goal_spec.json
 > ```
+> 패널은 결정적 도구(doc_lint/citation/dose) findings를 먼저 합류시키고 `review_synthesis.json` + `qa_fix_plan.md`(Critical/Major)를 만든다. **`qa_fix_plan.md`는 아래 Step 3 수렴 루프의 actor(protocol-writer) 입력**으로 연결된다.
 
 ```
 Agent(
@@ -503,12 +505,12 @@ Agent(
    불변 입력(변경 금지): _workspace/02_synopsis.md, _workspace/00_input/design_decisions.md
    이전 산출물: _workspace/03_protocol_draft.md를 Read하라.
 
-   먼저 _workspace/review/qa_fix_plan.md에 수정 계획을 Write하라 (각 Critical/Major별 수정 방향).
-   그 다음 아래 항목을 반영하여 _workspace/03_protocol_draft.md를 수정하라.
+   수정 계획: _workspace/review/qa_fix_plan.md가 존재하면(v4 패널 자동 생성 — review_synthesis 기반 Critical/Major) Read하여 그대로 사용하고, 없으면 직접 작성하라.
+   그 다음 아래 우선순위로 _workspace/03_protocol_draft.md를 수정하라.
 
-   doc_lint critical (결정적):
-   - {critical 메시지들}
-   QA 피드백:
+   1) 결정적 도구 findings (doc_lint/citation_verify/dose_safety) — 최우선
+   2) review_synthesis.json의 벤더 critic Critical/Major (출처 태깅)
+   3) QA 피드백:
    - [C-1] {제목}: {내용} → 권고: {수정 방향}
    ...
    설계 결정(synopsis/design_decisions)은 보존하라.

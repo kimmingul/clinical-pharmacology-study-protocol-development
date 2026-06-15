@@ -225,3 +225,51 @@ def test_synthesize_write(tmp_path):
     assert os.path.isfile(path)
     assert json.load(open(path, encoding="utf-8"))["schema"] \
         == "review_synthesis/v1"
+
+
+# --- collect_deterministic + fixplan (followup 1 & 2) -----------------------
+
+def test_collect_deterministic_doc_lint_and_citation(tmp_path):
+    draft = tmp_path / "03_protocol_draft.md"
+    # Missing B.x sections + retention 3년 (doc_lint Critical) + malformed NCT
+    draft.write_text(
+        "# P\n## B.1 General\n필수문서 보존 기간은 3년으로 한다.\n"
+        "유사시험 NCT123 참조.\n", encoding="utf-8")
+    findings = review_panel.collect_deterministic(str(draft))
+    sources = {f["source"] for f in findings}
+    assert "doc_lint" in sources
+    # retention 3년 -> a Critical from doc_lint
+    assert any(f["severity"] == "Critical" and f["source"] == "doc_lint"
+               for f in findings)
+    # malformed NCT (3 digits) -> citation_verify format finding
+    assert any(f["source"] == "citation_verify" for f in findings)
+
+
+def test_collect_deterministic_offline_no_writes(tmp_path):
+    draft = tmp_path / "03_protocol_draft.md"
+    draft.write_text("## B.1 General\nPMID: 12345678 참조.\n", encoding="utf-8")
+    findings = review_panel.collect_deterministic(str(draft))
+    assert isinstance(findings, list)
+    # no review/ dir should be created by collect (it only reads)
+    assert not (tmp_path / "review").exists()
+
+
+def test_fixplan_markdown_lists_critical_major():
+    synth = {
+        "critical": [{"source": "dose_safety", "section": "B.7",
+                      "issue": "용량 > MRSD", "recommendation": "감량"}],
+        "major": [{"source": "google:regulatory_cross_check", "section": "B.1",
+                   "issue": "기관 정보 누락"}],
+        "minor": [],
+    }
+    md = review_panel.fixplan_markdown(synth)
+    assert "Critical (1)" in md and "Major (1)" in md
+    assert "dose_safety" in md and "용량 > MRSD" in md
+    assert "감량" in md
+
+
+def test_write_fixplan(tmp_path):
+    md = review_panel.fixplan_markdown({"critical": [], "major": [], "minor": []})
+    path = review_panel.write_fixplan(md, str(tmp_path))
+    assert os.path.isfile(path)
+    assert path.endswith("qa_fix_plan.md")

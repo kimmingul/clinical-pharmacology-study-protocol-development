@@ -40,5 +40,10 @@
 - `ruff check .claude/scripts/llm/` → clean
 - 산출물: `_workspace/review/vendor_*.json`, `review_synthesis.json`, `llm/review_panel_plan.json`
 
+## 후속 1·2 (결정적 합류 + 수렴 루프 피드백)
+- **Followup 1 — 결정적 findings 합류**: `review_panel.py deterministic`가 doc_lint/citation_verify/dose_safety를 실행해 `deterministic_findings.json`을 만들고 synthesize에 **최우선**으로 합류(`run_review_panel.sh --draft`가 자동 호출).
+- **Followup 2 — 수렴 루프 피드백**: `review_panel.py fixplan`이 `review_synthesis.json` → `qa_fix_plan.md`(Critical 5 + Major 14, 출처·권고 포함)를 렌더 → Phase 9 actor(protocol-writer) 다음 반복 입력으로 배선.
+- **"결정적 우선·다수결 없음" 가치 실증**: Gemini citation critic이 보존기간을 "3년"이라 **잘못** 주장(Major)했으나, 결정적 doc_lint(15년 KGCP, 의약품등의 안전에 관한 규칙 별표 4)가 우선이므로 qa-reviewer/actor는 doc_lint를 채택한다 — 벤더 critic의 오판을 결정적 앵커가 방어.
+
 ## 결론
-Phase 9 actor-critic 루프에 이종 벤더 critic 패널이 **실제 GPT/Gemini/Grok 호출로 작동**함을 확인. 결정적 도구 우선 + 출처 태깅 + 그레이스풀 폴딩 + egress fail-closed가 모두 동작. 다음: 결정적 findings(doc_lint/citation/dose)를 `--deterministic`로 합류시키고 수렴 루프 반복에 synthesis를 피드백.
+Phase 9 actor-critic 루프에 이종 벤더 critic 패널 + 결정적 합류 + fixplan 피드백이 **실제 GPT/Gemini/Grok 호출로 작동**함을 확인. 결정적 우선 + 출처 태깅 + 그레이스풀 폴딩 + egress fail-closed + 수렴 루프 연결까지 완성.
