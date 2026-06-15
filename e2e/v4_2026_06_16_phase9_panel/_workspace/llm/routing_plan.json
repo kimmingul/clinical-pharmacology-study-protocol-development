@@ -1,0 +1,45 @@
+{
+  "schema": "llm_routing/v1",
+  "host": "anthropic",
+  "available": [
+    "anthropic",
+    "google",
+    "openai",
+    "xai"
+  ],
+  "multi_llm": true,
+  "assignment": {
+    "authoring": "anthropic",
+    "regulatory_cross_check": "google",
+    "citation_integrity": "google",
+    "biostat_adversarial": "xai",
+    "judge_synth": "openai"
+  },
+  "alternatives": {
+    "authoring": [
+      "openai",
+      "google"
+    ],
+    "regulatory_cross_check": [
+      "anthropic",
+      "openai"
+    ],
+    "citation_integrity": [
+      "openai",
+      "anthropic"
+    ],
+    "biostat_adversarial": [
+      "openai",
+      "anthropic"
+    ],
+    "judge_synth": [
+      "google",
+      "xai"
+    ]
+  },
+  "as_of": "2026-06-15",
+  "stale_warning": false,
+  "notes": [
+    "citation_integrity: deterministic-first (citation_verify.py); LLM google assists only"
+  ]
+}

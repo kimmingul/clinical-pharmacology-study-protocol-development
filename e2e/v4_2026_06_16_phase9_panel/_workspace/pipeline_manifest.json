@@ -1,0 +1,76 @@
+{
+  "schema": "pipeline_manifest/v1",
+  "harness_version": "3.0.0",
+  "trial": "",
+  "created_utc": "2026-06-15T15:16:12+00:00",
+  "phases": [
+    {
+      "phase": "llm-call",
+      "agent": "ask_model:google",
+      "model": "google",
+      "timestamp_utc": "2026-06-15T15:16:12+00:00",
+      "inputs": [
+        {
+          "path": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/panel/prompt_google_regulatory_cross_check.txt",
+          "sha256": "46ac41500ac053887811fa47f557283ad326b75ec20891002e53a28588382063"
+        }
+      ],
+      "output": {
+        "path": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/vendor_google_regulatory_cross_check.json",
+        "sha256": "4340a3b09ea46adf537cf3f4cf8e1a132842b0287391abbe6267f58df979ab25"
+      },
+      "note": "vendor=google host=anthropic egress=ok"
+    },
+    {
+      "phase": "llm-call",
+      "agent": "ask_model:google",
+      "model": "google",
+      "timestamp_utc": "2026-06-15T15:17:39+00:00",
+      "inputs": [
+        {
+          "path": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/panel/prompt_google_regulatory_cross_check.txt",
+          "sha256": "46ac41500ac053887811fa47f557283ad326b75ec20891002e53a28588382063"
+        }
+      ],
+      "output": {
+        "path": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/vendor_google_regulatory_cross_check.json",
+        "sha256": "aeb8f636a845511e554fedf4d68bd138ca98a66de90696662833a3a154da559a"
+      },
+      "note": "vendor=google host=anthropic egress=ok"
+    },
+    {
+      "phase": "llm-call",
+      "agent": "ask_model:xai",
+      "model": "xai",
+      "timestamp_utc": "2026-06-15T15:18:28+00:00",
+      "inputs": [
+        {
+          "path": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/panel/prompt_xai_biostat_adversarial.txt",
+          "sha256": "2d94abb28b50f2992f1a547662946c4e78ccbc77548e42a26dba19b06bb10399"
+        }
+      ],
+      "output": {
+        "path": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/vendor_xai_biostat_adversarial.json",
+        "sha256": "0245519d844e4dc6f5f3618ba3e10ecf3b5ee713a72d367648a2bb7a10f66072"
+      },
+      "note": "vendor=xai host=anthropic egress=ok"
+    },
+    {
+      "phase": "llm-call",
+      "agent": "ask_model:google",
+      "model": "google",
+      "timestamp_utc": "2026-06-15T15:19:16+00:00",
+      "inputs": [
+        {
+          "path": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/panel/prompt_google_citation_integrity.txt",
+          "sha256": "fde7b04cc58c1fb4293d2e41662d04dc671d8a1cae2d23e82424c355d64c6fb6"
+        }
+      ],
+      "output": {
+        "path": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/vendor_google_citation_integrity.json",
+        "sha256": "9096fe55c20d0fe90d08c969279b4fbadd5244f8e7531000d7b1937d076207ea"
+      },
+      "note": "vendor=google host=anthropic egress=ok"
+    }
+  ]
+}

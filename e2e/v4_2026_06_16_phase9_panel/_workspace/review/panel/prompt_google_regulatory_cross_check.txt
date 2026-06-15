@@ -1,0 +1,77 @@
+당신은 규제 심사관이다. 아래 임상시험 계획서를 ICH E6(R3) Appendix B 16개 섹션(B.1~B.16) 충족, MFDS/FDA/EMA 정합, 헬싱키 선언·KGCP·PIPA·생명윤리법 준수, 규제 용어 정확성 관점에서 **적대적으로** 검토하라. 누락·미충족·모호한 규제 표현을 찾아내라. 통과시키는 것이 목적이 아니라 결함을 찾는 것이 목적이다.
+
+Return ONLY a JSON object, no prose: {"role":"<role>","verdict":"pass|concerns|fail","findings":[{"severity":"Critical|Major|Minor","section":"<B.x or name>","issue":"<concrete problem>","evidence":"<why; cite rule/guideline if regulatory>","recommendation":"<fix>"}]}
+
+=== PROTOCOL DRAFT ===
+# 임상시험 계획서 — Clopidogrel과 Omeprazole의 약물상호작용 시험 (초안 v0)
+
+건강한 성인 자원자를 대상으로 omeprazole이 clopidogrel 활성대사체의 약동학에
+미치는 영향을 평가하는 공개, 무작위, 2×2 교차 시험.
+
+## B.1 General Information
+- 계획서 제목: Clopidogrel–Omeprazole DDI 시험
+- 계획서 번호: CLO-OME-DDI-001, 버전 0.1, 2026-06-15
+- 의뢰자: [의뢰자명]
+
+## B.2 Background Information
+Clopidogrel은 CYP2C19에 의해 활성대사체로 전환되는 전구약물이다. Omeprazole은
+CYP2C19 저해제로, 병용 시 clopidogrel 활성대사체 노출이 감소할 수 있다
+(PMID: 19915222, NCT00352877 참조). 투여 경로는 경구이며 용량 근거는 라벨에 따른다.
+
+## B.3 Trial Objectives and Purpose
+1차 목적: omeprazole 병용 시 clopidogrel 활성대사체 AUC·Cmax 변화 평가.
+Estimand: 건강 성인에서 병용/단독 간 활성대사체 노출비(GMR).
+
+## B.4 Trial Design
+공개, 무작위, 2×2 교차. 1차 평가변수: clopidogrel 활성대사체 AUC0-last, Cmax.
+무작위 배정으로 순서 효과를 균형화한다. 기간 간 휴약기(washout)는 최소 14일 이상으로 한다.
+Clopidogrel 모약물(반감기 약 6시간) 및 활성대사체(반감기 약 30분), omeprazole(반감기 약 0.5–1시간)의 PK
+잔류는 짧으나, clopidogrel의 비가역적 혈소판 저해 및 omeprazole의 CYP2C19 저해 효소 회복에 수일이 소요되는 점과
+PK carry-over 방지를 고려하여 보수적으로 최소 14일 이상의 휴약기를 적용한다.
+
+## B.5 Selection of Participants
+선정: 만 19–45세 건강 성인. 제외: CYP2C19 PM, 위장관 질환, 출혈 위험.
+
+## B.6 Discontinuation of Trial Intervention and Participant Withdrawal
+중단 기준: 중대한 이상반응, 동의 철회. 탈락 시 추적관찰을 수행한다.
+
+## B.7 Treatment and Interventions for Participants
+Clopidogrel 300 mg 부하 후 75 mg, omeprazole 80 mg. 병용약물은 제한한다.
+
+## B.8 Assessment of Efficacy
+약동학 평가가 1차 변수이며 GMR로 상호작용 정도를 판정한다.
+
+## B.9 Assessment of Safety
+활력징후, 출혈 증상, 임상검사로 안전성을 평가한다. AE/SAE를 기록한다.
+
+## B.10 Statistical Considerations
+혼합효과 모형으로 log-변환 AUC·Cmax를 분석하고 병용/단독 기하평균비(GMR)의 90% 신뢰구간을 제시한다.
+약물상호작용의 동등성(no-effect) 판정 경계는 90% 신뢰구간 80.00–125.00%로 한다. 즉, clopidogrel 활성대사체
+AUC·Cmax의 병용/단독 GMR에 대한 90% 신뢰구간이 80.00–125.00% 범위 내에 완전히 포함되면 omeprazole의
+유의한 영향이 없는 것으로 판정한다(MFDS/FDA DDI no-effect 기준).
+표본수는 활성대사체 개체내 변동을 가정하여 산출한다.
+
+## B.11 Direct Access to Source Records
+의뢰자·규제당국·IRB의 원본 자료 접근을 허용한다.
+
+## B.12 Quality Control and Quality Assurance
+모니터링 계획에 따라 QC·QA를 수행한다. 필수문서의 보존에 관한 사항은 B.14에 기술한다.
+
+## B.13 Ethics
+헬싱키 선언과 KGCP를 준수하며 IRB 승인 후 시행한다.
+
+## B.14 Data Handling and Record Keeping
+모든 자료는 CRF(증례기록서)와 원자료(source data)에 정확히 기록하고, 전자자료 시스템 사용 시 접근 권한 통제와
+변경 이력을 남기는 감사추적(audit trail)을 유지한다. 동의서, CRF, 원자료를 포함한 임상시험 관련 모든 필수 문서는
+임상시험 종료 후 최소 15년간 보존한다(의약품등의 안전에 관한 규칙 별표 4, KGCP). 보존 기간 중 자료의 무결성과
+판독 가능성을 유지하며, 이관·폐기 시 의뢰자의 사전 서면 동의를 받는다.
+
+## B.15 Financing and Insurance
+본 임상시험의 비용은 의뢰자가 부담한다. 의뢰자는 시험 참여로 인한 시험대상자의 건강상 피해를 보상하기 위하여
+약사법 시행규칙 제24조에 따라 시험대상자 단체 보험에 가입하며, 보상 절차는 별도의 보상 규약 및 동의설명서에
+기술한다. 연구비 지급 및 이해상충에 관한 사항은 관련 계약서에 따른다.
+
+## B.16 Publication Policy
+시험 결과는 통계분석 완료 후 의뢰자와 시험자가 협의하여 학술지 게재 또는 학회 발표 등을 통해 공표한다.
+긍정·부정 결과와 무관하게 결과를 공개하며, 저자 자격은 ICMJE 기준을 따른다. 본 임상시험은 시행 전
+공개 등록(ClinicalTrials.gov 등)을 원칙으로 한다.

@@ -1,0 +1,34 @@
+{
+  "role": "QA Reviewer",
+  "verdict": "concerns",
+  "findings": [
+    {
+      "severity": "Major",
+      "section": "B.7 (Treatment and Interventions)",
+      "issue": "용량 설정 근거와 실제 기술된 용량 간의 불일치",
+      "evidence": "B.2에서는 용량 근거를 '라벨(label)'에 따른다고 명시하였으나, B.7에서는 Omeprazole 80mg을 투여하는 것으로 기술됨. Omeprazole의 일반적인 허가 용량은 1일 20-40mg이며, 80mg은 일반적인 라벨 범위를 초과하는 고용량이므로 '라벨에 따른다'는 기술과 배치됨.",
+      "recommendation": "B.2의 용량 근거를 'DDI 평가를 위한 최대 저해 효과 유도' 등의 과학적 근거로 수정하거나, 용량을 허가 범위 내로 조정하십시오."
+    },
+    {
+      "severity": "Major",
+      "section": "B.14 (Data Handling and Record Keeping)",
+      "issue": "법적 문서 보존 기간에 대한 잘못된 인용 및 단정",
+      "evidence": "본문에 '최소 15년간 보존'하며 그 근거로 '의약품 등의 안전에 관한 규칙 별표 4(KGCP)'를 들고 있음. 그러나 해당 규정은 일반적으로 품목허가일로부터 3년(또는 시험 종료 후 5년)을 최소 기간으로 정함. 15년은 인용된 법령의 실제 내용과 일치하지 않는 과도한 단정임.",
+      "recommendation": "KGCP 규정에 따른 실제 법적 보존 기간(품목허가일로부터 3년 등)으로 수정하거나, 15년이 의뢰자 내부 정책(SOP)임을 명시하십시오."
+    },
+    {
+      "severity": "Minor",
+      "section": "B.10 (Statistical Considerations)",
+      "issue": "DDI No-effect 경계값 설정에 대한 임상적 근거 제시 미흡",
+      "evidence": "Clopidogrel 활성대사체의 노출 감소는 임상적 효능(혈소판 억제)과 직결됨. MFDS/FDA DDI 가이드라인에 따르면 'no-effect boundary'는 해당 약물의 치료역과 임상적 유의성에 기반해야 함. 단순히 BE 기준인 80-125%를 DDI 판정 기준으로 단정한 것은 근거가 부족함.",
+      "recommendation": "80.00-125.00% 범위를 채택한 임상적 타당성을 기술하거나, Clopidogrel의 유효성 유지에 필요한 최소 노출 변화 범위를 고려하여 재설정하십시오."
+    },
+    {
+      "severity": "Minor",
+      "section": "B.4 (Trial Design)",
+      "issue": "생리학적 회복 기간 주장에 대한 근거 문헌 누락",
+      "evidence": "Clopidogrel의 비가역적 혈소판 저해 회복 및 Omeprazole 중단 후 CYP2C19 활성 회복에 수일이 소요된다는 설명은 14일 washout의 핵심 근거이나, 이에 대한 구체적인 문헌(예: PMID)이나 데이터가 누락됨.",
+      "recommendation": "혈소판의 생애주기(약 10일) 및 Omeprazole의 효소 저해 가역성/회복 시간에 관한 참고문헌을 추가하십시오."
+    }
+  ]
+}

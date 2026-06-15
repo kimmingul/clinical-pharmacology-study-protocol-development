@@ -445,6 +445,15 @@ Agent(
 
 **Step 2: QA 취합**
 
+> **Multi-LLM 패널 (v4, 조건부)**: `_workspace/llm/routing_plan.json`이 있고 `multi_llm=true`이면, qa-reviewer 호출 **전에** 이종 벤더 critic 패널을 실행하여 `review_synthesis.json`을 만든다(상세: `.claude/commands/review.md` Step 2.5). 없으면 단일‑LLM(Claude)로 진행(v3 동등). 기밀/안전핵심은 egress 게이트가 차단하고 host qa-reviewer가 해당 역할을 대체한다.
+> ```bash
+> PY=.claude/scripts/.venv/bin/python
+> $PY .claude/scripts/llm/review_panel.py plan --routing _workspace/llm/routing_plan.json \
+>     --roles .claude/references/llm/review_roles.json --draft _workspace/03_protocol_draft.md \
+>     --host "$(${PY} -c "import json;print(json.load(open('_workspace/llm/routing_plan.json'))['host'])")" --workspace _workspace
+> .claude/scripts/llm/run_review_panel.sh --workspace _workspace --classification REGULATORY_PUBLIC
+> ```
+
 ```
 Agent(
   description: "리뷰 취합 및 우선순위 분류",
@@ -452,6 +461,7 @@ Agent(
   name: "qa-reviewer",
   prompt: "먼저 .claude/agents/qa-reviewer.md를 Read하여 역할과 원칙을 숙지하라.
 그 다음 .claude/skills/regulatory-review/SKILL.md를 Read하여 'QA 취합 절차' 섹션을 따르라.
+존재하면 _workspace/review/review_synthesis.json(v4 이종 벤더 critic 취합)도 Read하여 결정적 도구 우선 + 출처 태깅으로 반영하라.
 
 다음 파일들을 모두 Read하라:
 - _workspace/review/review_clinical_pharmacologist.md

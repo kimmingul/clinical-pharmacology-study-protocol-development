@@ -160,6 +160,26 @@ PD/오믹스 배경: _workspace/01_research_ts.md가 존재하면 Read하라.
 
 > **시험 유형이 BE/FE인 경우** translational-scientist는 호출하지 않는다 (PG/PD 의미 낮음).
 
+### Step 2.5: Multi-LLM cross-vendor 패널 (v4, 조건부)
+
+`_workspace/llm/routing_plan.json`이 존재하고 `multi_llm=true`이면, 위 Claude 페르소나 리뷰에 더해 **이종 벤더 critic 패널**을 실행한다. 없으면 이 단계를 건너뛰고 단일‑LLM(Claude) 리뷰만으로 진행한다(v3 동등).
+
+```bash
+PY=.claude/scripts/.venv/bin/python   # 없으면 python3
+WS=_workspace; HOST=$(${PY} -c "import json;print(json.load(open('$WS/llm/routing_plan.json'))['host'])" 2>/dev/null || echo anthropic)
+# (선행: /llm-health로 health.json·routing_plan.json 생성)
+$PY .claude/scripts/llm/review_panel.py plan --routing "$WS/llm/routing_plan.json" \
+    --roles .claude/references/llm/review_roles.json \
+    --draft "$WS/03_protocol_draft.md" --host "$HOST" --workspace "$WS"
+# 허가약물(공개) 연구는 REGULATORY_PUBLIC로 선언 → cross-vendor 허용. 기밀/안전핵심 마커가 섞이면 egress가 상향·차단.
+.claude/scripts/llm/run_review_panel.sh --workspace "$WS" --host "$HOST" --classification REGULATORY_PUBLIC
+```
+
+- 역할별 적대적 critic(regulatory_cross_check, biostat_adversarial, citation_integrity)이 능력 기반으로 비‑host 벤더에 배정되어 `_workspace/review/vendor_<provider>_<role>.json`을 생성한다(동일 프롬프트 복제 금지 — 역할별 관점 분리).
+- **egress 게이트가 모든 외부 호출을 fail‑closed로 검사** — 기밀 IB/안전핵심(NOAEL/MRSD)은 호스트가 누구든 차단되고 해당 역할은 host qa-reviewer가 대체.
+- 누락/차단된 critic은 SKIPPED로 표기되고 파이프라인은 중단 없이 진행.
+- 산출물 `_workspace/review/review_synthesis.json`은 **결정적 도구(doc_lint/citation_verify/dose_safety) 우선 + 벤더 critic 출처 태깅 + 상충 플래그**(다수결 ❌).
+
 ### Step 3: QA 취합
 모든 리뷰 완료 후:
 ```
@@ -177,9 +197,10 @@ Agent(
 - _workspace/review/review_biostatistician.md
 - _workspace/review/review_clinician.md
 - _workspace/review/review_translational_scientist.md (존재하면 — BE/FE 외 시험)
+- _workspace/review/review_synthesis.json (존재하면 — v4 Multi-LLM 패널 취합: 결정적 도구 우선 + 벤더 critic 출처 태깅 + 상충)
 
-참여한 4-5명의 리뷰를 취합하여 Critical/Major/Minor로 분류하라.
-리뷰어 간 상충 의견이 있으면 양쪽 근거를 비교하여 기록하라.
+참여한 4-5명의 리뷰(+ 존재 시 이종 벤더 critic)를 취합하여 Critical/Major/Minor로 분류하라.
+결정적 도구 결과(doc_lint/citation_verify/dose_safety)를 최우선으로 하고, 리뷰어/critic 간 상충 의견은 양쪽 근거를 비교하여 기록하라(다수결로 결정하지 말 것).
 
 산출물을 _workspace/review/qa_review_report.md에 Write하라."
 )
