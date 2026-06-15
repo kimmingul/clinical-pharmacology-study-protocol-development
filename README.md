@@ -581,6 +581,79 @@ qa-reviewer가 4개 리뷰를 취합하여 아래 기준으로 분류합니다:
 
 ---
 
+## Multi-LLM 사용법 (v4)
+
+**Single-LLM + Multi-Persona → Multi-LLM + Multi-Persona 하이브리드.** 보유한 Tier‑1 LLM(Claude·GPT·Gemini·Grok)을 능력 기반으로 조합해 **이종 교차검증**으로 품질을 높입니다. **단일 LLM만 있으면 v3와 동작이 동일**하므로(아무 설정 불필요), 추가 LLM 보유자만 켜면 됩니다.
+
+> 핵심 원칙: **작성은 단일(호스트), 검증은 다중.** 작성기·기밀 IB 처리는 호스트가 전담하고, 외부 벤더는 **검증/critic 전용**입니다. 강점은 코드가 아니라 `.claude/references/llm/*.json` **데이터**에 있어 모델이 진화하면 그 파일만 갱신합니다.
+
+### 1) 보유 LLM 점검 — `/llm-health`
+
+각 LLM CLI(`claude`/`codex`/`gemini`/`grok`)에 **실제 프롬프트(nonce+산술)를 보내** 로그인·API 키가 진짜 동작하는지 확인하고(존재 확인 ❌), 능력 기반 최적 조합을 **제안**합니다.
+
+```bash
+/llm-health            # 보유 LLM probe → health.json + 최적 조합 제안(사용자 확정)
+/llm-health --refresh  # 세션 중 로그인이 풀렸을 때 재실행 → 라우팅 갱신·자동 폴딩
+```
+
+- 산출: `_workspace/llm/health.json`(`ok|auth_fail|timeout|missing`), `routing_plan.json`(능력 기반 배정).
+- CLI가 깔려 있어도 **키가 무효면 사용하지 않습니다**(false‑positive 방지). 호출 실패 시 해당 벤더는 자동 제외되고 차순위로 폴딩됩니다.
+
+### 2) 벤더 중립 조합 테이블
+
+보유 조합에 따라 사전 정의된 역할 배정이 자동 선택됩니다(호스트가 누구든 동일 — Codex/Gemini CLI에서 호스팅해도 작동). `authoring`은 데이터 유출·컨텍스트 비용 최소화를 위해 **항상 호스트**, 나머지는 능력 기반 best‑available:
+
+| 보유 조합 | 작성 | Phase 9 critic | 특화 |
+|---|---|---|---|
+| **{Claude}** | Opus 전 persona | — | 결정적 도구만 (**= v3**) |
+| **{Claude+GPT}** | host | + GPT | 규제/QA·통계·traceability |
+| **{Claude+Gemini}** | host | + Gemini | 가이드라인 bulk·citation |
+| **{Claude+GPT+Gemini}** | host | 3인 패널 | GPT 결함분류 + Gemini 인용 |
+| **{+Grok}** | host | + **Grok** | **biostat 반박·red‑team** |
+
+> 역할 1순위(최신 능력 기준): regulatory_cross_check=**Gemini** · citation_integrity=**`citation_verify.py`(결정적)→Gemini** · biostat_adversarial=**Grok** · judge=**비‑작성 벤더(GPT 우선)**. `protocol-writer`·`icf-writer`·FIH IB·MRSD는 **항상 호스트**.
+
+### 3) 켜고 끄기 (전체 / Phase별)
+
+`_workspace/00_input/goal_spec.json`의 `multi_llm` 블록으로 제어합니다:
+
+```json
+"multi_llm": { "enabled": true, "host": "anthropic", "phase_overrides": { "9": true, "2": false } }
+```
+
+- `enabled:false` → 순수 Multi‑Persona(v3 동등). `/review --multi-llm off`로 일회성 비활성도 가능.
+- 미설정/`routing_plan.json` 부재 → 자동으로 단일‑LLM.
+
+### 4) 안전 — 기밀 데이터는 외부로 안 나갑니다 (fail‑closed)
+
+모든 외부 호출은 `ask_model.sh` 단일 게이트를 거치고, `egress_gate.py`가 데이터를 분류합니다:
+
+| 분류 | 외부 벤더 |
+|---|---|
+| PUBLIC / REGULATORY_PUBLIC (선언 시) | 허용 |
+| **SPONSOR_CONFIDENTIAL** (IB 등) | **호스트만** |
+| **SAFETY_CRITICAL** (NOAEL·MRSD·독성) | **호스트만** |
+
+- **선언 floor + 마커는 상향만**: 허가약물 공개 연구를 `REGULATORY_PUBLIC`로 선언하면 cross‑vendor가 가능하지만, 본문에 NOAEL이 섞이면 자동으로 `SAFETY_CRITICAL`로 상향되어 차단됩니다.
+- FIH(신약·기밀 IB)는 호스트 단독 유지. 벤더명은 정책 데이터로만 지정(하드코딩 없음).
+
+### 5) Phase 9 이종 critic 패널
+
+`/review`(또는 전체 파이프라인 Phase 9)에서 `multi_llm`이 켜져 있으면, Claude 페르소나 리뷰에 더해 **역할별 적대적 critic**이 비‑호스트 벤더에서 실행됩니다.
+
+```bash
+/llm-health            # (선행) 라우팅 확정
+/review                # Step 2.5에서 자동으로 cross-vendor 패널 실행
+```
+
+- 산출 `_workspace/review/review_synthesis.json` — **결정적 도구(doc_lint/citation_verify/dose_safety) 우선 + 벤더 critic 출처 태깅 + 상충 플래그**(다수결 ❌).
+- `_workspace/review/qa_fix_plan.md`(Critical/Major) → **수렴 루프의 다음 수정 입력**.
+- 미가용·차단된 critic은 SKIPPED, host qa-reviewer가 해당 역할 대체 — 파이프라인은 중단 없이 진행.
+
+> **왜 이종인가**: 같은 모델 자기검증은 자신의 오류를 눈감습니다. 실증에서 **Grok이 Gemini가 놓친 5개 Critical(표본수 공백 등)을 포착**했고, 반대로 결정적 도구가 Gemini의 보존기간 오판("3년")을 방어했습니다.
+
+---
+
 ## 사용자 검토 게이트
 
 워크플로우에 두 개의 명시적 사용자 검토 게이트가 있습니다:
