@@ -298,16 +298,16 @@ def print_mrsd_result(result: MRSDResult) -> None:
     print(f"\n{sep}")
     print("  MRSD Calculation (NOAEL -> HED -> MRSD)")
     print(sep)
-    print(f"\n  Step 1: NOAEL")
+    print("\n  Step 1: NOAEL")
     print(f"    Species:          {result.species}")
     print(f"    NOAEL:            {result.noael_mg_kg} mg/kg")
-    print(f"\n  Step 2: HED (Body Surface Area scaling)")
+    print("\n  Step 2: HED (Body Surface Area scaling)")
     print(f"    Conversion factor (Km_human/Km_{result.species}): "
           f"1/{BSA_CONVERSION_FACTORS.get(result.species.lower(), '?')}")
     print(f"    HED = {result.noael_mg_kg} / "
           f"{BSA_CONVERSION_FACTORS.get(result.species.lower(), '?')} "
           f"= {result.hed_mg_kg} mg/kg")
-    print(f"\n  Step 3: MRSD (with safety factor)")
+    print("\n  Step 3: MRSD (with safety factor)")
     print(f"    Safety factor:    1/{int(result.safety_factor)}")
     print(f"    MRSD = {result.hed_mg_kg} / {int(result.safety_factor)} "
           f"= {result.mrsd_mg_kg} mg/kg")
@@ -327,8 +327,8 @@ def print_mabel_result(result: MABELResult) -> None:
     print(f"  Target occupancy:   {result.target_occupancy * 100:.0f}%")
     print(f"  MABEL = {result.target_occupancy} x {result.ec50} / "
           f"(1 - {result.target_occupancy}) = {result.mabel}")
-    print(f"\n  Note: MABEL should be further refined using integrated")
-    print(f"  PK/PD modelling and cross-species pharmacology data.")
+    print("\n  Note: MABEL should be further refined using integrated")
+    print("  PK/PD modelling and cross-species pharmacology data.")
     print(f"\n{sep}\n")
 
 

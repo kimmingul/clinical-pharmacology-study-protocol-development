@@ -248,7 +248,7 @@ def print_result(
         else:
             print(f"    {key:30s} = {value}")
 
-    print(f"\n  Results (evaluable):")
+    print("\n  Results (evaluable):")
     print(f"    {'N per group/sequence':30s} = {n_per_group}")
     print(f"    {'N total':30s} = {n_total}")
 
