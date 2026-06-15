@@ -1,0 +1,36 @@
+{
+  "schema": "combination_profiles/v1",
+  "as_of": "2026-06-15",
+  "notes": "subset별 기본 역할 플랜(presets). 고정 정답이 아니라 출발점이며, route_select가 model_profiles.capability_scores × health(status=ok)로 최종 랭킹·배정한다. host_default_role은 데이터 egress·context 단편화 최소화를 위해 authoring을 호스트에 기본 배정한다(비기밀 시 override 가능).",
+  "roles": ["authoring", "regulatory_cross_check", "citation_integrity", "biostat_adversarial", "judge_synth"],
+  "host_default_role": "authoring",
+  "judge_must_differ_from_author": true,
+  "deterministic_first": ["doc_lint", "citation_verify", "dose_safety_guard"],
+  "phase_map": {
+    "2": ["regulatory_cross_check", "citation_integrity"],
+    "8": ["authoring"],
+    "9": ["regulatory_cross_check", "biostat_adversarial", "citation_integrity", "judge_synth"]
+  },
+  "presets": {
+    "single": {
+      "applies_to_size": 1,
+      "description": "단일 LLM = Multi-Persona only (v3 동등). 모든 역할을 host가 수행, 외부 critic 없음.",
+      "multi_llm": false
+    },
+    "host_plus_one": {
+      "applies_to_size": 2,
+      "description": "host 작성 + 비-host 1개를 이종 critic으로. 역할은 비-host의 최고 점수 역할에 배정.",
+      "multi_llm": true
+    },
+    "host_plus_panel": {
+      "applies_to_size": 3,
+      "description": "host 작성 + 2개 비-host critic 패널(regulatory/citation + biostat 등).",
+      "multi_llm": true
+    },
+    "full_panel": {
+      "applies_to_size": 4,
+      "description": "host 작성 + GPT/Gemini/Grok를 능력별 역할로 풀 패널. Phase 9 cross-vendor adversarial.",
+      "multi_llm": true
+    }
+  }
+}
