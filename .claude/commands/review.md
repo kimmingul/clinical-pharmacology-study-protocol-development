@@ -171,10 +171,15 @@ WS=_workspace; HOST=$(${PY} -c "import json;print(json.load(open('$WS/llm/routin
 $PY .claude/scripts/llm/review_panel.py plan --routing "$WS/llm/routing_plan.json" \
     --roles .claude/references/llm/review_roles.json \
     --draft "$WS/03_protocol_draft.md" --host "$HOST" --workspace "$WS"
-# 허가약물(공개) 연구는 REGULATORY_PUBLIC로 선언 → cross-vendor 허용. 기밀/안전핵심 마커가 섞이면 egress가 상향·차단.
-# --draft 전달 시 결정적 도구(doc_lint/citation/dose) findings를 먼저 수집해 synthesize에 합류하고 qa_fix_plan.md를 자동 생성한다.
-.claude/scripts/llm/run_review_panel.sh --workspace "$WS" --host "$HOST" \
-    --classification REGULATORY_PUBLIC --draft "$WS/03_protocol_draft.md" \
+
+# ★ egress 분류 선언은 시험 유형으로 결정한다 (하드코딩 금지):
+#   - 허가약물 공개 연구(DDI/BE/FE/QTc, IB 없음) → CLASS="--classification REGULATORY_PUBLIC" (cross-vendor 허용)
+#   - FIH/SAD/MAD 또는 IB 존재(신약·기밀) → CLASS="" (선언 생략 = fail-closed, host만)
+#   어떤 경우든 ask_model.sh가 _workspace/00_input/ib_manifest.json의 confidential을
+#   SPONSOR_CONFIDENTIAL floor로 강제하므로, 기밀 초안은 선언과 무관하게 외부 전송이 차단된다(이중 안전).
+CLASS=""   # 기본 fail-closed. 허가약물 공개 연구로 확인된 경우에만 위 REGULATORY_PUBLIC로 설정.
+.claude/scripts/llm/run_review_panel.sh --workspace "$WS" --host "$HOST" $CLASS \
+    --draft "$WS/03_protocol_draft.md" \
     ${GOAL:+--goal-spec "$WS/00_input/goal_spec.json"} ${MRSD:+--mrsd-json "$WS/00_input/mrsd.json"}
 ```
 
@@ -209,16 +214,16 @@ Agent(
 )
 ```
 
-### Step 4: Critical 자동 수정 (조건부)
-`_workspace/review/qa_review_report.md`를 Read하여 Critical 사항을 확인한다.
+### Step 4: 예산형 actor-critic 수렴 루프 (v3+)
 
-**Critical이 있으면:**
-1. Critical의 위치(계획서 섹션)를 파악
-2. protocol-writer를 재호출하여 수정 (피드백 포함)
-3. 수정 후 qa-reviewer를 1회 재호출
-4. **최대 1회만 수행.** 재검토 후에도 Critical이 있으면 사용자에게 보고
+`_workspace/review/qa_review_report.md`(+ 존재 시 `review_synthesis.json`)의 Critical/score를 확인하고, **수렴할 때까지 반복**한다 (상세 절차는 `trial-doc-orchestrator/SKILL.md` Phase 9 Step 3):
 
-**Critical이 없으면:** Step 5로 진행
+- 종료(수렴): `Critical == 0` **AND** `doc_lint score ≥ 90`
+- 각 반복: protocol-writer(actor)가 `qa_fix_plan.md`(결정적 도구 + 벤더 critic Critical/Major)를 반영해 수정 → 재채점·재리뷰
+- 조기 종료: `max_iterations`(기본 3) 소진 또는 score plateau → **사용자에게 잔존 Critical/Major + score 궤적 보고**(임의 완료 처리 금지)
+- 불변 입력: synopsis·design_decisions는 루프 중 변경 금지
+
+**수렴 시:** Step 5로 진행. `/finalize`로 T0 최종 게이트 권유.
 
 ### Step 5: 결과 보고
 QA 보고서 요약을 사용자에게 제시:

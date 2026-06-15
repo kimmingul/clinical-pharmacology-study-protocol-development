@@ -34,27 +34,37 @@ done
 [ -n "$PROVIDER" ] && [ -n "$PROMPT_FILE" ] && [ -n "$OUT" ] || { echo "usage: --provider --host --prompt-file --out" >&2; exit 2; }
 [ -f "$PROMPT_FILE" ] || { echo "prompt file not found: $PROMPT_FILE" >&2; exit 2; }
 
-# 1) Egress gate (fail-closed). Blocks confidential/safety-critical to non-allowed providers.
-if ! "$PY" "$GATE" --provider "$PROVIDER" --host "$HOST" --file "$PROMPT_FILE" ${CLASSIFICATION:+--classification "$CLASSIFICATION"} ${POLICY:+--policy "$POLICY"} >/dev/null; then
+# 1) Egress gate (fail-closed). An IB manifest marking the study confidential
+# forces a SPONSOR_CONFIDENTIAL floor regardless of --classification, so a FIH/IB
+# draft can never be downgraded to PUBLIC for external egress.
+IB_MANIFEST="$WORKSPACE/00_input/ib_manifest.json"
+if ! "$PY" "$GATE" --provider "$PROVIDER" --host "$HOST" --file "$PROMPT_FILE" \
+      ${CLASSIFICATION:+--classification "$CLASSIFICATION"} \
+      ${POLICY:+--policy "$POLICY"} \
+      $([ -f "$IB_MANIFEST" ] && echo --ib-manifest "$IB_MANIFEST") >/dev/null; then
   echo "⛔ egress gate BLOCKED provider=$PROVIDER (host=$HOST). 기밀/안전핵심 데이터는 외부 전송 불가." >&2
   exit 3
 fi
 
 mkdir -p "$(dirname "$OUT")"
-PROMPT="$(cat "$PROMPT_FILE")"
 
-# 2) Dispatch (vendor-neutral). Each CLI in headless/single-shot mode.
+# 2) Dispatch (vendor-neutral) via STDIN / --prompt-file — never command-line
+# args, so a large protocol/ICF draft can't trip ARG_MAX (E2BIG) on Linux.
 case "$PROVIDER" in
-  anthropic) claude -p "$PROMPT" > "$OUT";;
-  openai)    printf '%s' "$PROMPT" | codex exec --sandbox read-only --skip-git-repo-check - > "$OUT";;
-  google)    gemini -p "$PROMPT" > "$OUT";;
-  xai)       grok -p "$PROMPT" > "$OUT";;
+  anthropic) claude -p < "$PROMPT_FILE" > "$OUT";;
+  openai)    codex exec --sandbox read-only --skip-git-repo-check - < "$PROMPT_FILE" > "$OUT";;
+  google)    gemini -p "" < "$PROMPT_FILE" > "$OUT";;
+  xai)       grok --prompt-file "$PROMPT_FILE" > "$OUT";;
   *) echo "unknown provider: $PROVIDER" >&2; exit 2;;
 esac
 
-# 3) Provenance (best-effort; never fails the call).
+# 3) Provenance (best-effort; never fails the call). Records resolved model id,
+# prompt hash, and egress decision per the v4 reproducibility requirement.
+PROFILES="$ROOT/.claude/references/llm/model_profiles.json"
+PHASH="$("$PY" -c "import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest()[:16])" "$PROMPT_FILE" 2>/dev/null || echo '?')"
+MODELID="$("$PY" -c "import json,sys;print(json.load(open(sys.argv[1]))['providers'].get(sys.argv[2],{}).get('resolved_model',sys.argv[2]))" "$PROFILES" "$PROVIDER" 2>/dev/null || echo "$PROVIDER")"
 "$PY" "$MANIFEST" record --workspace "$WORKSPACE" --phase llm-call \
-  --agent "ask_model:$PROVIDER" --model "$PROVIDER" --output "$OUT" --inputs "$PROMPT_FILE" \
-  --note "vendor=$PROVIDER host=$HOST egress=ok" >/dev/null 2>&1 || true
+  --agent "ask_model:$PROVIDER" --model "$MODELID" --output "$OUT" --inputs "$PROMPT_FILE" \
+  --note "vendor=$PROVIDER host=$HOST egress=ok class=${CLASSIFICATION:-auto} prompt_sha=$PHASH" >/dev/null 2>&1 || true
 
 echo "ok provider=$PROVIDER -> $OUT"

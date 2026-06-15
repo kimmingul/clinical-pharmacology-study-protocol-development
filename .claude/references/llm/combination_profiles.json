@@ -4,6 +4,8 @@
   "notes": "subset별 기본 역할 플랜(presets). 고정 정답이 아니라 출발점이며, route_select가 model_profiles.capability_scores × health(status=ok)로 최종 랭킹·배정한다. host_default_role은 데이터 egress·context 단편화 최소화를 위해 authoring을 호스트에 기본 배정한다(비기밀 시 override 가능).",
   "roles": ["authoring", "regulatory_cross_check", "citation_integrity", "biostat_adversarial", "judge_synth"],
   "host_default_role": "authoring",
+  "host_only_roles": ["authoring", "judge_synth"],
+  "host_only_note": "authoring·judge_synth는 host(또는 host qa-reviewer)가 수행하는 역할이며 외부 critic 패널로 spawn하지 않는다. 외부 패널 critic은 review_roles.json의 panel_roles(regulatory_cross_check·biostat_adversarial·citation_integrity)뿐이다. route_select는 judge_synth를 '누가 해석 충돌을 판정하는가'(비-작성 벤더)로 배정하지만 실행은 host 합성 단계에서 이뤄진다.",
   "judge_must_differ_from_author": true,
   "deterministic_first": ["doc_lint", "citation_verify", "dose_safety_guard"],
   "phase_map": {

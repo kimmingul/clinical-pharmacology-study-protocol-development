@@ -22,6 +22,7 @@ Prints the decision as JSON; exit 0 if allowed, exit 3 if blocked.
 import argparse
 import json
 import os
+import re
 import sys
 
 DEFAULT_POLICY = os.path.join(
@@ -46,6 +47,19 @@ PRECEDENCE = [
 SEVERITY = {"PUBLIC": 0, "REGULATORY_PUBLIC": 1, "SPONSOR_CONFIDENTIAL": 2, "SAFETY_CRITICAL": 3}
 
 
+def _marker_hit(marker, haystack):
+    """Match a marker against (already-lowercased) text. ASCII markers use word
+    boundaries to avoid false positives (e.g. 'ib' must not match 'calibration');
+    markers containing non-ASCII (Korean) fall back to substring since \\b is
+    unreliable across Hangul."""
+    m = marker.strip().lower()
+    if not m:
+        return False
+    if m.isascii():
+        return re.search(r"(?<![a-z0-9])" + re.escape(m) + r"(?![a-z0-9])", haystack) is not None
+    return m in haystack
+
+
 def detect(text, policy):
     """Return the most-restrictive classification whose markers appear in text,
     or None if no marker matches."""
@@ -53,23 +67,38 @@ def detect(text, policy):
     markers = policy.get("markers", {})
     for cls in PRECEDENCE:
         for marker in markers.get(cls, []):
-            if marker.lower() in haystack:
+            if _marker_hit(marker, haystack):
                 return cls
     return None
 
 
-def classify(text, policy, declared=None):
+def load_ib_confidential(ib_manifest_path):
+    """True if an IB manifest marks the study confidential / external-forbidden."""
+    if not ib_manifest_path or not os.path.isfile(ib_manifest_path):
+        return False
+    try:
+        d = json.load(open(ib_manifest_path, encoding="utf-8"))
+    except (ValueError, OSError):
+        return True  # unreadable manifest -> fail-closed (treat as confidential)
+    return bool(d.get("confidential") or d.get("external_forbidden"))
+
+
+def classify(text, policy, declared=None, confidential_context=False):
     """Effective classification = most-restrictive of (caller-declared floor,
-    marker-detected). When neither is set, fall back to the policy default
-    (SPONSOR_CONFIDENTIAL — conservative / fail-closed).
+    marker-detected, and — when an IB manifest marks the study confidential —
+    a SPONSOR_CONFIDENTIAL floor). When nothing is set, fall back to the policy
+    default (SPONSOR_CONFIDENTIAL — conservative / fail-closed).
 
     A caller may DECLARE a less-restrictive floor (e.g. REGULATORY_PUBLIC for an
     approved-drug study) to enable cross-vendor egress, but markers can only
     ESCALATE — declaring PUBLIC on text containing 'NOAEL' still yields
-    SAFETY_CRITICAL. Declaring nothing keeps the conservative default."""
+    SAFETY_CRITICAL. confidential_context (FIH/IB) overrides any public
+    declaration so confidential drafts can never be downgraded for egress."""
     detected = detect(text, policy)
     default = policy.get("default_classification", "SPONSOR_CONFIDENTIAL")
     floor = declared if declared in SEVERITY else default
+    if confidential_context and SEVERITY[floor] < SEVERITY["SPONSOR_CONFIDENTIAL"]:
+        floor = "SPONSOR_CONFIDENTIAL"
     if detected is None:
         return floor
     return floor if SEVERITY[floor] >= SEVERITY[detected] else detected
@@ -108,28 +137,32 @@ def _reason(classification, provider, host, is_allowed, known):
             f"(host={host!r})")
 
 
-def check(provider, text, policy, host, declared=None):
+def check(provider, text, policy, host, declared=None, confidential_context=False):
     """Classify text (with optional caller-declared floor) and decide egress."""
-    classification = classify(text, policy, declared=declared)
+    classification = classify(text, policy, declared=declared,
+                              confidential_context=confidential_context)
     known = classification in policy.get("classifications", {})
     is_allowed = allowed(provider, classification, policy, host)
     return {
         "provider": provider,
         "host": host,
         "declared": declared,
+        "confidential_context": confidential_context,
         "classification": classification,
         "allowed": is_allowed,
         "reason": _reason(classification, provider, host, is_allowed, known),
     }
 
 
-def check_files(provider, paths, policy, host, declared=None):
+def check_files(provider, paths, policy, host, declared=None,
+                confidential_context=False):
     """Classify the concatenation of files (most-restrictive wins) and decide."""
     chunks = []
     for p in paths:
         with open(p, encoding="utf-8") as f:
             chunks.append(f.read())
-    result = check(provider, "\n".join(chunks), policy, host, declared=declared)
+    result = check(provider, "\n".join(chunks), policy, host, declared=declared,
+                   confidential_context=confidential_context)
     result["files"] = list(paths)
     return result
 
@@ -150,17 +183,21 @@ def main():
     ap.add_argument("--classification", default=None,
                     choices=list(SEVERITY.keys()),
                     help="caller-declared floor (markers can only escalate)")
+    ap.add_argument("--ib-manifest", default=None,
+                    help="IB manifest path; confidential/external_forbidden "
+                         "forces a SPONSOR_CONFIDENTIAL floor (FIH safety)")
     ap.add_argument("--policy", default=DEFAULT_POLICY)
     args = ap.parse_args()
 
     policy = _load_policy(args.policy)
+    conf = load_ib_confidential(args.ib_manifest)
 
     if args.file:
         result = check_files(args.provider, args.file, policy, args.host,
-                             declared=args.classification)
+                             declared=args.classification, confidential_context=conf)
     else:
         result = check(args.provider, args.text or "", policy, args.host,
-                       declared=args.classification)
+                       declared=args.classification, confidential_context=conf)
 
     print(json.dumps(result, ensure_ascii=False, indent=2))
     sys.exit(0 if result["allowed"] else 3)

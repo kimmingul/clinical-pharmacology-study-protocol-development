@@ -82,6 +82,36 @@ def _placeholder_warnings(text):
     return out
 
 
+# Record-retention requirement, grounded in the relevant country's statute.
+# Korea: 「의약품등의 안전에 관한 규칙」 별표 4 (의약품 임상시험 관리기준·KGCP) —
+# essential documents / 동의서 / CRF must be retained ≥ 15 years after trial end.
+# The threshold is overridable per study/jurisdiction via goal_spec.retention_years_min.
+RETENTION_MIN_YEARS = 15
+RETENTION_LEGAL_BASIS = (
+    "「의약품등의 안전에 관한 규칙」 별표 4(의약품 임상시험 관리기준·KGCP): "
+    "필수문서·동의서·CRF는 시험 종료 후 최소 15년 보존"
+)
+
+
+def _retention_errors(text):
+    """Flag document/record retention written as 3년 (a recurring error) against
+    the statutory minimum. Covers 보존/보유/보관 기간 in both protocol and ICF."""
+    out = []
+    for m in re.finditer(r"(?:보존|보유|보관)\s*기간[^\n]*", text):
+        line = m.group(0)
+        if re.search(r"3\s*년", line) and "15년" not in line:
+            out.append(
+                f"document retention 3년으로 기재됨 — {RETENTION_LEGAL_BASIS} 위반"
+                f"(최소 {RETENTION_MIN_YEARS}년 필요): '{line.strip()[:90]}'"
+            )
+    for m in re.finditer(r"최소\s*3\s*년[^\n]*KGCP", text):
+        out.append(
+            f"retention '최소 3년 … KGCP'는 {RETENTION_MIN_YEARS}년이어야 함 "
+            f"({RETENTION_LEGAL_BASIS}): '{m.group(0).strip()[:90]}'"
+        )
+    return out
+
+
 def lint_protocol(text):
     """Return (errors, warnings) for a protocol draft."""
     errors, warnings = [], []
@@ -94,17 +124,7 @@ def lint_protocol(text):
             f"({len(present)}/16 present)"
         )
 
-    for m in re.finditer(r"(?:보존|보유)\s*기간[^\n]*", text):
-        line = m.group(0)
-        if re.search(r"3\s*년", line) and "15년" not in line:
-            errors.append(
-                f"document retention looks like 3년 (KGCP requires 15년): "
-                f"'{line.strip()[:90]}'"
-            )
-    for m in re.finditer(r"최소\s*3\s*년[^\n]*KGCP", text):
-        errors.append(
-            f"retention '최소 3년 ... KGCP' must be 15년: '{m.group(0).strip()[:90]}'"
-        )
+    errors += _retention_errors(text)
 
     if re.search(r"90%\s*(?:신뢰구간|CI)", text) or "동등성" in text:
         if not ("80.00" in text and "125.00" in text):
@@ -121,6 +141,10 @@ def lint_protocol(text):
 def lint_icf(text):
     """Return (errors, warnings) for an ICF draft (softer; advisory-focused)."""
     errors, warnings = [], []
+
+    # Record retention in the consent doc must match the statutory minimum too
+    # (the ICF tells subjects how long essential records are kept).
+    errors += _retention_errors(text)
 
     if "개인정보" not in text:
         warnings.append("ICF: no '개인정보' (PIPA) consent content detected")

@@ -136,4 +136,4 @@
 | MFDS | 의약품의 약물상호작용 평가 가이드라인 (식약처 민원인 안내서) |
 | FDA | In Vitro Drug Interaction Studies (2020); Clinical Drug Interaction Studies (2020) |
 | EMA | Guideline on the Investigation of Drug Interactions (CPMP/EWP/560/95/Rev. 1, 2012) |
-| ICH | M12 Drug Interaction Studies (2024, Step 5) |
+| ICH | M12 Drug Interaction Studies (Step 4 final, 2024-05-21) |

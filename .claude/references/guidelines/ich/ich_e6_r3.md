@@ -274,7 +274,7 @@ E6(R3)는 **미디어 중립적(media-neutral)** 언어를 채택하여:
 - 데이터 무결성이 유지되어야 함
 - 시스템 검증이 완료되어야 함
 
-*Annex 2 (비전통적 개입 임상시험)에서 분산형 시험의 상세 요건을 다룰 예정 (2025년 말 예정)*
+*Annex 2 (비전통적 개입 임상시험)가 분산형 시험의 상세 요건을 다룬다 — **Step 4 채택 2026-06-03**.*
 
 ---
 
@@ -293,5 +293,5 @@ E6(R3)는 **미디어 중립적(media-neutral)** 언어를 채택하여:
 
 - ICH E6(R3) Step 4 최종 가이드라인 (2025.01.06): https://database.ich.org/sites/default/files/ICH_E6(R3)_Step4_FinalGuideline_2025_0106.pdf
 - ICH E6(R3) 발표 뉴스: https://www.ich.org/news/ich-e6r3-guideline-reaches-step-4-ich-process
-- ICH E6(R3) Annex 2 Step 2 초안 (2024.10): https://database.ich.org/sites/default/files/ICH_E6(R3)_Annex%202_Step2_DraftGuideline_2024_1024_0.pdf
+- ICH E6(R3) Annex 2 **Step 4 최종** (2026.06.03): https://database.ich.org/sites/default/files/ICH_E6%28R3%29_Annex%202_Guideline_Step%204_2026_0603_0.pdf
 - EMA 시행 정보: https://www.ema.europa.eu/en/ich-e6-good-clinical-practice-scientific-guideline

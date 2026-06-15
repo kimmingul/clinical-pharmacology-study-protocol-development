@@ -325,3 +325,41 @@ def test_no_declaration_stays_conservative():
         "openai", "aspirin pharmacokinetics", POLICY, "anthropic")
     assert r["classification"] == "SPONSOR_CONFIDENTIAL"
     assert r["allowed"] is False
+
+
+# --- egress: word-boundary markers + confidential IB context (review fixes) -
+
+def test_marker_word_boundary_no_false_positive():
+    # 'ib' must not match inside 'calibration'/'fibrosis'; plain text -> default.
+    r = egress_gate.check(
+        "openai", "calibration and fibrosis of the assay", POLICY, "anthropic",
+        declared="REGULATORY_PUBLIC")
+    assert r["classification"] == "REGULATORY_PUBLIC"
+    assert r["allowed"] is True
+
+
+def test_marker_word_boundary_real_ib_still_detected():
+    r = egress_gate.check(
+        "openai", "see the IB section 3", POLICY, "anthropic",
+        declared="REGULATORY_PUBLIC")
+    assert r["classification"] == "SPONSOR_CONFIDENTIAL"
+    assert r["allowed"] is False
+
+
+def test_confidential_context_overrides_public_declaration():
+    # Even declaring REGULATORY_PUBLIC, an IB-confidential study can't egress.
+    r = egress_gate.check(
+        "openai", "aspirin pharmacokinetics (no markers)", POLICY, "anthropic",
+        declared="REGULATORY_PUBLIC", confidential_context=True)
+    assert r["classification"] == "SPONSOR_CONFIDENTIAL"
+    assert r["allowed"] is False
+
+
+def test_load_ib_confidential(tmp_path):
+    p = tmp_path / "ib_manifest.json"
+    p.write_text('{"confidential": true}', encoding="utf-8")
+    assert egress_gate.load_ib_confidential(str(p)) is True
+    p2 = tmp_path / "open.json"
+    p2.write_text('{"confidential": false}', encoding="utf-8")
+    assert egress_gate.load_ib_confidential(str(p2)) is False
+    assert egress_gate.load_ib_confidential(str(tmp_path / "missing.json")) is False

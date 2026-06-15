@@ -708,6 +708,8 @@ Synopsis가 작성되면 사용자의 **명시적 승인**이 있어야 Full Pro
 │   │   ├── compare.md
 │   │   ├── protocol.md
 │   │   ├── review.md
+│   │   ├── finalize.md                     # T0 최종 가드레일 (v3)
+│   │   ├── llm-health.md                   # Multi-LLM 점검·조합 제안 (v4)
 │   │   └── icf.md
 │   ├── memory/                            # 세션 간 메모리 (사용자 선호, 도메인 지식)
 │   │   ├── MEMORY.md                      # 메모리 인덱스
@@ -729,10 +731,17 @@ Synopsis가 작성되면 사용자의 **명시적 승인**이 있어야 Full Pro
 │   │   │   │   ├── fe_cross_agency.md
 │   │   │   │   └── pk_general_cross_agency.md
 │   │   │   └── needs_user_input.md        # 사용자 PDF 제공 필요 항목
+│   │   ├── llm/                            # (v4) Multi-LLM 라우팅 데이터 (벤더 중립)
+│   │   │   ├── model_profiles.json         # 모델별 능력 점수·resolved_model
+│   │   │   ├── combination_profiles.json   # subset별 역할 프리셋
+│   │   │   ├── egress_policy.json          # 데이터 분류 → 허용 provider
+│   │   │   └── review_roles.json           # Phase 9 역할별 적대적 프롬프트
 │   │   └── templates/                     # 표준 템플릿 (선정/제외기준 등)
 │   │       └── inclusion_exclusion_criteria.md
 │   └── scripts/                           # 실행 가능한 Python 스크립트
 │       ├── README.md                      # 스크립트 인덱스
+│       ├── llm/                            # (v4) health_check·route_select·egress_gate·review_panel·ask_model.sh
+│       ├── qa/                             # doc_lint·citation_verify·dose_safety_guard·pipeline_manifest
 │       ├── sample_size/                   # Sample size 계산
 │       │   ├── parallel_continuous.py
 │       │   ├── crossover_2x2_be.py

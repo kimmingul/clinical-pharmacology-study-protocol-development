@@ -451,7 +451,10 @@ Agent(
 > $PY ${CLAUDE_PLUGIN_ROOT}/scripts/llm/review_panel.py plan --routing _workspace/llm/routing_plan.json \
 >     --roles ${CLAUDE_PLUGIN_ROOT}/references/llm/review_roles.json --draft _workspace/03_protocol_draft.md \
 >     --host "$(${PY} -c "import json;print(json.load(open('_workspace/llm/routing_plan.json'))['host'])")" --workspace _workspace
-> ${CLAUDE_PLUGIN_ROOT}/scripts/llm/run_review_panel.sh --workspace _workspace --classification REGULATORY_PUBLIC \
+> # egress 선언은 시험 유형으로: 허가약물 공개(DDI/BE/FE/QTc)만 `--classification REGULATORY_PUBLIC`,
+> # FIH/SAD/MAD·IB 존재 시 생략(fail-closed). ask_model.sh가 ib_manifest.confidential을 강제 floor로 적용(이중 안전).
+> CLASS=""   # 허가약물 공개 연구로 확인된 경우에만 REGULATORY_PUBLIC
+> ${CLAUDE_PLUGIN_ROOT}/scripts/llm/run_review_panel.sh --workspace _workspace $CLASS \
 >     --draft _workspace/03_protocol_draft.md --goal-spec _workspace/00_input/goal_spec.json
 > ```
 > 패널은 결정적 도구(doc_lint/citation/dose) findings를 먼저 합류시키고 `review_synthesis.json` + `qa_fix_plan.md`(Critical/Major)를 만든다. **`qa_fix_plan.md`는 아래 Step 3 수렴 루프의 actor(protocol-writer) 입력**으로 연결된다.
