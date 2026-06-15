@@ -109,6 +109,16 @@ claude
 | QTc | Williams 4×4 | `williams_4x4.py` |
 | Parallel | 연속형/이분형 | `parallel_continuous.py`, `parallel_binary.py` |
 
+## Multi-LLM (v4, 벤더 중립)
+
+보유한 Tier‑1 LLM(Claude·GPT·Gemini·Grok)을 능력 기반으로 조합해 **이종 교차검증**으로 검증 품질을 높입니다. **단일 LLM만 있으면 v3와 동작 동일**(설정 불필요).
+
+- **`/llm-health`** — 각 LLM CLI에 실제 probe(nonce+산술)로 로그인/키 검증 후 최적 조합 제안(재실행 가능, 자동 폴딩).
+- **벤더 중립 라우팅** — `authoring`은 항상 호스트, 검증은 best‑available(regulatory=Gemini, biostat=**Grok**, judge=비‑작성 벤더). 강점은 `references/llm/*.json` 데이터로 관리.
+- **fail‑closed egress** — 기밀 IB·안전핵심(NOAEL/MRSD)은 호스트 무관 외부 전송 차단. 허가약물 공개 연구만 `REGULATORY_PUBLIC` 선언 시 cross‑vendor 허용.
+- **Phase 9 이종 critic 패널** — `/review`가 `multi_llm` 활성 시 비‑호스트 벤더 critic 실행 → 결정적 도구 우선·출처 태깅·다수결 ❌로 취합(`review_synthesis.json` + `qa_fix_plan.md`).
+- 토글: `goal_spec.json`의 `multi_llm.{enabled, phase_overrides}` 또는 `/review --multi-llm off`.
+
 ## 핵심 설계 원칙
 
 - **사용자 게이트 2개**: Phase 3 자료 조사 승인, Phase 7 Synopsis 승인 (Hard Gate)
