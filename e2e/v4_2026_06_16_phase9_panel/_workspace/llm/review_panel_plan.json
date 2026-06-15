@@ -1,0 +1,30 @@
+{
+  "schema": "review_panel/v1",
+  "host": "anthropic",
+  "draft": "e2e/v4_2026_06_16_phase9_panel/_workspace/03_protocol_draft.md",
+  "classification": null,
+  "entries": [
+    {
+      "role": "regulatory_cross_check",
+      "provider": "google",
+      "mode": "external",
+      "prompt_file": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/panel/prompt_google_regulatory_cross_check.txt",
+      "out_file": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/vendor_google_regulatory_cross_check.json"
+    },
+    {
+      "role": "biostat_adversarial",
+      "provider": "xai",
+      "mode": "external",
+      "prompt_file": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/panel/prompt_xai_biostat_adversarial.txt",
+      "out_file": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/vendor_xai_biostat_adversarial.json"
+    },
+    {
+      "role": "citation_integrity",
+      "provider": "google",
+      "mode": "external",
+      "prompt_file": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/panel/prompt_google_citation_integrity.txt",
+      "out_file": "e2e/v4_2026_06_16_phase9_panel/_workspace/review/vendor_google_citation_integrity.json"
+    }
+  ],
+  "generated_at": "2026-06-15T15:15:36+00:00"
+}

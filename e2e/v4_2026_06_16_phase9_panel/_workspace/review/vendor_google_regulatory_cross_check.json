@@ -1,0 +1,62 @@
+{
+  "role": "Regulatory Reviewer",
+  "verdict": "fail",
+  "findings": [
+    {
+      "severity": "Critical",
+      "section": "B.7 Treatment and Interventions",
+      "issue": "Omeprazole 투여 요법(투여 기간 및 빈도) 명시 누락",
+      "issue_type": "Omission",
+      "evidence": "CYP2C19 저해제인 Omeprazole은 항정상태(Steady-state) 도달 여부가 DDI 평가의 핵심이나, 80mg 단회인지 반복 투여인지 명시되지 않음. ICH M12(Drug Interaction Studies) 가이드라인 위반.",
+      "recommendation": "Omeprazole의 구체적인 투여 스케줄(예: Day 1-5, 80mg QD)과 Clopidogrel 투여와의 시간 간격을 명확히 기술할 것."
+    },
+    {
+      "severity": "Major",
+      "section": "B.1 General Information",
+      "issue": "시험책임자, 공동연구자 및 임상시험 실시기관 정보 완전 누락",
+      "issue_type": "Non-compliance",
+      "evidence": "ICH E6(R3) B.1.3 및 B.1.4에 따라 시험책임자의 성명, 자격, 주소 및 실시기관의 명칭/주소가 필수 기재되어야 함.",
+      "recommendation": "실시기관 정보와 의학적 자문을 제공할 전문의(Medical Monitor) 정보를 추가할 것."
+    },
+    {
+      "severity": "Major",
+      "section": "B.9 Assessment of Safety",
+      "issue": "중대한 이상반응(SAE) 즉시 보고 절차 및 타임라인 부재",
+      "issue_type": "Regulatory Deficiency",
+      "evidence": "KGCP 제33조 및 ICH E6(R3) B.9.5에 따라 시험자는 의뢰자에게 '즉시(24시간 이내)' SAE를 보고해야 한다는 명시적 절차가 있어야 함.",
+      "recommendation": "SAE 발생 시 24시간 이내 의뢰자 및 IRB 보고 절차와 보고 양식을 구체화하여 명시할 것."
+    },
+    {
+      "severity": "Major",
+      "section": "B.5 Selection of Participants",
+      "issue": "시험대상자 선정/제외 기준의 구체성 결여 (BMI, 피임, 병용약물)",
+      "issue_type": "Incompleteness",
+      "evidence": "건강 성인 대상 PK 시험에서 결과의 변동성을 줄이기 위한 BMI 범위(예: 18.5~25.0 kg/m2) 및 가임기 여성의 피임 기준, 흡연/음주 제한 사항이 누락됨. ICH E6(R3) B.5.2 준수 실패.",
+      "recommendation": "BMI, 피임법(이중차단), 시험 참여 전 일정 기간 내 약물 복용 금지 등 제외 기준을 정밀화할 것."
+    },
+    {
+      "severity": "Major",
+      "section": "B.10 Statistical Considerations",
+      "issue": "구체적인 표본수 산출 근거 및 N수 미제시",
+      "issue_type": "Incompleteness",
+      "evidence": "ICH E6(R3) B.10.2에 따라 통계적 검정력에 근거한 표본수 산출 과정과 수치가 명시되어야 하나, '가정하여 산출한다'는 미래형 표현으로 대체됨.",
+      "recommendation": "Clopidogrel 활성대사체의 개체내 변동성(CV) 문헌치를 인용하여 산출된 구체적인 대상자 수(예: N=24)와 탈락률을 제시할 것."
+    },
+    {
+      "severity": "Minor",
+      "section": "B.14 Data Handling and Record Keeping",
+      "issue": "개인정보 보호법(PIPA)에 따른 가명처리(Pseudonymization) 절차 누락",
+      "issue_type": "Regulatory Compliance",
+      "evidence": "대한민국 개인정보 보호법 및 생명윤리법에 따라 수집된 정보의 가명처리 및 식별자 관리 방안이 구체적이지 않음.",
+      "recommendation": "대상자 식별코드 부여 방식 및 개인정보 분리 보관에 관한 기술적/관리적 보호조치를 명시할 것."
+    },
+    {
+      "severity": "Minor",
+      "section": "B.3 Trial Objectives",
+      "issue": "상호작용 기전(CYP2C19)에 대한 목적 기술 미흡",
+      "issue_type": "Ambiguity",
+      "evidence": "단순 노출 변화 평가를 넘어, CYP2C19 유전형에 따른 차이 분석 여부 등 DDI의 본질적 기전 탐구 목적이 모호함.",
+      "recommendation": "CYP2C19 저해에 의한 활성대사체 형성 감소를 확인한다는 점을 목적에 명확히 반영할 것."
+    }
+  ]
+}
