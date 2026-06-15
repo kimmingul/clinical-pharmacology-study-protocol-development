@@ -29,6 +29,7 @@ Usage
 import argparse
 import json
 import os
+import sys
 from datetime import datetime, timezone
 
 _REF = os.path.join(
@@ -268,6 +269,78 @@ def write_synthesis(result, workspace="_workspace"):
     return path
 
 
+def _qa_module(name):
+    """Import a deterministic QA module from ../qa (sibling of this llm/ dir)."""
+    qa = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "qa")
+    if qa not in sys.path:
+        sys.path.insert(0, qa)
+    return __import__(name)
+
+
+def collect_deterministic(draft_path, goal_spec_path=None, mrsd_json=None):
+    """Run the deterministic guardrails on a draft and return their findings as
+    authoritative entries (source=doc_lint|citation_verify|dose_safety). These
+    feed synthesize() FIRST so the panel never overrides machine-checkable facts.
+    Offline only (no network, no writes)."""
+    findings = []
+    doc_lint = _qa_module("doc_lint")
+    gs = doc_lint.load_goal_spec(goal_spec_path) if goal_spec_path else None
+    res = doc_lint.score_file(draft_path, goal_spec=gs)
+    for sev, key in (("Critical", "critical"), ("Major", "major"), ("Minor", "minor")):
+        for msg in res.get(key, []):
+            findings.append({"severity": sev, "source": "doc_lint", "issue": msg})
+
+    cv = _qa_module("citation_verify")
+    with open(draft_path, encoding="utf-8") as f:
+        text = f.read()
+    for item in cv.classify_offline(cv.extract_citations(text)):
+        if not item.get("format_ok", True):
+            findings.append({
+                "severity": "Major", "source": "citation_verify",
+                "issue": f"인용 형식 오류: {item.get('type')} {item.get('value')} "
+                         f"({item.get('reason')})"})
+
+    if mrsd_json and os.path.exists(mrsd_json):
+        ds = _qa_module("dose_safety_guard")
+        r = ds.check_file(draft_path, mrsd_json=mrsd_json)
+        for v in r.get("violations", []):
+            findings.append({"severity": "Critical", "source": "dose_safety",
+                             "issue": v.get("message", "dose > MRSD")})
+    return findings
+
+
+def fixplan_markdown(synthesis):
+    """Render the Critical/Major findings of a synthesis into a fix plan the
+    actor (protocol-writer) addresses on the next convergence-loop turn."""
+    lines = ["# QA 수정 계획 (자동 생성 — review_synthesis.json 기반)", ""]
+    for sev, key in (("Critical", "critical"), ("Major", "major")):
+        items = synthesis.get(key, [])
+        lines.append(f"## {sev} ({len(items)})")
+        if not items:
+            lines.append("- (없음)")
+        for i, f in enumerate(items, 1):
+            src = f.get("source", "?")
+            sec = f.get("section", "-")
+            issue = str(f.get("issue", "")).strip()
+            rec = str(f.get("recommendation", "")).strip()
+            lines.append(f"{i}. [{src}] §{sec}: {issue}"
+                         + (f" → 권고: {rec}" if rec else ""))
+        lines.append("")
+    lines.append("> protocol-writer는 위 Critical→Major 순으로 본문을 수정한다. "
+                 "synopsis·design_decisions의 설계 결정은 불변. 결정적 도구(doc_lint/"
+                 "citation_verify/dose_safety) 항목이 최우선.")
+    return "\n".join(lines) + "\n"
+
+
+def write_fixplan(md, workspace="_workspace"):
+    out_dir = os.path.join(workspace, "review")
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, "qa_fix_plan.md")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(md)
+    return path
+
+
 def _load(path):
     with open(path, encoding="utf-8") as f:
         return json.load(f)
@@ -310,6 +383,30 @@ def _cmd_synthesize(args):
           f"{len(result['conflicts'])} conflicts -> {path}")
 
 
+def _cmd_deterministic(args):
+    findings = collect_deterministic(
+        args.draft, goal_spec_path=args.goal_spec, mrsd_json=args.mrsd_json)
+    out_dir = os.path.join(args.workspace, "review")
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, "deterministic_findings.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(findings, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    n = {"Critical": 0, "Major": 0, "Minor": 0}
+    for x in findings:
+        n[x["severity"]] = n.get(x["severity"], 0) + 1
+    print(f"deterministic: {n['Critical']} Critical, {n['Major']} Major, "
+          f"{n['Minor']} Minor -> {path}")
+
+
+def _cmd_fixplan(args):
+    synthesis = _load(os.path.join(args.workspace, "review", "review_synthesis.json"))
+    md = fixplan_markdown(synthesis)
+    path = write_fixplan(md, args.workspace)
+    print(f"fixplan: {len(synthesis.get('critical', []))} Critical + "
+          f"{len(synthesis.get('major', []))} Major -> {path}")
+
+
 def main():
     ap = argparse.ArgumentParser(
         description="Phase 9 cross-vendor critic panel build + synthesis.")
@@ -333,6 +430,19 @@ def main():
     s.add_argument("--deterministic", default=None,
                    help="JSON file of authoritative guardrail findings")
     s.set_defaults(func=_cmd_synthesize)
+
+    d = sub.add_parser("deterministic",
+                       help="run doc_lint/citation/dose guards -> findings json")
+    d.add_argument("--draft", required=True)
+    d.add_argument("--workspace", default="_workspace")
+    d.add_argument("--goal-spec", default=None)
+    d.add_argument("--mrsd-json", default=None)
+    d.set_defaults(func=_cmd_deterministic)
+
+    fp = sub.add_parser("fixplan",
+                        help="render review_synthesis.json -> qa_fix_plan.md")
+    fp.add_argument("--workspace", default="_workspace")
+    fp.set_defaults(func=_cmd_fixplan)
 
     args = ap.parse_args()
     args.func(args)

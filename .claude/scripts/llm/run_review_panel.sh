@@ -17,13 +17,16 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 PY="$ROOT/.claude/scripts/.venv/bin/python"; [ -x "$PY" ] || PY="python3"
 LLM="$ROOT/.claude/scripts/llm"
 
-WORKSPACE="_workspace" HOST="anthropic" CLASSIFICATION="" DETERMINISTIC=""
+WORKSPACE="_workspace" HOST="anthropic" CLASSIFICATION="" DETERMINISTIC="" DRAFT="" GOAL_SPEC="" MRSD_JSON=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --workspace) WORKSPACE="$2"; shift 2;;
     --host) HOST="$2"; shift 2;;
     --classification) CLASSIFICATION="$2"; shift 2;;
     --deterministic) DETERMINISTIC="$2"; shift 2;;
+    --draft) DRAFT="$2"; shift 2;;
+    --goal-spec) GOAL_SPEC="$2"; shift 2;;
+    --mrsd-json) MRSD_JSON="$2"; shift 2;;
     *) echo "unknown arg: $1" >&2; exit 2;;
   esac
 done
@@ -59,7 +62,18 @@ while IFS=$'\t' read -r PROVIDER PROMPT OUT; do
   fi
 done <<< "$ENTRIES"
 
+# Generate authoritative deterministic findings (doc_lint/citation/dose) from the
+# draft so synthesize lists them FIRST. (--draft given and no explicit --deterministic.)
+if [ -z "$DETERMINISTIC" ] && [ -n "$DRAFT" ] && [ -f "$DRAFT" ]; then
+  "$PY" "$LLM/review_panel.py" deterministic --draft "$DRAFT" --workspace "$WORKSPACE" \
+    ${GOAL_SPEC:+--goal-spec "$GOAL_SPEC"} ${MRSD_JSON:+--mrsd-json "$MRSD_JSON"} || true
+  DETERMINISTIC="$WORKSPACE/review/deterministic_findings.json"
+fi
+
 # Synthesize deterministic + vendor critic findings (deterministic-first).
 "$PY" "$LLM/review_panel.py" synthesize --workspace "$WORKSPACE" \
   ${DETERMINISTIC:+--deterministic "$DETERMINISTIC"}
-echo "panel done -> $WORKSPACE/review/review_synthesis.json"
+
+# Render the convergence-loop fix plan (Critical/Major) for the actor.
+"$PY" "$LLM/review_panel.py" fixplan --workspace "$WORKSPACE" || true
+echo "panel done -> $WORKSPACE/review/review_synthesis.json (+ qa_fix_plan.md)"
