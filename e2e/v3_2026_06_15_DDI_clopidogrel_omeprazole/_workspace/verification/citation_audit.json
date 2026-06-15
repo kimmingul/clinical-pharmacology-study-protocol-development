@@ -1,0 +1,44 @@
+{
+  "schema": "citation_audit/v1",
+  "generated_utc": "2026-06-14T22:45:08+00:00",
+  "online": true,
+  "files": [
+    {
+      "path": "e2e/v3_2026_06_15_DDI_clopidogrel_omeprazole/_workspace/03_protocol_draft.md",
+      "counts": {
+        "pmid": 1,
+        "nct": 1,
+        "nct_malformed": 0,
+        "dailymed_setid": 0,
+        "url": 0
+      },
+      "format_fail": 0
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "format_fail": 0,
+    "not_found": 1,
+    "unverified_network": 0
+  },
+  "items": [
+    {
+      "file": "e2e/v3_2026_06_15_DDI_clopidogrel_omeprazole/_workspace/03_protocol_draft.md",
+      "type": "pmid",
+      "value": "19915222",
+      "format_ok": true,
+      "reason": "ok",
+      "online_status": "verified",
+      "exists": true
+    },
+    {
+      "file": "e2e/v3_2026_06_15_DDI_clopidogrel_omeprazole/_workspace/03_protocol_draft.md",
+      "type": "nct",
+      "value": "NCT00352877",
+      "format_ok": true,
+      "reason": "ok",
+      "online_status": "not-found",
+      "exists": false
+    }
+  ]
+}

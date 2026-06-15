@@ -64,7 +64,7 @@ mkdir -p _workspace/review
 ```
 Agent(
   description: "임상약리학 관점 계획서 리뷰",
-  model: "sonnet",
+  model: "opus",
   name: "clinical-pharmacologist",
   prompt: "먼저 .claude/agents/clinical-pharmacologist.md를 Read하라.
 .claude/skills/regulatory-review/SKILL.md를 Read하여 리뷰 절차를 따르라.
@@ -82,7 +82,7 @@ Agent(
 ```
 Agent(
   description: "규제 관점 계획서 리뷰",
-  model: "sonnet",
+  model: "opus",
   name: "regulatory-expert",
   prompt: "먼저 .claude/agents/regulatory-expert.md를 Read하라.
 .claude/skills/regulatory-review/SKILL.md를 Read하여 리뷰 절차를 따르라.
@@ -99,7 +99,7 @@ Agent(
 ```
 Agent(
   description: "통계 관점 계획서 리뷰",
-  model: "sonnet",
+  model: "opus",
   name: "biostatistician",
   prompt: "먼저 .claude/agents/biostatistician.md를 Read하라.
 .claude/skills/regulatory-review/SKILL.md를 Read하여 리뷰 절차를 따르라.
@@ -118,7 +118,7 @@ Agent(
 ```
 Agent(
   description: "임상의학·안전성 관점 계획서 리뷰",
-  model: "sonnet",
+  model: "opus",
   name: "clinician",
   prompt: "먼저 .claude/agents/clinician.md를 Read하라.
 .claude/skills/regulatory-review/SKILL.md를 Read하여 리뷰 절차를 따르라.
@@ -137,7 +137,7 @@ Agent(
 ```
 Agent(
   description: "중개의학·PD/오믹스 관점 계획서 리뷰",
-  model: "sonnet",
+  model: "opus",
   name: "translational-scientist",
   prompt: "먼저 .claude/agents/translational-scientist.md를 Read하라.
 .claude/skills/regulatory-review/SKILL.md를 Read하여 리뷰 절차를 따르라.

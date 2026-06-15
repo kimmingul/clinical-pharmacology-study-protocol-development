@@ -70,7 +70,7 @@ mkdir -p _workspace/01_references/metabolomics
 ```
 Agent(
   description: "임상약리학 배경 조사",
-  model: "sonnet",
+  model: "opus",
   name: "clinical-pharmacologist",
   prompt: "먼저 .claude/agents/clinical-pharmacologist.md를 Read하여 역할을 숙지하라.
 그 다음 .claude/skills/clinical-research/SKILL.md를 Read하여 조사 절차와 개별 reference 파일 구조를 따르라.
@@ -90,7 +90,7 @@ Agent(
 
 Agent(
   description: "규제 자료 조사",
-  model: "sonnet",
+  model: "opus",
   name: "regulatory-expert",
   prompt: "먼저 .claude/agents/regulatory-expert.md를 Read하여 역할을 숙지하라.
 그 다음 .claude/skills/clinical-research/SKILL.md를 Read하여 조사 절차와 개별 reference 파일 구조를 따르라.
@@ -110,7 +110,7 @@ Agent(
 
 Agent(
   description: "안전성 자료 조사",
-  model: "sonnet",
+  model: "opus",
   name: "clinician",
   prompt: "먼저 .claude/agents/clinician.md를 Read하여 역할을 숙지하라.
 그 다음 .claude/skills/clinical-research/SKILL.md를 Read하여 조사 절차와 개별 reference 파일 구조를 따르라.
@@ -133,7 +133,7 @@ Agent(
 
 Agent(
   description: "PD/오믹스 자료 조사 (조건부)",
-  model: "sonnet",
+  model: "opus",
   name: "translational-scientist",
   prompt: "먼저 .claude/agents/translational-scientist.md를 Read하여 역할을 숙지하라.
 그 다음 .claude/skills/clinical-research/SKILL.md를 Read하여 '시험 유형별 오믹스/PD 우선순위' 표를 확인하라.

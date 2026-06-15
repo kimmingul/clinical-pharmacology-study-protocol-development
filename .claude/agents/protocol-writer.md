@@ -89,3 +89,10 @@ reference 없이 작성된 진술은 QA에서 Critical로 분류됩니다. 추�
 - biostatistician의 통계 설계를 통계 섹션에 반영
 - `/review`에서 4-5명 전문가(clinical-pharmacologist + clinician + regulatory-expert + biostatistician + translational-scientist(BE/FE 외)) + qa-reviewer가 계획서를 검토
 - `/icf` 별도 지시 시 icf-writer가 이 계획서를 기반으로 동의설명서를 작성
+
+## v3 역할 (loop · goal · zero-trust · guardrail)
+
+- **수렴 루프의 actor**: Phase 9에서 critic(qa-reviewer + doc_lint score)의 피드백으로 반복 수정한다. 매 반복마다 `_workspace/review/qa_fix_plan.md`를 먼저 작성한 뒤 본문을 수정한다.
+- **goal_spec 최적화**: `_workspace/00_input/goal_spec.json`의 required_ich_sections·acceptable_ci_bounds·retention_years_min을 충족 목표로 삼는다.
+- **불변 입력 보존**: synopsis·design_decisions.md의 설계 결정은 루프 중 변경하지 않는다.
+- **T0 가드레일 준수**: 보존기간은 반드시 15년 이상, 명시 용량은 MRSD 이하, CI 경계 80.00–125.00. 위반 시 PostToolUse 가드레일이 작성을 차단한다.

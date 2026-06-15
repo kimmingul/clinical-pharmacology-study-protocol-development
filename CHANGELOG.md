@@ -8,6 +8,45 @@ log lives in `CLAUDE.md` (진화 로그); this file tracks user-facing releases.
 
 _No unreleased changes._
 
+## [3.0.0] — 2026-06-14 — loop · goal · zero-trust · guardrail
+
+3-모델 리뷰(Claude · Codex 0.139 · Gemini 0.46)에 기반해 최신 에이전트 엔지니어링
+동향을 하네스에 반영한 메이저 릴리스. 설계 근거는
+`docs/plugin_v3_advancement_proposal_ko.md` 참조.
+
+### Added — 제안 1 (Goal + Loop engineering)
+- `.claude/references/schemas/trial_goal_spec.schema.json` + `goal_spec.example.json`
+  — estimand(ICH E9 R1)·CI 경계·검정력·필수 ICH 섹션·보존연한을 기계 판독형
+  **성공명세**로 정의. Phase 1/4에서 확정하고 게이트 승인 대상으로 삼는다.
+- `doc_lint.py`에 결정적 채점 `score_file()` + `--score`/`--goal-spec` CLI 추가
+  (기존 `lint_file` API는 불변).
+- 오케스트레이터 Phase 9를 `max 1 revision` → **예산형 actor-critic 수렴 루프**로
+  재설계 (종료조건: Critical=0 & score≥90, 또는 budget 소진 / score plateau →
+  사람 에스컬레이션). synopsis·design_decisions.md는 불변 입력으로 락.
+
+### Added — 제안 2 (Zero-trust 근거·provenance)
+- `.claude/scripts/qa/citation_verify.py` — PMID/NCT/DailyMed setid/URL을 추출하고
+  PubMed eutils·ClinicalTrials.gov v2로 **독립 재조회**(offline-graceful),
+  `_workspace/verification/citation_audit.json` 생성.
+- `.claude/scripts/qa/source_snapshot.py` — 외부 fetch를 SHA-256·조회일·URL로
+  스냅샷하여 `source_provenance.json`에 append (사이트 구조 변경에도 재현성 유지).
+- IB least-privilege: `_workspace/00_input/ib_manifest.json` + Phase 2 섹션 제한 규칙,
+  `SECURITY.md`에 기밀 데이터 취급 명문화.
+
+### Added — 제안 3 (계층형 Guardrail)
+- advisory 단일 hook을 **3-tier**로 승격: T0 차단(보존<15년, 명시 용량>MRSD,
+  ICF PII, 최종화 시 Appendix B 섹션 누락), T1 권고(기존), T2 사람 게이트.
+- `.claude/scripts/qa/dose_safety_guard.py` — 프로토콜 내 시작/증량 용량이 산출된
+  MRSD 이하인지 결정적 검증.
+- `/finalize` 커맨드 — `doc_lint --strict`를 **실제 생성 초안**에 적용하여 T0 실패
+  문서의 "최종 승인"을 차단.
+
+### Changed
+- **전 에이전트(8종) opus(최신) 전환** — 조사·작성·검토 전 단계 최고 추론 모델.
+- 8개 페르소나(`.claude/agents/*.md`)에 v3 역할(goal_spec 충족 매핑, zero-trust
+  인용 검증, 가드레일 tier, 수렴 루프 actor/critic) 주입.
+- `plugin.json` / `marketplace.json` 버전 **3.0.0**.
+
 ## [2.1.0] — 2026-06-14 — enterprise-grade hardening
 
 Released as **v2.1.0** (`plugin.json` / `marketplace.json`). Merged to `main`

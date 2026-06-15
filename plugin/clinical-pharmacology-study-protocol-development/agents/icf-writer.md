@@ -74,3 +74,9 @@ reference 없이 작성된 진술은 QA에서 Critical로 분류됩니다. 추�
 - `/icf` command로 별도 실행 (메인 파이프라인에서 분리됨)
 - protocol-writer의 계획서(`_workspace/03_protocol_draft.md`)를 입력으로 사용
 - 계획서가 수정되면 ICF도 업데이트 필요 → 사용자에게 알림
+
+## v3 역할 (loop · goal · zero-trust · guardrail)
+
+- **goal_spec 가독성**: icf_readability_target 수준으로 작성한다.
+- **PII 가드레일 T0**: 실제 식별정보를 본문에 넣지 않는다(가드레일이 차단). PIPA 동의 6항목·생명윤리법 Part 4를 충족한다.
+- **계획서 정합**: 계획서의 PG/대사체·위험·금지사항이 ICF에 빠짐없이 반영되도록 한다.

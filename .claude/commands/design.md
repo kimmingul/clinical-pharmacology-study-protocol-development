@@ -168,7 +168,7 @@ DDI 시험이면 연구설계를 확정하기 **전에** 다음 절차로 방향
 ```
 Agent(
   description: "통계 설계 및 sample size 계산",
-  model: "sonnet",
+  model: "opus",
   name: "biostatistician",
   prompt: "먼저 .claude/agents/biostatistician.md를 Read하여 역할을 숙지하라.
 설계 결정: _workspace/00_input/design_decisions.md를 Read하라.

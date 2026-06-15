@@ -1,0 +1,56 @@
+{
+  "schema": "pipeline_manifest/v1",
+  "harness_version": "3.0.0",
+  "trial": "Clopidogrel+Omeprazole DDI (v3 E2E)",
+  "created_utc": "2026-06-14T22:44:52+00:00",
+  "phases": [
+    {
+      "phase": "9",
+      "agent": "doc_lint",
+      "model": "n/a",
+      "timestamp_utc": "2026-06-14T22:44:52+00:00",
+      "inputs": [],
+      "output": {
+        "path": "e2e/v3_2026_06_15_DDI_clopidogrel_omeprazole/_workspace/03_protocol_draft.md",
+        "sha256": "7f91ca35d7da24ca5c6f0b631ec611bba71e99bcee627f0f79e9b1321e5cbfeb"
+      },
+      "note": "iter1 critic: score 10, critical 4 (T0 block)"
+    },
+    {
+      "phase": "9",
+      "agent": "protocol-writer",
+      "model": "opus",
+      "timestamp_utc": "2026-06-14T22:44:52+00:00",
+      "inputs": [],
+      "output": {
+        "path": "e2e/v3_2026_06_15_DDI_clopidogrel_omeprazole/_workspace/03_protocol_draft.md",
+        "sha256": "7f91ca35d7da24ca5c6f0b631ec611bba71e99bcee627f0f79e9b1321e5cbfeb"
+      },
+      "note": "iter1 actor: B.14-16 추가, 보존 15년, CI 80-125, washout 14d"
+    },
+    {
+      "phase": "9",
+      "agent": "doc_lint",
+      "model": "n/a",
+      "timestamp_utc": "2026-06-14T22:44:52+00:00",
+      "inputs": [],
+      "output": {
+        "path": "e2e/v3_2026_06_15_DDI_clopidogrel_omeprazole/_workspace/03_protocol_draft.md",
+        "sha256": "7f91ca35d7da24ca5c6f0b631ec611bba71e99bcee627f0f79e9b1321e5cbfeb"
+      },
+      "note": "iter2 critic: score 100, critical 0 — 수렴"
+    },
+    {
+      "phase": "finalize",
+      "agent": "finalize",
+      "model": "opus",
+      "timestamp_utc": "2026-06-14T22:44:52+00:00",
+      "inputs": [],
+      "output": {
+        "path": "e2e/v3_2026_06_15_DDI_clopidogrel_omeprazole/_workspace/03_protocol_draft.md",
+        "sha256": "7f91ca35d7da24ca5c6f0b631ec611bba71e99bcee627f0f79e9b1321e5cbfeb"
+      },
+      "note": "T0 게이트 전부 통과"
+    }
+  ]
+}

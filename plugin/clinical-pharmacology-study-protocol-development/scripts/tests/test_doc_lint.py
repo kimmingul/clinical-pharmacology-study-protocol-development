@@ -1,4 +1,6 @@
 """Tests for the shared document linter (qa/doc_lint.py)."""
+import json
+
 import doc_lint
 
 
@@ -78,3 +80,80 @@ def test_lint_file_dispatches_by_name(tmp_path):
     p.write_text("개인정보 동의 내용", encoding="utf-8")
     doc_type, _, _ = doc_lint.lint_file(str(p))
     assert doc_type == "icf"
+
+
+# --- score_file / goal-spec scoring -----------------------------------------
+
+def _write_protocol(tmp_path, text, name="03_protocol_draft.md"):
+    p = tmp_path / name
+    p.write_text(text, encoding="utf-8")
+    return str(p)
+
+
+def test_lint_file_tuple_unchanged(tmp_path):
+    """The public lint_file API must still return (doc_type, errors, warnings)."""
+    p = _write_protocol(tmp_path, PROTOCOL_OK)
+    result = doc_lint.lint_file(p)
+    assert isinstance(result, tuple) and len(result) == 3
+    doc_type, errors, warnings = result
+    assert doc_type == "protocol"
+    assert errors == []
+    assert isinstance(warnings, list)
+
+
+def test_score_clean_protocol_is_100(tmp_path):
+    p = _write_protocol(tmp_path, PROTOCOL_OK)
+    r = doc_lint.score_file(p)
+    assert r["doc_type"] == "protocol"
+    assert r["score"] == 100
+    assert r["critical"] == []
+    assert r["passed"] is True
+
+
+def test_score_missing_sections_critical_and_failed(tmp_path):
+    p = _write_protocol(tmp_path, "# B.1 only")
+    r = doc_lint.score_file(p)
+    assert r["critical"], "missing sections must produce a critical finding"
+    assert r["score"] < 100
+    assert r["passed"] is False
+
+
+def test_score_retention_3year_critical(tmp_path):
+    p = _write_protocol(tmp_path, PROTOCOL_BAD_RETENTION)
+    r = doc_lint.score_file(p)
+    assert any("retention" in c.lower() for c in r["critical"])
+    assert r["passed"] is False
+
+
+def test_score_goal_spec_required_section_enforced(tmp_path):
+    """A goal_spec requiring B.99 (absent) adds a critical finding."""
+    p = _write_protocol(tmp_path, PROTOCOL_OK)
+    goal = {"schema": "trial_goal_spec/v1", "required_ich_sections": ["B.99"]}
+    r = doc_lint.score_file(p, goal_spec=goal)
+    assert any("B.99" in c for c in r["critical"])
+    assert r["passed"] is False
+
+
+def test_score_goal_spec_retention_min_critical(tmp_path):
+    """goal_spec retention_years_min flags a too-short retention period."""
+    text = "\n".join(f"# B.{i} x" for i in range(1, 17)) + \
+        "\n- 보존 기간: 시험 종료 후 10년\n동등성 90% CI 80.00–125.00%\n"
+    p = _write_protocol(tmp_path, text)
+    goal = {"schema": "trial_goal_spec/v1", "retention_years_min": 15}
+    r = doc_lint.score_file(p, goal_spec=goal)
+    assert any("retention" in c.lower() or "보존" in c for c in r["critical"])
+
+
+def test_load_goal_spec_roundtrip(tmp_path):
+    spec = {"schema": "trial_goal_spec/v1", "drug": "x", "trial_type": "DDI",
+            "primary_objective": "y"}
+    p = tmp_path / "goal.json"
+    p.write_text(json.dumps(spec), encoding="utf-8")
+    assert doc_lint.load_goal_spec(str(p)) == spec
+
+
+def test_load_goal_spec_missing_returns_none(tmp_path):
+    assert doc_lint.load_goal_spec(str(tmp_path / "nope.json")) is None
+    bad = tmp_path / "bad.json"
+    bad.write_text("{ not json", encoding="utf-8")
+    assert doc_lint.load_goal_spec(str(bad)) is None

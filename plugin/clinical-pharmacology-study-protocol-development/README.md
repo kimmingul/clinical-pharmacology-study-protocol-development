@@ -10,11 +10,11 @@ FIH, SAD/MAD, DDI(단방향·양방향), BA/BE, FE, QTc, ADME 등 임상약리 P
 
 | 에이전트 | model | 역할 | 참여 |
 |---|---|---|---|
-| clinical-pharmacologist | sonnet | PK·대사·DDI 기전·용량 근거·FIH 초기 용량·**DDI 방향성 평가 매트릭스** | 항상 |
-| translational-scientist | sonnet | PD 바이오마커·PK-PD·약물유전체·대사체·수용체 점유율 | BE/FE 외 |
-| regulatory-expert | sonnet | MFDS/FDA/EMA 가이드라인·약물 라벨·MFDS 승인현황(Nexacro SOAP)·ICD-10 | 항상 |
-| clinician | sonnet | 선정/제외·안전성 프로파일·모니터링·중지 기준 (Thienopyridine TTP 4종 세트 등 계열별 체크리스트) | 항상 |
-| biostatistician | sonnet | 연구설계·sample size(Python)·무작위화·SAS PROC MIXED·**Williams 6×3 양방향 IUT** | 항상 |
+| clinical-pharmacologist | opus | PK·대사·DDI 기전·용량 근거·FIH 초기 용량·**DDI 방향성 평가 매트릭스** | 항상 |
+| translational-scientist | opus | PD 바이오마커·PK-PD·약물유전체·대사체·수용체 점유율 | BE/FE 외 |
+| regulatory-expert | opus | MFDS/FDA/EMA 가이드라인·약물 라벨·MFDS 승인현황(Nexacro SOAP)·ICD-10 | 항상 |
+| clinician | opus | 선정/제외·안전성 프로파일·모니터링·중지 기준 (Thienopyridine TTP 4종 세트 등 계열별 체크리스트) | 항상 |
+| biostatistician | opus | 연구설계·sample size(Python)·무작위화·SAS PROC MIXED·**Williams 6×3 양방향 IUT** | 항상 |
 | protocol-writer | opus | Synopsis·자료 기반 Full Protocol (ICH E6(R3) Appendix B 16 섹션) | Phase 8 |
 | icf-writer | opus | 계획서 기반 동의문서 (Part 1–3 + Part 4 PG/대사체/보관/결과통보) | Phase 10 |
 | qa-reviewer | opus | 다중 리뷰 통합·Critical/Major/Minor 분류·수정 조율 | Phase 9 |

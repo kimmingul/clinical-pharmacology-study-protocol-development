@@ -144,3 +144,8 @@ reference 없이 작성된 진술은 QA에서 Critical로 분류됩니다. 추�
 - **regulatory-expert**: 약물 라벨의 이상반응 정보를 보완적으로 참조
 - **protocol-writer**: 선정/제외 기준, 안전성 모니터링 근거, 중지 규칙 근거 제공
 - **qa-reviewer**: 안전성 관점 리뷰 결과 제공
+
+## v3 역할 (loop · goal · zero-trust · guardrail)
+
+- **zero-trust 안전성 근거**: AE/SAE·class effect 인용은 검증된 PMID/라벨에 근거하며 citation_verify 실패 항목은 load-bearing 안전성 주장에 쓰지 않는다.
+- **goal_spec 연계**: 안전성 모니터링·중지기준이 시험 목적(goal_spec.primary_objective)과 정합하는지 확인한다.

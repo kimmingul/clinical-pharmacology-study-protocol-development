@@ -18,7 +18,8 @@ description: "임상약리 임상시험 문서(계획서, 동의설명서, 동�
 | `/synopsis` | 6 | Synopsis 생성 (인자로 변형 지정 가능) | 설계 협의 완료 |
 | `/compare` | 6 | 여러 Synopsis 비교표 제시 | Synopsis 2개 이상 |
 | `/protocol` | 8 | Full Protocol 작성 | Synopsis 승인 완료 (Phase 7) |
-| `/review` | 9 | 다중 에이전트 병렬 리뷰 | Protocol 작성 완료 |
+| `/review` | 9 | 다중 에이전트 병렬 리뷰 (v3: 수렴 루프) | Protocol 작성 완료 |
+| `/finalize` | 9.5 | (v3) T0 최종 가드레일 — doc_lint strict + citation + dose | Protocol/ICF 초안 존재 |
 | `/icf` | 10 | ICF 작성 (별도 명령 필요) | Protocol 존재 |
 
 > 전체 파이프라인 실행 요청 시 Phase 1→10 순서로 진행하되, 각 게이트에서 반드시 사용자 승인을 받는다. 개별 Command로 특정 Phase만 실행할 수도 있다.
@@ -61,6 +62,11 @@ description: "임상약리 임상시험 문서(계획서, 동의설명서, 동�
 | `_workspace/04_icf_draft.md` | 동의설명서/동의서/개인정보 동의서 |
 | `_workspace/review/review_{agent}.md` | 에이전트별 리뷰 |
 | `_workspace/review/qa_review_report.md` | QA 통합 리뷰 보고서 |
+| `_workspace/review/qa_fix_plan.md` | (v3) 수렴 루프 각 반복의 수정 계획 |
+| `_workspace/00_input/goal_spec.json` | (v3) 기계 판독형 성공명세 (채점·가드레일 기준) |
+| `_workspace/00_input/ib_manifest.json` | (v3) IB 해시·허용 섹션·기밀 플래그 (FIH) |
+| `_workspace/verification/citation_audit.json` | (v3) 인용(PMID/NCT/setid/URL) 독립 검증 결과 |
+| `_workspace/verification/source_provenance.json` | (v3) 외부 fetch 스냅샷 해시·조회일·URL |
 | `_workspace/pipeline_manifest.json` | 재현성 매니페스트 (단계별 provenance) |
 
 ## 재현성 매니페스트 (provenance — 권장)
@@ -119,7 +125,10 @@ Bash로 `ls _workspace/ 2>/dev/null` 실행하여 실행 모드를 결정한다:
 **필수 정보 확보 시:**
 1. `mkdir -p _workspace/00_input`
 2. Write로 `_workspace/00_input/trial_info.md` 저장
-3. IB 제공 시 `_workspace/00_input/`에 복사
+3. **goal_spec 작성 (v3)**: `${CLAUDE_PLUGIN_ROOT}/references/schemas/goal_spec.example.json`을 참고하여 이번 시험의 성공명세 `_workspace/00_input/goal_spec.json`을 작성한다 (drug·trial_type·primary_objective·estimand·acceptable_ci_bounds·target_power·required_ich_sections·retention_years_min·pg_or_biobank_required). 이 파일은 채점·가드레일·수렴 루프의 기준이 되며 Phase 4에서 갱신·재승인할 수 있다.
+4. IB 제공 시 (FIH/SAD/MAD) — **zero-trust 최소권한 (v3)**:
+   - IB를 `_workspace/00_input/`에 복사한다.
+   - **IB manifest 작성**: `_workspace/00_input/ib_manifest.json`에 파일명·SHA-256·비공개(confidential) 플래그·에이전트별 허용 섹션을 기록한다 (예: clinical-pharmacologist=비임상 PK/독성/약리 섹션만). IB는 **기밀 자료**이므로, 필요한 에이전트에게 필요한 섹션만 인용하도록 프롬프트를 제한하고, IB 원문을 외부 도구(WebFetch·외부 API)로 전송하지 않는다. 상세 정책은 `SECURITY.md` 참조.
 
 ### Phase 2: 병렬 자료 수집
 
@@ -148,7 +157,7 @@ clinician ───────────────────────�
 ```
 Agent(
   description: "PK/PD 자료 수집 및 약동학 분석",
-  model: "sonnet",
+  model: "opus",
   name: "clinical-pharmacologist",
   prompt: "먼저 ${CLAUDE_PLUGIN_ROOT}/agents/clinical-pharmacologist.md를 Read하여 역할과 원칙을 숙지하라.
 그 다음 ${CLAUDE_PLUGIN_ROOT}/skills/clinical-research/SKILL.md를 Read하여 조사 절차를 따르라.
@@ -173,7 +182,7 @@ Agent(
 ```
 Agent(
   description: "규제 자료 수집 및 가이드라인 분석",
-  model: "sonnet",
+  model: "opus",
   name: "regulatory-expert",
   prompt: "먼저 ${CLAUDE_PLUGIN_ROOT}/agents/regulatory-expert.md를 Read하여 역할과 원칙을 숙지하라.
 그 다음 ${CLAUDE_PLUGIN_ROOT}/skills/clinical-research/SKILL.md를 Read하여 조사 절차를 따르라.
@@ -202,7 +211,7 @@ Agent(
 ```
 Agent(
   description: "임상적 판단 및 안전성 프로파일 자료 수집",
-  model: "sonnet",
+  model: "opus",
   name: "clinician",
   prompt: "먼저 ${CLAUDE_PLUGIN_ROOT}/agents/clinician.md를 Read하여 역할과 원칙을 숙지하라.
 그 다음 ${CLAUDE_PLUGIN_ROOT}/skills/clinical-research/SKILL.md를 Read하여 조사 절차를 따르라.
@@ -228,7 +237,7 @@ BE/FE 시험이 아닌 경우 (FIH/SAD/MAD/DDI/QTc/ADME/Special Pop)에 호출�
 ```
 Agent(
   description: "PD/오믹스 자료 수집 (PK-PD, PG, 대사체)",
-  model: "sonnet",
+  model: "opus",
   name: "translational-scientist",
   prompt: "먼저 ${CLAUDE_PLUGIN_ROOT}/agents/translational-scientist.md를 Read하여 역할과 원칙을 숙지하라.
 그 다음 ${CLAUDE_PLUGIN_ROOT}/skills/clinical-research/SKILL.md를 Read하여 조사 절차와 시험 유형별 우선순위를 확인하라.
@@ -259,7 +268,15 @@ _workspace/01_references/{pd_biomarkers,pharmacogenomics,metabolomics}/ 디렉�
    - `_workspace/01_research_clin.md`
    - `_workspace/01_research_ts.md` (BE/FE 외 시험)
 2. 핵심 발견사항을 통합하여 `_workspace/01_research_report.md`에 Write한다
-3. 사용자에게 **핵심 발견사항 요약**을 제시한다
+3. **zero-trust 인용 검증 (v3)** — Bash로 인용을 독립 검증한다:
+   ```bash
+   PY=${CLAUDE_PLUGIN_ROOT}/scripts/.venv/bin/python   # 없으면 python3
+   $PY ${CLAUDE_PLUGIN_ROOT}/scripts/qa/citation_verify.py audit \
+       _workspace/01_research_report.md _workspace/01_references/**/*.md \
+       --workspace _workspace --online    # 네트워크 불가 시 --online 생략(형식 검증만)
+   ```
+   `citation_audit.json`의 `format_fail`/`not-found`가 있으면 해당 인용을 `[출처 미확인]`으로 강등하고, dose/안전성 등 load-bearing 근거에는 사용하지 않는다.
+4. 사용자에게 **핵심 발견사항 요약** + 인용 검증 결과(검증/미검증 수)를 제시한다
 
 **사용자 선택지:**
 - **승인** → Phase 4로 진행
@@ -297,7 +314,7 @@ _workspace/01_references/{pd_biomarkers,pharmacogenomics,metabolomics}/ 디렉�
 ```
 Agent(
   description: "Sample size 계산 및 통계 설계",
-  model: "sonnet",
+  model: "opus",
   name: "biostatistician",
   prompt: "먼저 ${CLAUDE_PLUGIN_ROOT}/agents/biostatistician.md를 Read하여 역할과 원칙을 숙지하라.
 
@@ -402,7 +419,7 @@ Synopsis에서 확정된 설계 결정(연구설계, 평가변수, 대상자 수
 ```
 Agent(
   description: "{에이전트 역할} 관점의 계획서 리뷰",
-  model: "sonnet",
+  model: "opus",
   name: "{agent-name}",
   prompt: "먼저 ${CLAUDE_PLUGIN_ROOT}/agents/{agent-name}.md를 Read하여 역할과 원칙을 숙지하라.
 그 다음 ${CLAUDE_PLUGIN_ROOT}/skills/regulatory-review/SKILL.md를 Read하여 '개별 리뷰어 절차' 섹션을 따르라.
@@ -448,27 +465,52 @@ Agent(
 )
 ```
 
-**Step 3: Critical 자동 수정 (조건부)**
+**Step 3: Actor-Critic 수렴 루프 (v3 — 예산형)**
 
-QA 보고서를 Read하여 Critical 사항을 확인한다.
+> **변경 (v3.0.0)**: 기존 "Critical 자동 수정 최대 1회" 하드캡을 **예산형 수렴 루프**로 대체한다. protocol-writer(actor)와 qa-reviewer + `doc_lint`(critic)가 종료조건을 만족할 때까지 반복하되, 예산·plateau로 무한 루프를 막는다.
 
-Critical 존재 시:
-1. Critical 위치(어느 섹션)를 파악한다
-2. protocol-writer를 Agent로 재호출하여 수정:
+**루프 파라미터 (기본값)**:
+- `max_iterations = 3`
+- 종료(수렴): `Critical == 0` **AND** `doc_lint score ≥ 90`
+- 조기 종료(plateau): 직전 대비 score 개선 `< 2`점 **AND** Critical 미감소 → 사람 에스컬레이션
+- **불변 입력(락)**: `_workspace/02_synopsis.md`(또는 승인 변형)과 `_workspace/00_input/design_decisions.md`는 루프 중 변경 금지. 작성자가 설계 합의를 임의로 바꾸지 못하게 한다.
+
+**각 반복(iteration k)**:
+
+1. **결정적 채점 먼저(critic A)** — Bash로 실행하여 객관 점수를 얻는다:
+   ```bash
+   PY=${CLAUDE_PLUGIN_ROOT}/scripts/.venv/bin/python   # 없으면 python3
+   GOAL=_workspace/00_input/goal_spec.json
+   $PY ${CLAUDE_PLUGIN_ROOT}/scripts/qa/doc_lint.py _workspace/03_protocol_draft.md --score \
+       ${GOAL:+--goal-spec "$GOAL"}
    ```
-   [수정 모드]
-   이전 산출물: _workspace/03_protocol_draft.md를 Read하고, 아래 QA Critical 사항을 반영하여 수정하라.
+   `score`, `critical[]`을 기록한다.
+2. **QA 취합(critic B)** — 위 Step 2(qa-reviewer)로 `qa_review_report.md`를 갱신한다. qa-reviewer는 **직전 보고서 대비 신규/잔존/해소된 이슈를 구분**한다.
+3. **종료 판정**: 종료조건 충족 → 루프 종료(성공). plateau → 종료(에스컬레이션). 그 외 → 4로.
+4. **수정(actor)** — protocol-writer를 재호출한다. 수정 전 **`qa_fix_plan.md`를 먼저 작성**하게 하여 어떤 Critical/Major를 어떻게 고칠지 명시한 뒤 본문을 수정한다:
+   ```
+   [수정 모드 — iteration {k}]
+   불변 입력(변경 금지): _workspace/02_synopsis.md, _workspace/00_input/design_decisions.md
+   이전 산출물: _workspace/03_protocol_draft.md를 Read하라.
 
-   QA 피드백 (Critical 사항):
+   먼저 _workspace/review/qa_fix_plan.md에 수정 계획을 Write하라 (각 Critical/Major별 수정 방향).
+   그 다음 아래 항목을 반영하여 _workspace/03_protocol_draft.md를 수정하라.
+
+   doc_lint critical (결정적):
+   - {critical 메시지들}
+   QA 피드백:
    - [C-1] {제목}: {내용} → 권고: {수정 방향}
    ...
-
-   수정된 문서를 같은 파일에 Write하라.
+   설계 결정(synopsis/design_decisions)은 보존하라.
    ```
-3. 수정 후 Phase 9 리뷰를 1회 재실행한다
-4. **최대 1회만**. 재검토 후에도 Critical이 있으면 사용자에게 보고한다
+5. provenance 기록(권장): `pipeline_manifest.py record --phase 9 --note "iter {k}: score {s}, critical {n}"`.
+6. k+1로.
 
-Critical이 없으면 사용자에게 결과 보고.
+**루프 종료 후**:
+- **수렴 성공**: 사용자에게 "Critical 0, score N/100 — 수렴(iter k)" 보고. `/finalize`로 T0 최종 게이트 권유.
+- **예산 소진/plateau**: 잔존 Critical/Major와 score 궤적을 제시하고 **사용자 판단을 요청**(전문가 개입 지점). 임의로 "완료" 처리하지 않는다.
+
+> **Goodhart 주의**: 루프는 `doc_lint`/QA 루브릭을 최적화하나, 루브릭이 과학적 타당성 전부를 포착하지는 못한다. Phase 7 사람 게이트와 다양한 critic(5인 리뷰 + 결정적 린트)을 유지하여 단일 지표 과최적화를 방지한다.
 
 ### Phase 10: ICF 작성 (별도 `/icf` 명령)
 
