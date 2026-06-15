@@ -67,7 +67,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from utils.power_analysis import normal_quantile, adjust_for_dropout, print_result
+from utils.power_analysis import normal_quantile, adjust_for_dropout
 
 
 def cv_to_sigma_w(cv_pct: float) -> float:
@@ -256,7 +256,7 @@ def run_sensitivity_analyses():
     import sys as _sys
     print(f"  Python  : {_sys.version.split()[0]}")
     print(f"  scipy   : {scipy.__version__}")
-    print(f"  numpy   : ", end="")
+    print("  numpy   : ", end="")
     import numpy as np
     print(np.__version__)
     print(f"{sep}\n")

@@ -3,7 +3,6 @@
 Validates the body-surface-area conversion factors against the FDA 2005
 guidance (Km_human / Km_animal) and the Emax-based MABEL formula.
 """
-import math
 
 import pytest
 

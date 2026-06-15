@@ -11,7 +11,6 @@ References used as expected values:
 import os
 import sys
 
-import pytest
 
 
 # Make ``.claude/scripts/sample_size`` importable directly.
