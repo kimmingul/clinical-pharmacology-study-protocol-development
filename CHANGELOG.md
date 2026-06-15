@@ -8,6 +8,35 @@ log lives in `CLAUDE.md` (진화 로그); this file tracks user-facing releases.
 
 _No unreleased changes._
 
+## [4.1.0] — 2026-06-16 — 4-모델 리뷰 반영 (정확성·적절성·정합성·시의성)
+
+Opus·Codex·Gemini 4축 교차 검토 지적을 검증 후 일괄 수정한 릴리스. (외부 모델이
+자기 CLI/모델명을 오인한 부분은 실측으로 기각.)
+
+### Fixed — 안전 (P0)
+- **egress 하드코딩 제거**: `/review`·SKILL Phase 9의 `--classification REGULATORY_PUBLIC`
+  하드코딩을 시험유형 기반 선언으로 교체. `egress_gate.py`에 **`confidential_context`
+  (ib_manifest) 강제 floor** 추가 — FIH/IB 초안은 선언과 무관하게 외부 전송 차단.
+  `ask_model.sh`가 `ib_manifest.json`을 자동 적용(이중 안전).
+
+### Fixed — 정확성/정합성 (P1)
+- **`ask_model.sh` stdin/`--prompt-file` 디스패치**: 프로토콜 전문을 CLI 인자로 넘기던
+  ARG_MAX(E2BIG) 위험 제거(Linux 이식성). provenance에 model id·prompt_sha·egress 기록.
+- **보존기간 법령 근거화**: `doc_lint`에 `RETENTION_LEGAL_BASIS`(「의약품등의 안전에 관한
+  규칙」 별표 4·KGCP, 15년) + 공유 `_retention_errors`(보존/보유/보관), **ICF에도 적용**.
+  `icf-template`의 "최소 3년" → 법령 인용 15년. 임계값은 `goal_spec.retention_years_min`로 조정.
+- `/finalize icf`가 실제 `04_icf_draft.md` 검사(기존 03 고정 버그). judge_synth = host 역할
+  명시. `/review` Step 4 "최대 1회" → 수렴 루프. model_profiles resolved_model 현행화.
+
+### Fixed — 정합성/시의성 (P2)
+- egress 마커 **단어경계 매칭**(ASCII) → 'ib'의 calibration/fibrosis 오탐 제거.
+- v4 제안서 "구현 완료" 배지, README 구조에 `scripts/llm`·`references/llm`·`/llm-health`·
+  `/finalize` 반영. ICH E6(R3) **Annex 2 Step 4(2026-06-03)**·**M12 Step 4(2024-05-21)** 표기 정정.
+
+### Verified
+- `pytest .claude/scripts/` → **152 passed**, ruff clean. 라이브 재검증(egress IB 차단·
+  단어경계·ask_model stdin·ICF 보존) 통과.
+
 ## [4.0.0] — 2026-06-16 — Multi-LLM + Multi-Persona 하이브리드 (벤더 중립)
 
 Single-LLM(Multi-Persona) → **Multi-LLM + Multi-Persona 하이브리드**로의 메이저 릴리스.
