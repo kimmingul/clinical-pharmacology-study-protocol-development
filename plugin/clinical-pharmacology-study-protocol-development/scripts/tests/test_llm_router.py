@@ -363,3 +363,70 @@ def test_load_ib_confidential(tmp_path):
     p2.write_text('{"confidential": false}', encoding="utf-8")
     assert egress_gate.load_ib_confidential(str(p2)) is False
     assert egress_gate.load_ib_confidential(str(tmp_path / "missing.json")) is False
+
+
+# --- v4.2: agy migration + explicit snapshot model pins ---------------------
+
+def test_google_cli_is_agy_not_gemini():
+    """gemini CLI was force-migrated to agy (antigravity, 2026-06-18)."""
+    g = PROFILES["providers"]["google"]
+    assert g["cli"] == "agy"
+    assert g["version_cmd"][0] == "agy"
+
+
+def test_resolved_models_are_bare_pinnable_ids():
+    """resolved_model is passed to each CLI via --model, so it must be a bare id
+    (no descriptive prose like 'gpt-5.5 (OpenAI; codex-cli)')."""
+    for key, prof in PROFILES["providers"].items():
+        rm = prof["resolved_model"]
+        assert rm and " " not in rm and "(" not in rm, \
+            f"{key} resolved_model {rm!r} is not a bare --model id"
+
+
+def test_probe_cmd_pins_the_resolved_model():
+    """The health probe must exercise the SAME model ask_model.sh will call:
+    --model <resolved_model> appears in probe_cmd."""
+    for key, prof in PROFILES["providers"].items():
+        cmd = prof["probe_cmd"]
+        assert "--model" in cmd, f"{key} probe_cmd missing --model pin"
+        i = cmd.index("--model")
+        assert cmd[i + 1] == prof["resolved_model"], \
+            f"{key} probe pins {cmd[i+1]!r} != resolved_model {prof['resolved_model']!r}"
+
+
+def test_probe_cmd_prompt_lands_as_value_or_stdin():
+    """Append convention: probe_cmd must end with '-p' (prompt appended as its
+    value) or '-' (stdin), so health_check's payload extraction keeps working."""
+    for key, prof in PROFILES["providers"].items():
+        assert prof["probe_cmd"][-1] in ("-p", "-"), \
+            f"{key} probe_cmd must end with -p or -, got {prof['probe_cmd'][-1]!r}"
+
+
+def test_anthropic_pins_opus_and_forbids_fable():
+    """Export-controlled Fable must never be auto-selected; Opus is pinned."""
+    a = PROFILES["providers"]["anthropic"]
+    assert a["resolved_model"] == "claude-opus-4-8"
+    assert "fable" in a.get("availability_constraint", "").lower()
+
+
+def test_check_all_honors_per_provider_probe_timeout():
+    """google (agy) declares probe_timeout=70; anthropic uses the global default."""
+    seen = {}
+
+    def capturing_runner(cmd, stdin_text, timeout):
+        if _is_version_call(cmd):
+            return 0, "v1\n", ""
+        seen[cmd[0]] = timeout
+        nonce = _payload(cmd, stdin_text).split('"probe":"', 1)[1].split('"', 1)[0]
+        return 0, json.dumps({"probe": nonce, "sum": 17}), ""
+
+    orig = health_check.shutil.which
+    health_check.shutil.which = lambda c: "/usr/bin/" + c
+    try:
+        health_check.check_all(
+            PROFILES, providers=["anthropic", "google"],
+            runner=capturing_runner, timeout=15)
+    finally:
+        health_check.shutil.which = orig
+    assert seen.get("agy") == 70, "google probe_timeout override not honored"
+    assert seen.get("claude") == 15, "anthropic should use the global default timeout"

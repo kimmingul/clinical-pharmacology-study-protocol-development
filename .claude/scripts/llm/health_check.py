@@ -2,7 +2,7 @@
 """Live LLM-CLI health probe — confirm login/key actually works.
 
 The v4 Multi-LLM pipeline routes roles across the installed CLIs (claude, codex,
-gemini, grok). A CLI being *installed* (on PATH) does not mean it is *usable* —
+agy [google; replaced gemini], grok). A CLI being *installed* (on PATH) does not mean it is *usable* —
 the key may be missing, the login expired, or the binary may echo input without
 reasoning. This probe sends a tiny arithmetic+nonce challenge to each CLI and
 verifies the model actually reasoned over it, so route_select.py only ever
@@ -169,7 +169,10 @@ def probe_provider(provider, profile, nonce, timeout=15, runner=_run):
     cmd = list(profile.get("probe_cmd") or [cli])
     # Convention: a trailing "-" means the CLI reads the prompt from stdin
     # (e.g. `codex exec -`); otherwise pass the prompt as the final CLI
-    # argument (e.g. `claude -p <prompt>`, `gemini -p <prompt>`, `grok -p <prompt>`).
+    # argument (e.g. `claude -p <prompt>`, `agy ... -p <prompt>`, `grok -p <prompt>`).
+    # Note (v4.2): provider flags (e.g. agy's --model/--print-timeout) are placed
+    # BEFORE the trailing "-p" in probe_cmd so the appended prompt lands as the
+    # -p value, keeping this append convention intact.
     if cmd and cmd[-1] == "-":
         stdin_text = prompt
     else:
@@ -235,8 +238,12 @@ def check_all(profiles, providers=None, runner=_run, timeout=15):
             }
             continue
         nonce = uuid.uuid4().hex[:12]
+        # Per-provider probe_timeout override (v4.2): some CLIs (notably agy,
+        # a Go agent with non-trivial startup) need a longer probe budget than
+        # the global default, or a healthy provider is falsely marked "timeout".
+        provider_timeout = profile.get("probe_timeout", timeout)
         results[key] = probe_provider(
-            key, profile, nonce, timeout=timeout, runner=runner)
+            key, profile, nonce, timeout=provider_timeout, runner=runner)
     return {
         "schema": "llm_health/v1",
         "probed_at": _utc_now(),

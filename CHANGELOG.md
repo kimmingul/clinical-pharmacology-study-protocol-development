@@ -8,6 +8,48 @@ log lives in `CLAUDE.md` (진화 로그); this file tracks user-facing releases.
 
 _No unreleased changes._
 
+## [4.2.0] — 2026-06-29 — 버그픽스: agy 마이그레이션 + 명시 모델 핀
+
+Multi-LLM 어댑터의 가용성·정확성 버그 3건을 수정한 유지보수 릴리스. 핀할 4개
+모델 id를 모두 실제 CLI 호출로 검증한 뒤 반영했다. (조사·라우팅 로직·capability
+점수는 불변 — 순수 버그픽스.)
+
+### Fixed — Multi-LLM 어댑터
+- **gemini CLI → agy(antigravity) 강제 마이그레이션**: Google이 2026-06-18부로
+  `gemini` CLI 서비스를 중단(공식 전환). `model_profiles.json` google provider를
+  `cli:"agy"`·`version_cmd:["agy","--version"]`로 교체. agy는 IDE형 에이전트라
+  대용량 응답을 brain 아티팩트에 쓰고 stdout엔 요약+`file://` 경로만 출력 →
+  `ask_model.sh` google 분기를 **stdin 입력(ARG_MAX 무관) + 아티팩트 경로 파싱**
+  어댑터로 재작성. agy 시작 지연 대응으로 `health_check.py`에 **per-provider
+  `probe_timeout`** 추가(google=70)하여 healthy provider가 false `timeout`으로
+  분류되는 것 방지.
+- **Anthropic 모델 명시 핀 + Fable 차단 (provenance 무결성)**: `ask_model.sh`가
+  `resolved_model`을 **dispatch 앞에서 읽어 `--model`로 전달** → "기록한 모델 =
+  실제 호출 모델"이 구조적으로 보장(기존엔 provenance에 opus를 기록하면서 실제로는
+  CLI 기본 모델을 호출 → Fable일 경우 거짓 기록 + 수출통제 위반 위험). anthropic에
+  `availability_constraint`(Fable 5/Mythos 5 수출통제→Opus 4.8 고정, 자동 latest
+  금지) 명문화.
+- **각 회사 최신 고성능 모델을 날짜 스냅샷으로 명시 핀** (B3, 사용자 선택=스냅샷):
+  anthropic `claude-opus-4-8` · openai `gpt-5.5` · google `gemini-3.5-pro-002`(스냅샷)
+  · xai `grok-build`. `resolved_model`을 서술 문자열에서 **바레 `--model` id**로 정리.
+  probe_cmd도 동일 `--model`을 핀해 health probe가 실제 호출 모델을 검증. (codex/grok
+  CLI는 dated snapshot을 미노출하여 alias 핀 + `model_note`로 사유 기록.)
+
+### Security — agy 어댑터 하드닝 (커밋 보안 리뷰 반영)
+- **자율 에이전트 sandboxing**: agy는 로컬 도구를 실행할 수 있는 IDE형 자율
+  에이전트라, `ask_model.sh`·probe에서 **`--dangerously-skip-permissions`를 절대
+  쓰지 않고 `--sandbox`로 실행**(codex `--sandbox read-only`와 동일 원칙). ask_model
+  프롬프트에는 외부 fetch 콘텐츠가 섞일 수 있어, prompt-injection이 **로컬 코드
+  실행으로 번지는 경로를 차단**.
+- **아티팩트 경로 검증**: agy stdout에서 파싱한 `file://…md` 경로를 무검증으로 `cp`
+  하던 것을, **agy 자신의 brain 디렉토리(`~/.gemini/antigravity-cli/brain`) 하위로
+  canonical(realpath) 검증** 후에만 회수 — 주입으로 밀반입된 임의 로컬 `.md` 읽기 차단,
+  벗어나면 stdout 요약으로 안전 폴백.
+
+### Tests
+- `test_llm_router.py`에 v4.2 불변식 고정 테스트 6건 추가(agy cli, 바레 id, probe의
+  `--model` 핀 일치, Fable 금지, per-provider probe_timeout). **전체 152 passed.**
+
 ## [4.1.0] — 2026-06-16 — 4-모델 리뷰 반영 (정확성·적절성·정합성·시의성)
 
 Opus·Codex·Gemini 4축 교차 검토 지적을 검증 후 일괄 수정한 릴리스. (외부 모델이
