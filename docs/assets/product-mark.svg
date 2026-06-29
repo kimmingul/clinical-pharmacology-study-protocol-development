@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Clinical pharmacology protocol mark">
+  <defs>
+    <linearGradient id="bg" x1="32" x2="224" y1="28" y2="228" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A84FF"/>
+      <stop offset="0.55" stop-color="#34C759"/>
+      <stop offset="1" stop-color="#64D2FF"/>
+    </linearGradient>
+    <linearGradient id="sheet" x1="72" x2="184" y1="52" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E8F3FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <path d="M78 48h78l36 37v122a17 17 0 0 1-17 17H78a17 17 0 0 1-17-17V65a17 17 0 0 1 17-17Z" fill="url(#sheet)" opacity="0.96"/>
+  <path d="M155 49v32a8 8 0 0 0 8 8h30" fill="#CBE7FF"/>
+  <path d="M88 112h80M88 139h80M88 166h51" stroke="#145DA0" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="178" cy="175" r="28" fill="#0B5FFF"/>
+  <path d="M166 175h24M178 163v24" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+</svg>

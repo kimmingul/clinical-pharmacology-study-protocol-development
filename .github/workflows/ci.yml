@@ -63,6 +63,17 @@ jobs:
           claude plugin validate plugin/clinical-pharmacology-study-protocol-development || true
           claude plugin validate . || true
 
+  github-pages:
+    name: GitHub Pages static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate GitHub Pages entrypoint
+        run: python tests/test_github_pages.py
+
   secret-scan:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest

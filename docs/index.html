@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clinical Pharmacology Study Protocol Development</title>
+  <meta name="description" content="임상약리 임상시험 계획서 개발을 조사, 설계, 작성, 검토, 최종 검증까지 한 흐름으로 지원하는 Claude Code 플러그인입니다.">
+  <meta property="og:title" content="Clinical Pharmacology Study Protocol Development">
+  <meta property="og:description" content="임상약리 임상시험 문서를 8개 전문 에이전트와 10단계 파이프라인으로 개발합니다.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/product-mark.svg">
+  <link rel="icon" href="assets/product-mark.svg">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --surface-soft: #fbfbfd;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --line: #d2d2d7;
+      --blue: #0071e3;
+      --blue-hover: #0077ed;
+      --green: #1a8f5f;
+      --orange: #bf4800;
+      --shadow: 0 18px 48px rgba(0, 0, 0, .08);
+      --window: #16191d;
+      --window-2: #23272d;
+      --window-line: rgba(255, 255, 255, .09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Apple SD Gothic Neo", "Noto Sans KR", "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      letter-spacing: 0;
+      -webkit-font-smoothing: antialiased;
+      word-break: keep-all;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid rgba(0, 0, 0, .08);
+      background: rgba(245, 245, 247, .78);
+      backdrop-filter: saturate(180%) blur(20px);
+    }
+
+    .nav-inner {
+      width: min(1120px, calc(100% - 36px));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      min-width: 0;
+      gap: 9px;
+      color: var(--text);
+    }
+
+    .brand img {
+      width: 25px;
+      height: 25px;
+      border-radius: 7px;
+      flex: 0 0 auto;
+      box-shadow: 0 6px 14px rgba(0, 113, 227, .18);
+    }
+
+    .brand span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .button {
+      display: inline-flex;
+      min-height: 38px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 9px 18px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      box-shadow: 0 12px 24px rgba(0, 113, 227, .18);
+    }
+
+    .button:hover {
+      background: var(--blue-hover);
+      text-decoration: none;
+    }
+
+    .button.secondary {
+      background: transparent;
+      color: var(--blue);
+      border: 1px solid rgba(0, 113, 227, .34);
+      box-shadow: none;
+    }
+
+    .hero {
+      min-height: calc(100vh - 52px);
+      display: grid;
+      place-items: center;
+      padding: 66px 22px 58px;
+      background:
+        radial-gradient(circle at 50% 2%, rgba(255, 255, 255, .98), rgba(245, 245, 247, 0) 42%),
+        linear-gradient(180deg, #fff 0%, var(--bg) 75%);
+    }
+
+    .hero-inner {
+      width: min(1120px, 100%);
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(370px, .98fr);
+      align-items: center;
+      gap: 48px;
+    }
+
+    .eyebrow {
+      margin: 0 0 16px;
+      color: var(--orange);
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(48px, 6.8vw, 84px);
+      line-height: .99;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .hero-copy {
+      margin: 24px 0 0;
+      max-width: 670px;
+      color: var(--muted);
+      font-size: clamp(21px, 2.25vw, 28px);
+      line-height: 1.28;
+      font-weight: 600;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 32px;
+      align-items: center;
+    }
+
+    .availability {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      max-width: 650px;
+    }
+
+    .product-visual {
+      position: relative;
+      min-height: 540px;
+      display: grid;
+      place-items: center;
+    }
+
+    .app-mark {
+      position: absolute;
+      top: 8px;
+      width: 116px;
+      height: 116px;
+      border-radius: 28px;
+      box-shadow: 0 24px 48px rgba(0, 113, 227, .2);
+      z-index: 2;
+    }
+
+    .window {
+      width: min(540px, 100%);
+      margin-top: 86px;
+      border-radius: 24px;
+      background: var(--window);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .16);
+    }
+
+    .window-bar {
+      height: 50px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 18px;
+      background: var(--window-2);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .red { background: #ff5f57; }
+    .yellow { background: #ffbd2e; }
+    .green-dot { background: #28c840; }
+
+    .mock-body {
+      padding: 20px;
+      background: #111316;
+      color: #d7dce2;
+    }
+
+    .mock-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .mock-title,
+    .mock-pill {
+      min-height: 34px;
+      border-radius: 10px;
+      background: #252a30;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mock-pill {
+      color: #9bd7ff;
+      white-space: nowrap;
+    }
+
+    .phase-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 48px;
+      padding: 9px 12px;
+      border: 1px solid var(--window-line);
+      border-radius: 13px;
+      background: rgba(255, 255, 255, .035);
+      font-size: 13px;
+    }
+
+    .phase-number {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(0, 113, 227, .22);
+      color: #8fc8ff;
+      font-weight: 800;
+    }
+
+    .phase strong {
+      display: block;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+
+    .phase span {
+      color: #a1a9b3;
+      line-height: 1.35;
+    }
+
+    .phase-tag {
+      color: #80e0a7;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .section {
+      padding: 84px 22px;
+    }
+
+    .section-inner {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+    }
+
+    .section-title {
+      margin: 0 auto 16px;
+      max-width: 900px;
+      text-align: center;
+      font-size: clamp(34px, 4.2vw, 58px);
+      line-height: 1.06;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .section-lede {
+      margin: 0 auto 44px;
+      max-width: 790px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1.42;
+      font-weight: 600;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .feature {
+      min-height: 238px;
+      border-radius: 28px;
+      padding: 28px;
+      background: var(--surface);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, .04);
+    }
+
+    .feature h3 {
+      margin: 0 0 12px;
+      font-size: 25px;
+      line-height: 1.14;
+      font-weight: 800;
+    }
+
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.48;
+      font-weight: 600;
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: minmax(0, .96fr) minmax(0, 1.04fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border-radius: 30px;
+      padding: 30px;
+      background: var(--surface);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, .04);
+    }
+
+    .panel h3 {
+      margin: 0 0 12px;
+      font-size: 28px;
+      line-height: 1.12;
+    }
+
+    .panel p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.55;
+      font-weight: 600;
+    }
+
+    .command-stack {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .command-stack li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 46px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: var(--surface-soft);
+      border: 1px solid rgba(0, 0, 0, .05);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .command-stack code {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .study-types {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .study-types span {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0, 113, 227, .08);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .safety-band {
+      border-radius: 34px;
+      background: #111;
+      color: #f5f5f7;
+      padding: 56px;
+      display: grid;
+      grid-template-columns: .92fr 1.08fr;
+      gap: 42px;
+      align-items: start;
+    }
+
+    .safety-band h2 {
+      margin: 0;
+      font-size: clamp(34px, 4vw, 56px);
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+
+    .safety-list {
+      display: grid;
+      gap: 16px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .safety-list li {
+      border-top: 1px solid rgba(255, 255, 255, .16);
+      padding-top: 16px;
+    }
+
+    .safety-list strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #fff;
+      font-size: 18px;
+    }
+
+    .safety-list span {
+      color: #a1a1a6;
+      font-size: 16px;
+      line-height: 1.48;
+      font-weight: 600;
+    }
+
+    .install-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .terminal {
+      margin: 0;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #111316;
+      color: #eff3f7;
+      box-shadow: var(--shadow);
+    }
+
+    .terminal-bar {
+      height: 46px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 18px;
+      background: #23272d;
+    }
+
+    .terminal code {
+      display: block;
+      padding: 22px;
+      overflow-x: auto;
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre;
+    }
+
+    .release {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: center;
+      border-top: 1px solid var(--line);
+      padding-top: 34px;
+    }
+
+    .release h2 {
+      margin: 0 0 8px;
+      font-size: 29px;
+    }
+
+    .release p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+      font-weight: 600;
+    }
+
+    footer {
+      padding: 26px 22px 44px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    footer .section-inner {
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+      .nav-links a:not(.button) {
+        display: none;
+      }
+
+      .hero {
+        padding-top: 46px;
+      }
+
+      .hero-inner,
+      .workflow,
+      .safety-band,
+      .install-card,
+      .release {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-inner {
+        text-align: center;
+      }
+
+      .hero-copy,
+      h1,
+      .availability {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-actions {
+        justify-content: center;
+      }
+
+      .product-visual {
+        min-height: 450px;
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .safety-band {
+        padding: 36px 28px;
+      }
+
+      .terminal code {
+        font-size: 13px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .brand span {
+        max-width: 190px;
+      }
+
+      .button {
+        width: 100%;
+      }
+
+      .nav .button {
+        width: auto;
+      }
+
+      .hero-actions {
+        align-items: stretch;
+      }
+
+      .mock-header,
+      .phase {
+        grid-template-columns: 1fr;
+      }
+
+      .phase-number {
+        display: none;
+      }
+
+      .phase-tag {
+        justify-self: start;
+      }
+
+      .panel,
+      .feature {
+        border-radius: 22px;
+        padding: 24px;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000;
+        --surface: #161617;
+        --surface-soft: #1d1d20;
+        --text: #f5f5f7;
+        --muted: #a1a1a6;
+        --line: #2f2f32;
+      }
+
+      .nav {
+        border-bottom-color: rgba(255, 255, 255, .12);
+        background: rgba(22, 22, 23, .72);
+      }
+
+      .hero {
+        background:
+          radial-gradient(circle at 50% 2%, rgba(34, 39, 46, .9), rgba(0, 0, 0, 0) 46%),
+          linear-gradient(180deg, #0b0b0c 0%, #000 75%);
+      }
+
+      .command-stack li {
+        border-color: rgba(255, 255, 255, .07);
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav" aria-label="주요 탐색">
+    <div class="nav-inner">
+      <a class="brand" href="#top" aria-label="Clinical Pharmacology Study Protocol Development 홈">
+        <img src="assets/product-mark.svg" alt="">
+        <span>Clinical Protocol Development</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">기능</a>
+        <a href="#workflow">흐름</a>
+        <a href="#safety">검증</a>
+        <a href="#install" class="button">설치</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <p class="eyebrow">Claude Code Plugin · v4.2.0</p>
+          <h1>임상약리 임상시험 계획서 개발을, 조사부터 검증까지 한 흐름으로.</h1>
+          <p class="hero-copy">FIH, DDI, BE/FE, QTc, ADME 연구 문서를 8개 전문 에이전트와 10단계 파이프라인으로 작성하고 검토합니다.</p>
+          <div class="hero-actions">
+            <a class="button" href="https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/releases/latest">v4.2.0 다운로드</a>
+            <a class="button secondary" href="https://github.com/kimmingul/clinical-pharmacology-study-protocol-development">GitHub에서 보기</a>
+          </div>
+          <p class="availability">AI 생성물은 전문가 검토와 IRB 승인이 필요한 초안입니다. 실제 연구 시작, 규제 제출, 시험대상자 배포 전에는 의학·통계·규제 전문가의 검증이 필요합니다.</p>
+        </div>
+
+        <div class="product-visual" aria-label="임상시험 계획서 개발 파이프라인 미리보기">
+          <img class="app-mark" src="assets/product-mark.svg" alt="Clinical pharmacology protocol mark">
+          <div class="window">
+            <div class="window-bar">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green-dot"></span>
+            </div>
+            <div class="mock-body">
+              <div class="mock-header">
+                <div class="mock-title">Protocol pipeline</div>
+                <div class="mock-pill">ICH E6(R3)</div>
+              </div>
+              <ol class="phase-list">
+                <li class="phase">
+                  <span class="phase-number">1</span>
+                  <span><strong>자료 조사</strong>문헌, 라벨, ClinicalTrials.gov, MFDS/FDA/EMA 근거 수집</span>
+                  <span class="phase-tag">/research</span>
+                </li>
+                <li class="phase">
+                  <span class="phase-number">2</span>
+                  <span><strong>설계 결정</strong>선정·제외기준, 평가변수, 통계 설계, sample size</span>
+                  <span class="phase-tag">/design</span>
+                </li>
+                <li class="phase">
+                  <span class="phase-number">3</span>
+                  <span><strong>Synopsis 작성</strong>승인된 설계를 기준으로 핵심 시험 개요 생성</span>
+                  <span class="phase-tag">/synopsis</span>
+                </li>
+                <li class="phase">
+                  <span class="phase-number">4</span>
+                  <span><strong>Protocol 작성</strong>ICH E6(R3) Appendix B 16개 섹션 구조 반영</span>
+                  <span class="phase-tag">/protocol</span>
+                </li>
+                <li class="phase">
+                  <span class="phase-number">5</span>
+                  <span><strong>다중 검토</strong>전문가 페르소나와 결정적 도구로 critical issue 수렴</span>
+                  <span class="phase-tag">/review</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="section-inner">
+        <h2 class="section-title">임상약리 문서 개발에 필요한 역할을 한 플러그인에 담았습니다.</h2>
+        <p class="section-lede">조사, 설계, 작성, 검토가 끊어지지 않도록 각 단계의 입력과 산출물을 명확히 연결합니다.</p>
+        <div class="feature-grid">
+          <article class="feature">
+            <h3>8개 전문 에이전트.</h3>
+            <p>clinical pharmacologist, translational scientist, regulatory expert, clinician, biostatistician, writer, reviewer 역할을 분리해 문서 품질을 높입니다.</p>
+          </article>
+          <article class="feature">
+            <h3>10단계 파이프라인.</h3>
+            <p>자료 조사부터 Synopsis 승인, Full Protocol, 다중 리뷰, ICF 생성까지 사용자 검토 게이트를 포함한 순서로 진행합니다.</p>
+          </article>
+          <article class="feature">
+            <h3>ICH E6(R3) 기반.</h3>
+            <p>Appendix B 16개 공식 섹션 구조와 KGCP 보존기간, MFDS/FDA/EMA 가이드라인을 문서 작성 기준으로 사용합니다.</p>
+          </article>
+          <article class="feature">
+            <h3>시험 유형별 설계.</h3>
+            <p>FIH/SAD/MAD, DDI 단방향·양방향, BE, FE, QTc, ADME, 특수 집단 PK 연구에 맞춘 설계 흐름과 sample size 스크립트를 제공합니다.</p>
+          </article>
+          <article class="feature">
+            <h3>Multi-LLM 검토.</h3>
+            <p>v4 계열은 보유한 Claude, GPT, Gemini, Grok CLI를 capability 기반으로 라우팅해 cross-vendor critic 패널을 구성할 수 있습니다.</p>
+          </article>
+          <article class="feature">
+            <h3>근거 중심 산출물.</h3>
+            <p>PMID, NCT, URL, 라벨, 가이드라인 인용을 요구하고 citation audit과 source snapshot으로 재현성을 보강합니다.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow" class="section">
+      <div class="section-inner">
+        <h2 class="section-title">명령은 짧고, 산출물 흐름은 명확합니다.</h2>
+        <p class="section-lede">각 명령은 이전 단계의 승인된 산출물을 입력으로 사용해 설계 결정이 하류 문서에서 흔들리지 않도록 합니다.</p>
+        <div class="workflow">
+          <div class="panel">
+            <h3>기본 실행 순서</h3>
+            <p>프로젝트 디렉토리에서 Claude Code를 열고 아래 명령을 순서대로 실행합니다.</p>
+            <ul class="command-stack" aria-label="Claude Code command flow">
+              <li><code>/research</code><span>자료 조사</span></li>
+              <li><code>/design</code><span>연구 설계</span></li>
+              <li><code>/synopsis</code><span>Synopsis 작성</span></li>
+              <li><code>/protocol</code><span>Full Protocol 작성</span></li>
+              <li><code>/review</code><span>다중 검토</span></li>
+              <li><code>/finalize</code><span>최종 가드레일</span></li>
+              <li><code>/icf</code><span>동의문서 작성</span></li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h3>지원하는 연구 유형</h3>
+            <p>허가 약물의 공개 자료 기반 연구부터 IB가 필요한 FIH 연구까지 임상약리 Phase 1 문서 개발 흐름을 다룹니다.</p>
+            <div class="study-types" aria-label="지원 시험 유형">
+              <span>FIH / SAD / MAD</span>
+              <span>DDI one-sequence</span>
+              <span>DDI 2x2 crossover</span>
+              <span>Williams 6x3 DDI</span>
+              <span>BE / RSABE</span>
+              <span>Food Effect</span>
+              <span>QTc</span>
+              <span>ADME</span>
+              <span>Special Population PK</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="safety" class="section">
+      <div class="section-inner">
+        <div class="safety-band">
+          <h2>초안 생성보다 중요한 것은, 검증 가능한 초안입니다.</h2>
+          <ul class="safety-list">
+            <li>
+              <strong>Zero-trust citation</strong>
+              <span>PubMed, ClinicalTrials.gov, DailyMed, URL 인용을 독립 재조회하고 audit JSON으로 남깁니다.</span>
+            </li>
+            <li>
+              <strong>Fail-closed egress</strong>
+              <span>기밀 IB와 안전 핵심 정보는 외부 LLM 전송을 기본 차단하고, 공개 규제 자료만 명시적으로 허용합니다.</span>
+            </li>
+            <li>
+              <strong>Dose safety guard</strong>
+              <span>FIH 시작 용량과 증량 용량이 MRSD 근거를 벗어나지 않는지 결정적 검사로 확인합니다.</span>
+            </li>
+            <li>
+              <strong>Actor-critic review loop</strong>
+              <span>Critical issue 0건과 문서 점수 기준을 만족할 때까지 검토와 수정 계획을 반복합니다.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="install" class="section">
+      <div class="section-inner">
+        <h2 class="section-title">Claude Code 플러그인으로 설치합니다.</h2>
+        <p class="section-lede">GitHub 저장소를 marketplace로 등록한 뒤 플러그인을 설치하면 명령, 에이전트, 스킬이 함께 로드됩니다.</p>
+        <div class="install-card">
+          <pre class="terminal" aria-label="설치 명령"><span class="terminal-bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green-dot"></span></span><code># 1) GitHub 저장소를 marketplace로 등록
+/plugin marketplace add kimmingul/clinical-pharmacology-study-protocol-development
+
+# 2) 플러그인 설치
+/plugin install clinical-pharmacology-study-protocol-development
+
+# 3) 명령과 에이전트 로드 확인
+/plugin</code></pre>
+          <div class="panel">
+            <h3>필수 환경</h3>
+            <p>Claude Code 최신 버전, Python 3.10 이상, sample size 계산용 scipy, 그리고 PubMed·ClinicalTrials.gov·DailyMed·openFDA·MFDS 자료 접근이 가능한 네트워크 환경이 필요합니다.</p>
+            <a class="button secondary" href="https://github.com/kimmingul/clinical-pharmacology-study-protocol-development">README 보기</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="release" class="section">
+      <div class="section-inner">
+        <div class="release">
+          <div>
+            <h2>현재 릴리스: v4.2.0</h2>
+            <p>agy 마이그레이션, 명시 모델 핀, provenance 무결성, per-provider probe timeout, agy sandboxing, 아티팩트 경로 검증을 포함한 Multi-LLM 어댑터 유지보수 릴리스입니다.</p>
+          </div>
+          <a class="button" href="https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/releases/latest">Latest Release</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="section-inner">
+      <span>Copyright © 2026 Min-Gul Kim. MIT License.</span>
+      <span>Clinical Pharmacology Study Protocol Development · GitHub Pages</span>
+    </div>
+  </footer>
+</body>
+</html>
