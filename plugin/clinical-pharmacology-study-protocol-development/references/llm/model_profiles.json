@@ -1,20 +1,22 @@
 {
   "schema": "model_profiles/v1",
-  "as_of": "2026-06-16",
+  "as_of": "2026-06-29",
   "staleness_warn_days": 90,
   "sources": [
     "Anthropic / OpenAI / Google / xAI public model docs (as_of date)",
-    "4-model consultation 2026-06-15~16 (codex 0.139, gemini 0.46, grok 0.2.51, claude opus-4-8)"
+    "4-model consultation 2026-06-15~16 (codex 0.139, gemini 0.46, grok 0.2.51, claude opus-4-8)",
+    "v4.2 (2026-06-29): gemini CLI → agy(antigravity) 강제 마이그레이션(2026-06-18 gemini-cli 서비스 중단). 각 provider 최신 고성능 모델을 날짜 스냅샷으로 명시 핀하고 4종 모두 실제 호출로 검증(claude-opus-4-8 / gpt-5.5 / gemini-3.5-pro-002 / grok-build)."
   ],
   "notes": "강점은 코드가 아니라 이 DATA에 둔다. 모델이 진화하면 capability_scores와 resolved_model을 갱신하고 as_of를 올린다. route_select는 점수를 랭킹에 사용하고, 호스트 LLM은 as_of가 staleness_warn_days보다 오래되면 자기 최신 지식으로 재검토하도록 경고한다. 점수는 0-10, 역할별 상대 비교용(절대치 아님).",
-  "resolved_model_note": "resolved_model은 작성 시점(as_of)의 best-known 식별자다. AUTHORITATIVE한 실제 모델은 /llm-health(health_check.py)가 각 CLI에서 보고하는 값이며, 라우팅·provenance는 그 값을 사용한다. 외부 모델은 학습 cutoff 때문에 자기 최신 모델명을 stale하게 답할 수 있으므로 이 파일을 신뢰원으로 둔다.",
+  "resolved_model_note": "resolved_model은 각 CLI의 --model로 전달되는 **명시 핀 모델 id**다(v4.2). 가능하면 날짜 스냅샷(예: gemini-3.5-pro-002)을 두어 재현성을 확보하고, as_of가 staleness_warn_days보다 오래되면 호스트가 각 회사의 최신 고성능 모델로 bump한다(단 Anthropic은 availability_constraint 때문에 Fable로 올리지 않고 Opus 유지). probe_cmd와 ask_model.sh가 동일한 resolved_model을 사용하므로 '기록한 모델 = 실제 호출 모델'이 보장된다.",
   "role_keys": ["authoring", "regulatory_cross_check", "citation_integrity", "biostat_adversarial", "judge_synth"],
   "providers": {
     "anthropic": {
       "cli": "claude",
-      "probe_cmd": ["claude", "-p"],
+      "probe_cmd": ["claude", "--model", "claude-opus-4-8", "-p"],
       "version_cmd": ["claude", "--version"],
       "resolved_model": "claude-opus-4-8",
+      "availability_constraint": "Fable 5 / Mythos 5는 수출통제로 외국인 사용 제한(2026-06-12). Anthropic은 Opus 4.8로 고정하고 'latest 자동 해석' 금지(자동 latest는 Fable을 선택하게 됨).",
       "capability_scores": {"authoring": 9, "regulatory_cross_check": 8, "citation_integrity": 6, "biostat_adversarial": 6, "judge_synth": 8},
       "context_window": "200k+",
       "known_failure_modes": ["over-cautious refusals on dual-use", "cost"],
@@ -23,9 +25,10 @@
     },
     "openai": {
       "cli": "codex",
-      "probe_cmd": ["codex", "exec", "--sandbox", "read-only", "--skip-git-repo-check", "-"],
+      "probe_cmd": ["codex", "exec", "--model", "gpt-5.5", "--sandbox", "read-only", "--skip-git-repo-check", "-"],
       "version_cmd": ["codex", "--version"],
-      "resolved_model": "gpt-5.5 (OpenAI; codex-cli)",
+      "resolved_model": "gpt-5.5",
+      "model_note": "codex-cli 기본=gpt-5.5. 이 CLI는 dated snapshot id를 노출하지 않아 alias 핀. 스냅샷 노출 시 bump.",
       "capability_scores": {"authoring": 8, "regulatory_cross_check": 7, "citation_integrity": 7, "biostat_adversarial": 8, "judge_synth": 9},
       "context_window": "large",
       "known_failure_modes": ["verbose structured output"],
@@ -33,10 +36,12 @@
       "privacy_constraints": "vendor=openai; ZDR/enterprise 설정 필요"
     },
     "google": {
-      "cli": "gemini",
-      "probe_cmd": ["gemini", "-p"],
-      "version_cmd": ["gemini", "--version"],
-      "resolved_model": "gemini-3-pro (Google; gemini-cli)",
+      "cli": "agy",
+      "probe_cmd": ["agy", "--model", "gemini-3.5-pro-002", "--sandbox", "--print-timeout", "60s", "-p"],
+      "version_cmd": ["agy", "--version"],
+      "probe_timeout": 70,
+      "resolved_model": "gemini-3.5-pro-002",
+      "cli_note": "v4.2: gemini CLI → agy(antigravity, Go). gemini-cli는 2026-06-18 서비스 중단. agy는 IDE형 에이전트라 대용량 응답을 brain 아티팩트에 쓰고 stdout엔 요약+경로를 출력 → ask_model.sh가 아티팩트 경로를 파싱해 회수. probe는 소형이라 inline 출력. agy 시작이 느려 probe_timeout=70.",
       "capability_scores": {"authoring": 7, "regulatory_cross_check": 9, "citation_integrity": 9, "biostat_adversarial": 5, "judge_synth": 7},
       "context_window": "very large (best for bulk guideline/IB sweep)",
       "known_failure_modes": ["authoring nuance < Claude"],
@@ -45,9 +50,10 @@
     },
     "xai": {
       "cli": "grok",
-      "probe_cmd": ["grok", "-p"],
+      "probe_cmd": ["grok", "--model", "grok-build", "-p"],
       "version_cmd": ["grok", "--version"],
-      "resolved_model": "grok-4.3 (xAI; grok-cli)",
+      "resolved_model": "grok-build",
+      "model_note": "grok-cli는 코딩 특화 모델만 노출(grok-build 기본, grok-composer-2.5-fast). 프론티어 grok-4.x를 직접 노출하지 않아 best-available=grok-build alias 핀. dated snapshot 미노출.",
       "capability_scores": {"authoring": 6, "regulatory_cross_check": 5, "citation_integrity": 5, "biostat_adversarial": 9, "judge_synth": 6},
       "context_window": "large",
       "known_failure_modes": ["long-form regulatory prose 약함", "단독 host 비권장"],

@@ -4,11 +4,11 @@
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![CI](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/actions/workflows/ci.yml/badge.svg)](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/actions/workflows/ci.yml)
 
-임상약리 임상시험 문서를 체계적으로 개발하는 Claude Code 하네스 프로젝트. **현재 버전: v4.1.0** ([CHANGELOG](CHANGELOG.md))
+임상약리 임상시험 문서를 체계적으로 개발하는 Claude Code 하네스 프로젝트. **현재 버전: v4.2.0** ([CHANGELOG](CHANGELOG.md))
 
 ## 설치 (Installation)
 
-이 저장소는 Claude Code 플러그인 마켓플레이스로 구성되어 있습니다 (루트 `.claude-plugin/marketplace.json`). 최신 릴리스: **v4.1.0**.
+이 저장소는 Claude Code 플러그인 마켓플레이스로 구성되어 있습니다 (루트 `.claude-plugin/marketplace.json`). 최신 릴리스: **v4.2.0**.
 
 ```
 # 1) 마켓플레이스 등록 — GitHub 저장소에서 직접
@@ -22,7 +22,7 @@
 #    8개 에이전트, 스킬이 로드되었는지 /plugin 으로 확인
 ```
 
-> **대안 (zip 직접 설치)**: [Releases](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/releases/latest)에서 `clinical-pharmacology-study-protocol-development-v4.1.0.zip`을 받아 `~/.claude/plugins/`에 압축 해제합니다. 배포용 zip은 저장소에 커밋하지 않고 **GitHub Release 자산**으로만 제공됩니다.
+> **대안 (zip 직접 설치)**: [Releases](https://github.com/kimmingul/clinical-pharmacology-study-protocol-development/releases/latest)에서 `clinical-pharmacology-study-protocol-development-v4.2.0.zip`을 받아 `~/.claude/plugins/`에 압축 해제합니다. 배포용 zip은 저장소에 커밋하지 않고 **GitHub Release 자산**으로만 제공됩니다.
 >
 > 개발본(`.claude/`)을 배포본(`plugin/`)으로 동기화하려면 루트 `./sync_plugin.sh`를 실행합니다.
 
@@ -42,6 +42,8 @@
 
 **필수 명령**: `/research` → `/design` → `/synopsis` → `/protocol` → `/review` → `/finalize` → `/icf`
 
+> **v4.2.0 (버그픽스)**: Multi-LLM 어댑터 가용성·정확성 수정 — **gemini CLI → agy(antigravity)** 강제 마이그레이션(2026-06-18 gemini-cli 서비스 중단), 각 회사 최신 고성능 모델을 **날짜 스냅샷으로 명시 핀**(claude-opus-4-8 · gpt-5.5 · gemini-3.5-pro-002 · grok-build), Anthropic은 **Fable 수출통제로 Opus 고정** + `--model` 핀으로 "기록=실제 호출" provenance 무결성 보장. ([CHANGELOG](CHANGELOG.md#420--2026-06-29--버그픽스-agy-마이그레이션--명시-모델-핀))
+>
 > **v4.1.0 핵심**: 모든 에이전트 opus, 기계 판독형 **goal_spec**(성공명세), **zero-trust 인용 검증**(`citation_verify`)·외부 fetch provenance(`source_snapshot`)·**용량 안전 가드**(`dose_safety_guard`), **3-tier 가드레일**(T0 차단/T1 권고), Phase 9 **actor-critic 수렴 루프**(Critical=0 & score≥90까지 반복). 설계 근거: [`docs/plugin_v3_advancement_proposal_ko.md`](docs/plugin_v3_advancement_proposal_ko.md).
 
 **자세히는 아래 섹션 참조 ↓**
