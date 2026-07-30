@@ -894,9 +894,9 @@ def test_dose_violation_blocks_both_profiles(tmp_path):
         assert dose["status"] == fr.FAIL
 ```
 
-`test_dose_violation_blocks_both_profiles`의 `mrsd.json` 키 이름은 구현 전에 `dose_safety_guard.mrsd_from_json`을 읽어 실제 키를 확인한 뒤 맞춘다. 확인 명령:
-
-Run: `sed -n '61,75p' .claude/scripts/qa/dose_safety_guard.py`
+`mrsd.json`의 키 이름은 확인 완료다. `dose_safety_guard.mrsd_from_json`은
+`("mrsd_mg_rounded", "mrsd_mg")` 순서로 찾아 첫 숫자 값을 쓰므로, 위 테스트의
+`{"mrsd_mg": 1.0}`이 유효하다. 파일이 없거나 JSON이 깨져도 예외 없이 `None`을 반환한다.
 
 - [ ] **Step 3: 테스트를 실행해 실패를 확인**
 
@@ -1483,7 +1483,7 @@ EOF
 
 누락 없음.
 
-**2. 플레이스홀더 스캔** — "TBD"/"적절히 처리"/"위 내용에 대한 테스트 작성" 없음. 모든 코드 스텝에 실제 코드 블록이 있음. Task 5 Step 2의 `mrsd.json` 키 이름만 구현 시 확인이 필요하며, 확인 명령을 명시해 두었다.
+**2. 플레이스홀더 스캔** — "TBD"/"적절히 처리"/"위 내용에 대한 테스트 작성"/"Task N과 유사" 없음. 모든 코드 스텝에 실제 코드 블록이 있다. Task 5의 `mrsd.json` 키 이름은 `dose_safety_guard.mrsd_from_json`을 읽어 확정했다(`mrsd_mg_rounded` 또는 `mrsd_mg`). 미확인 항목은 남아 있지 않다.
 
 **3. 타입 일관성** — 태스크 간 이름 대조:
 
