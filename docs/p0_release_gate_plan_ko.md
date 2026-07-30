@@ -911,6 +911,34 @@ def test_dose_violation_blocks_both_profiles(tmp_path):
 `("mrsd_mg_rounded", "mrsd_mg")` 순서로 찾아 첫 숫자 값을 쓰므로, 위 테스트의
 `{"mrsd_mg": 1.0}`이 유효하다. 파일이 없거나 JSON이 깨져도 예외 없이 `None`을 반환한다.
 
+**정정 추가 테스트 (fail-open 회귀 방지).** `mrsd.json`이 존재하지만 MRSD 값을 얻을 수
+없는 3가지 형태(깨진 JSON / 키 누락 / 값이 `null`) 각각에 대해, FIH + 초과 용량 문서가
+submission에서 `dose == FAIL`(exit 1)이어야 한다. draft에서는 `SKIPPED`(exit 0)로 허용한다.
+
+```python
+@pytest.mark.parametrize("payload", ['{ not json', '{"unexpected_key": 1.0}',
+                                     '{"mrsd_mg_rounded": null}'])
+def test_fih_unusable_mrsd_json_blocks_submission(tmp_path, payload):
+    """mrsd.json이 있어도 MRSD 값을 못 얻으면 부재와 동일하게 취급해야 한다."""
+    mrsd = tmp_path / "mrsd.json"
+    mrsd.write_text(payload, encoding="utf-8")
+    doc = tmp_path / "protocol.md"
+    doc.write_text(
+        open(fixture("protocol_clean.md"), encoding="utf-8").read()
+        + "\n시작 용량: 9999 mg\n", encoding="utf-8")
+
+    sub = fr.run_gate(str(doc), "submission", str(tmp_path),
+                      goal_spec_path=fixture("goal_spec_fih.json"),
+                      mrsd_json=str(mrsd))
+    assert next(d for d in sub["dimensions"] if d["id"] == "dose")["status"] == fr.FAIL
+    assert sub["exit_code"] == fr.EXIT_REJECTED
+
+    draft = fr.run_gate(str(doc), "draft", str(tmp_path),
+                        goal_spec_path=fixture("goal_spec_fih.json"),
+                        mrsd_json=str(mrsd))
+    assert next(d for d in draft["dimensions"] if d["id"] == "dose")["status"] == fr.SKIPPED
+```
+
 - [ ] **Step 3: 테스트를 실행해 실패를 확인**
 
 Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k "fih or dose or goal_spec"`
@@ -943,10 +971,14 @@ def _is_fih(goal_spec):
 
 ```python
 def dim_dose(target, profile, ctx):
-    """FIH 시작 용량 대 MRSD. 시험유형을 모르면 submission에서 판정 불가로 차단."""
+    """FIH 시작 용량 대 MRSD. 시험유형·MRSD를 모르면 submission에서 판정 불가로 차단."""
     fih = _is_fih(ctx["goal_spec"])
     mrsd_path = ctx["mrsd_json"]
-    has_mrsd = bool(mrsd_path) and os.path.isfile(mrsd_path)
+    # 파일 존재가 아니라 MRSD '값'을 얻었는지로 판단한다. 파일이 있다는 이유만으로
+    # check_file에 위임하면, 손상·키 누락 파일에서 mrsd_mg=None -> status="skipped"가
+    # 되어 FIH 용량 위반이 submission을 통과한다(fail-open).
+    mrsd_mg = dose_safety_guard.mrsd_from_json(mrsd_path)
+    has_mrsd = mrsd_mg is not None
 
     if fih is None:
         if profile == "submission":
@@ -955,14 +987,17 @@ def dim_dose(target, profile, ctx):
         return _dim("dose", SKIPPED, reason="goal_spec 없음 (draft 허용)")
 
     if fih and not has_mrsd:
+        # 부재와 '읽었으나 값 없음'을 같은 분기로 처리하되 사유는 구분해 남긴다.
+        why = ("mrsd.json에서 MRSD 값을 얻지 못함(손상·키 누락)"
+               if mrsd_path and os.path.isfile(mrsd_path)
+               else "mrsd.json 없음")
         if profile == "submission":
             return _dim("dose", FAIL,
-                        ["FIH 계열이나 mrsd.json이 없어 MRSD 대조 불가"])
+                        [f"FIH 계열이나 {why} — MRSD 대조 불가"])
         return _dim("dose", SKIPPED,
-                    reason="FIH이나 mrsd.json 없음 (draft 허용)")
+                    reason=f"FIH이나 {why} (draft 허용)")
 
-    res = dose_safety_guard.check_file(
-        target, mrsd_json=mrsd_path if has_mrsd else None)
+    res = dose_safety_guard.check_file(target, mrsd_mg=mrsd_mg)
     if res["status"] == "violation":
         return _dim("dose", FAIL, [v["message"] for v in res["violations"]],
                     mrsd_mg=res["mrsd_mg"])
@@ -970,6 +1005,13 @@ def dim_dose(target, profile, ctx):
         return _dim("dose", SKIPPED, reason="MRSD 없음 — 대조 대상 없음")
     return _dim("dose", PASS, mrsd_mg=res["mrsd_mg"])
 ```
+
+> **정정 (T5 리뷰 Critical, 사용자 판정 2026-07-30):** 최초 계획은
+> `has_mrsd = bool(mrsd_path) and os.path.isfile(mrsd_path)`(파일 존재)였다.
+> 실측 결과 손상된 `mrsd.json`이 있으면 시작 용량 9999 mg인 FIH 문서가
+> submission에서 exit 0(PASS)로 통과했다(정상 파일이면 exit 1). 파일 존재가
+> 아니라 **MRSD 값 확보 여부**로 판단하도록 정정한다. 설계문서 §dose 표의
+> "mrsd 없음"은 "MRSD 값을 얻지 못함"을 포함한다.
 
 `DIMENSIONS`를 교체:
 

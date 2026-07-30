@@ -240,6 +240,12 @@ trial_type, primary_objective]`).
 | 있음 + 그 외 유형 | `SKIPPED` | `SKIPPED` |
 | 없음 | `SKIPPED` | `FAIL` — 시험유형 확인 불가 시 제출 판정 불가 |
 
+여기서 "mrsd 없음"은 **MRSD 값을 얻지 못한 모든 경우**를 뜻한다 — 파일 부재뿐 아니라
+파일이 존재하지만 JSON이 깨졌거나 `mrsd_mg_rounded`/`mrsd_mg` 키가 없어
+`dose_safety_guard.mrsd_from_json`이 `None`을 반환하는 경우를 포함한다. 파일 존재만으로
+`check_file`에 위임하면 `status="skipped"`가 되어 FIH 용량 위반이 submission을 통과하는
+fail-open 경로가 생긴다(T5 리뷰 Critical, 실측 확인).
+
 `trial_type` 매칭은 대소문자 무시 + **단어 경계** 정규식으로 한다
 (`\b(FIH|SAD|MAD)\b`, `re.IGNORECASE`). 스키마가 `type: string` 자유 서술을 허용하므로
 `"FIH (SAD/MAD 포함)"` 같은 값이 올 수 있어 부분 일치가 필요하지만, 단어 경계 없이
