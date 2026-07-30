@@ -252,6 +252,19 @@ def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
     }
 
 
+def _write_report(report, workspace):
+    """리포트를 <workspace>/verification/release_gate.json에 기록한다.
+
+    실패 시 예외를 전파한다 — 증거를 남기지 못하면 통과를 주장하지 않는다.
+    """
+    out = os.path.join(workspace, "verification", "release_gate.json")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with open(out, "w", encoding="utf-8") as fh:
+        json.dump(report, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+    return out
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Fail-closed release gate for protocol / ICF drafts.")
@@ -268,6 +281,14 @@ def main(argv=None):
 
     report = run_gate(args.target, args.profile, args.workspace,
                       goal_spec_path=args.goal_spec, mrsd_json=args.mrsd_json)
+
+    try:
+        report_path = _write_report(report, args.workspace)
+    except OSError as exc:
+        print(f"⛔ 최종화 거부: 리포트 기록 실패 — {exc}", file=sys.stderr)
+        print("   증거를 남기지 못하면 통과를 주장하지 않습니다.", file=sys.stderr)
+        return EXIT_UNDECIDABLE
+
     print(f"release gate ({args.profile}): {report['result']}")
     for d in report["dimensions"]:
         print(f"  [{d['id']}] {d['status']}")
@@ -277,6 +298,7 @@ def main(argv=None):
         print(f"  score {report['score_informational']}/100 (참고, 판정 미사용)")
     for w in report["warnings"]:
         print(f"  ⚠️  {w}")
+    print(f"  -> {report_path}")
     return report["exit_code"]
 
 

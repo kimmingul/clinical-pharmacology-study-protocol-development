@@ -285,3 +285,48 @@ def test_score_is_informational_only(tmp_path):
     assert isinstance(report["score_informational"], int)
     assert "score" not in [d["id"] for d in report["dimensions"]], \
         "score는 차원이 아니다"
+
+
+def test_report_is_written_with_schema_and_all_dimensions(tmp_path):
+    code = fr.main([fixture("protocol_clean.md"),
+                    "--profile", "draft",
+                    "--workspace", str(tmp_path),
+                    "--goal-spec", fixture("goal_spec_ddi.json")])
+    assert code == fr.EXIT_OK
+
+    out = tmp_path / "verification" / "release_gate.json"
+    assert out.is_file()
+    saved = json.loads(out.read_text(encoding="utf-8"))
+    assert saved["schema"] == "release_gate/v1"
+    assert saved["profile"] == "draft"
+    assert saved["result"] == "PASS"
+    assert saved["exit_code"] == 0
+    assert [d["id"] for d in saved["dimensions"]] == [
+        "structure", "citation", "dose", "advisory", "approval"]
+    assert saved["warnings"], "approval NOT_IMPLEMENTED 경고가 기록되어야 함"
+
+
+def test_report_write_failure_is_undecidable(tmp_path, monkeypatch):
+    def boom(*a, **k):
+        raise OSError("read-only filesystem")
+
+    monkeypatch.setattr(fr, "_write_report", boom)
+    code = fr.main([fixture("protocol_clean.md"),
+                    "--workspace", str(tmp_path)])
+    assert code == fr.EXIT_UNDECIDABLE
+
+
+def test_report_records_failure_details(tmp_path):
+    code = fr.main([fixture("protocol_missing_b7.md"),
+                    "--profile", "draft",
+                    "--workspace", str(tmp_path)])
+    assert code == fr.EXIT_REJECTED
+
+    saved = json.loads(
+        (tmp_path / "verification" / "release_gate.json").read_text(
+            encoding="utf-8"))
+    assert saved["result"] == "FAIL"
+    assert "structure" in saved["blocked_dimensions"]
+    structure = next(d for d in saved["dimensions"]
+                     if d["id"] == "structure")
+    assert structure["findings"], "차단 사유가 리포트에 남아야 함"
