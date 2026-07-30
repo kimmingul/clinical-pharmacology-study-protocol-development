@@ -6,7 +6,28 @@ log lives in `CLAUDE.md` (진화 로그); this file tracks user-facing releases.
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added — fail-closed release 게이트 (`/finalize`)
+
+- **`.claude/scripts/qa/finalize_run.py` 신설.** `/finalize`의 판정 로직이 커맨드
+  마크다운(에이전트 해석)에서 결정적 실행 파일로 옮겨졌다. 5개 차원
+  (`structure`/`citation`/`dose`/`advisory`/`approval`)을 실행하고
+  `<workspace>/verification/release_gate.json`(`schema: release_gate/v1`)에 기록한다.
+- **프로파일 2종.** `--profile draft`(기본)는 placeholder·미확인 인용을 표시만 하고,
+  `--profile submission`은 미해결 권고·online 미검증 인용을 차단한다.
+- **종료코드 3분기.** `0` 통과 / `1` 판정했고 불합격 / `2` 판정 불가(대상 없음·검사기
+  크래시·리포트 기록 실패). `ERROR`가 `FAIL`보다 우선하므로 게이트 고장이 문서 불량으로
+  보고되지 않는다.
+
+### Changed — 사용자 계약 변경
+
+- `/finalize`는 이제 종료코드를 재해석하지 않는 얇은 래퍼다. 통과 시에만
+  `pipeline_manifest.py record --phase finalize`로 provenance를 남긴다.
+- 상태 어휘는 정확히 `PASS`/`FAIL`/`SKIPPED`/`FORMAT_ONLY`/`NOT_IMPLEMENTED`/`ERROR`
+  6개다. 검사기가 실행되지 않은 상태를 '통과'로 부르지 않는 것이 이 게이트의 목적이다.
+- **게이트 통과는 '제출 가능'을 뜻하지 않는다.** 사람 승인 차원(`approval`)은
+  서명 이벤트 스토어 미구현으로 `NOT_IMPLEMENTED`이며, 매 실행 경고로 노출된다.
+  `submission` 프로파일의 online 인용 검증도 PMID·NCT만 조회하고 DailyMed setid·URL은
+  형식만 확인하므로 `FORMAT_ONLY`로 표기된다(제출 프로파일에서는 차단).
 
 ## [4.2.0] — 2026-06-29 — 버그픽스: agy 마이그레이션 + 명시 모델 핀
 

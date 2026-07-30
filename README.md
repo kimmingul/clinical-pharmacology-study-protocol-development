@@ -263,7 +263,8 @@ Metformin과 Rifampin의 DDI 시험 문서를 작성해줘
 # (Hard Gate: 명시 승인)
 /protocol        # Phase 8
 /review          # Phase 9  (actor-critic 수렴 루프)
-/finalize        # Phase 9.5 (T0 최종 가드레일)
+/finalize        # Phase 9.5 (release 게이트, 기본 draft)
+/finalize submission   # 제출 직전 — 미해결 권고·미검증 인용을 차단
 /icf             # Phase 10
 ```
 
@@ -285,7 +286,7 @@ Metformin과 Rifampin의 DDI 시험 문서를 작성해줘
 | `/compare` | 6 | 여러 Synopsis를 비교표로 제시 | Synopsis 2개 이상 |
 | `/protocol` | 8 | Full Protocol 작성 | Synopsis 승인 완료 |
 | `/review` | 9 | 다중 에이전트 리뷰 + **actor-critic 수렴 루프** (Critical=0 & score≥90까지) | Protocol 작성 완료 |
-| `/finalize` | 9.5 | **T0 최종 가드레일** — `doc_lint --strict` + 인용 검증 + 용량 안전 검사 | Protocol/ICF 초안 존재 |
+| `/finalize` | 9.5 | **fail-closed release 게이트** — 5개 차원(structure/citation/dose/advisory/approval)을 `--profile draft\|submission`으로 판정, 종료코드 0/1/2 | Protocol/ICF 초안 존재 |
 | `/icf` | 10 | ICF 작성 (동의설명서 + 동의서 + 개인정보 동의서) | Protocol 존재 |
 
 ### Command 사용 예시
@@ -710,7 +711,7 @@ Synopsis가 작성되면 사용자의 **명시적 승인**이 있어야 Full Pro
 │   │   ├── compare.md
 │   │   ├── protocol.md
 │   │   ├── review.md
-│   │   ├── finalize.md                     # T0 최종 가드레일 (v3)
+│   │   ├── finalize.md                     # release 게이트 실행 래퍼 (finalize_run.py 호출)
 │   │   ├── llm-health.md                   # Multi-LLM 점검·조합 제안 (v4)
 │   │   └── icf.md
 │   ├── memory/                            # 세션 간 메모리 (사용자 선호, 도메인 지식)
@@ -743,7 +744,7 @@ Synopsis가 작성되면 사용자의 **명시적 승인**이 있어야 Full Pro
 │   └── scripts/                           # 실행 가능한 Python 스크립트
 │       ├── README.md                      # 스크립트 인덱스
 │       ├── llm/                            # (v4) health_check·route_select·egress_gate·review_panel·ask_model.sh
-│       ├── qa/                             # doc_lint·citation_verify·dose_safety_guard·pipeline_manifest
+│       ├── qa/                             # doc_lint·citation_verify·dose_safety_guard·pipeline_manifest·finalize_run
 │       ├── sample_size/                   # Sample size 계산
 │       │   ├── parallel_continuous.py
 │       │   ├── crossover_2x2_be.py
