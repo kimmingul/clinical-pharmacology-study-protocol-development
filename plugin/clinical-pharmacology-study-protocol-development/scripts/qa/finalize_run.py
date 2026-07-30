@@ -59,12 +59,36 @@ def _dim(dim_id, status, findings=None, **extra):
 # 단어 경계 없이 매칭하면 다른 단어 속 SAD/MAD를 오탐한다.
 _FIH_RE = re.compile(r"\b(FIH|SAD|MAD)\b", re.IGNORECASE)
 
+# 스키마가 문서화한 비-FIH 유형 어휘(FIH/SAD/MAD/DDI/BE/FE/QTc/ADME 등). 스키마가
+# type: string 자유 서술이므로 닫힌 enum이 아니라 '인식 가능한 토큰' 매칭으로 다룬다.
+_NON_FIH_RE = re.compile(r"\b(DDI|BA|FE|ADME|QTc)\b", re.IGNORECASE)
+# BE만 대소문자를 구분한다 — IGNORECASE로 두면 "to be determined" 같은 미정 문자열의
+# 영어 단어 "be"가 생물학적 동등성 시험으로 인식되어 fail-open 경로가 된다.
+_NON_FIH_CASED_RE = re.compile(r"\bBE\b")
+
 
 def _is_fih(goal_spec):
-    """FIH 계열 여부. goal_spec이 없으면 None('알 수 없음')을 돌려준다."""
-    if not goal_spec:
+    """FIH 계열 여부. 판별할 수 없으면 None('알 수 없음')을 돌려준다.
+
+    None을 돌려주는 경우: goal_spec 자체가 없음, trial_type 키 없음, 문자열이 아님,
+    공백뿐, 그리고 FIH 어휘·비-FIH 어휘 어느 쪽과도 매칭되지 않는 자유 서술
+    (예: "최초 인체 투여 시험" — 영문 키워드 없음).
+
+    '읽을 수 없음'을 False(비-FIH)로 접으면 확정된 DDI/BE 시험과 구분되지 않아
+    dim_dose가 SKIPPED가 되고 FIH 용량 위반이 submission을 통과한다(fail-open).
+    설계 §6.1의 "시험유형 확인 불가 시 제출 판정 불가" 원칙을 goal_spec 부재가
+    아니라 trial_type 판별 가능 여부에 적용한다.
+    """
+    if not isinstance(goal_spec, dict):
         return None
-    return bool(_FIH_RE.search(str(goal_spec.get("trial_type", ""))))
+    trial_type = goal_spec.get("trial_type")
+    if not isinstance(trial_type, str) or not trial_type.strip():
+        return None
+    if _FIH_RE.search(trial_type):
+        return True
+    if _NON_FIH_RE.search(trial_type) or _NON_FIH_CASED_RE.search(trial_type):
+        return False
+    return None
 
 
 def dim_structure(target, profile, ctx):
@@ -92,6 +116,19 @@ def dim_advisory(target, profile, ctx):
 
 _SUMMARY_KEYS = ("total", "format_fail", "not_found", "unverified_network")
 
+# citation_verify.verify_online이 실제 레지스트리에 조회하는 유형은 pmid·nct뿐이다.
+# 아래 유형은 추출·형식 검증만 되고 online 검증 대상이 아니므로, 이들만 있는 문서에서
+# not_found=0은 '조회해서 다 있었다'가 아니라 '아무것도 조회하지 않았다'를 뜻한다.
+_ONLINE_UNVERIFIABLE_TYPES = ("dailymed_setid", "url")
+
+
+def _count_online_unverifiable(audit):
+    """online 검증 대상이 아닌 인용 유형의 건수를 유형별로 센다."""
+    return {
+        kind: sum(f["counts"].get(kind, 0) for f in audit["files"])
+        for kind in _ONLINE_UNVERIFIABLE_TYPES
+    }
+
 
 def dim_citation(target, profile, ctx):
     """인용 검증. draft는 형식만(FORMAT_ONLY), submission은 online 필수.
@@ -99,6 +136,11 @@ def dim_citation(target, profile, ctx):
     offline에서는 not_found가 구조적으로 항상 0이므로 '통과'라고 부르지 않고
     FORMAT_ONLY로 표기한다. submission 프로파일에서 FORMAT_ONLY는 차단이다
     (_BLOCKING 참조).
+
+    submission에서도 dailymed_setid·url은 verify_online이 조회하지 않는다. 이들만
+    근거로 가진 문서를 PASS로 부르면 offline과 똑같은 '구조적 0을 통과로 세는' 오류가
+    되므로, 해당 인용이 하나라도 있으면 FORMAT_ONLY로 표기한다. 심각도 자체는
+    _BLOCKING이 소유하며 이 함수는 사실만 보고한다.
     """
     online = (profile == "submission")
     audit = citation_verify.audit_files(
@@ -114,13 +156,29 @@ def dim_citation(target, profile, ctx):
         return _dim("citation", FORMAT_ONLY, findings, detail=detail,
                     reason="offline — id 실제 존재 여부 미검증")
 
+    unverifiable = _count_online_unverifiable(audit)
+    n_unverifiable = sum(unverifiable.values())
+    detail["online_unverifiable"] = n_unverifiable
+
     if s["not_found"]:
         findings.append(f"not_found={s['not_found']} — 레지스트리에 없는 인용 id")
     if s["unverified_network"]:
         findings.append(
             f"unverified_network={s['unverified_network']} — 네트워크 검증 불가")
 
-    return _dim("citation", FAIL if findings else PASS, findings, detail=detail)
+    # 형식 오류·미존재·네트워크 실패는 확정된 불합격이므로 FORMAT_ONLY보다 우선한다.
+    if findings:
+        return _dim("citation", FAIL, findings, detail=detail)
+
+    if n_unverifiable:
+        kinds = ", ".join(f"{k}={v}" for k, v in unverifiable.items() if v)
+        findings.append(
+            f"online_unverifiable={n_unverifiable} ({kinds}) — "
+            "online 조회 대상이 아닌 인용 유형이며 형식만 확인되었다")
+        return _dim("citation", FORMAT_ONLY, findings, detail=detail,
+                    reason="online 검증 불가 인용 유형 존재 — 통과로 세지 않는다")
+
+    return _dim("citation", PASS, findings, detail=detail)
 
 
 def dim_dose(target, profile, ctx):
@@ -134,10 +192,11 @@ def dim_dose(target, profile, ctx):
     has_mrsd = mrsd_mg is not None
 
     if fih is None:
+        why = "goal_spec 없음 또는 trial_type을 판별할 수 없음"
         if profile == "submission":
             return _dim("dose", FAIL,
-                        ["goal_spec 없음 — trial_type을 확인할 수 없어 제출 판정 불가"])
-        return _dim("dose", SKIPPED, reason="goal_spec 없음 (draft 허용)")
+                        [f"{why} — 시험유형 확인 불가로 제출 판정 불가"])
+        return _dim("dose", SKIPPED, reason=f"{why} (draft 허용)")
 
     if fih and not has_mrsd:
         # 부재와 '읽었으나 값 없음'을 같은 분기로 처리하되 사유는 구분해 남긴다.
@@ -184,6 +243,11 @@ _BLOCKING = {
     "submission": {FAIL, ERROR, FORMAT_ONLY},
 }
 
+# 여섯 단어 어휘 전체. 집계는 '차단 집합에 속하는가'로 판단하므로, 어휘 밖 상태
+# (오타나 새 차원 작성자의 "OK"/"WARN")는 그대로 두면 조용히 통과로 집계된다.
+_KNOWN_STATUSES = frozenset(
+    {PASS, FAIL, SKIPPED, FORMAT_ONLY, NOT_IMPLEMENTED, ERROR})
+
 
 def _utc_now():
     """UTC ISO-8601. 형식은 citation_verify._utc_now()와 동일해야 한다 —
@@ -211,6 +275,14 @@ def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
             dims.append(_dim(dim_id, ERROR,
                              [f"{type(exc).__name__}: {exc}"]))
 
+    # 어휘 밖 상태는 ERROR로 강등한다 — 모르는 상태는 통과가 아니다.
+    for d in dims:
+        status = d.get("status")
+        if not isinstance(status, str) or status not in _KNOWN_STATUSES:
+            d.setdefault("findings", []).append(
+                f"알 수 없는 상태 {status!r} — 상태 어휘 밖이므로 ERROR로 강등한다")
+            d["status"] = ERROR
+
     blocking = _BLOCKING[profile]
     has_error = any(d["status"] == ERROR for d in dims)
     blocked = [d["id"] for d in dims if d["status"] in blocking]
@@ -233,9 +305,11 @@ def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
         score = None
 
     gate_warnings = []
-    if any(d["status"] == NOT_IMPLEMENTED for d in dims):
+    not_implemented = [d["id"] for d in dims if d["status"] == NOT_IMPLEMENTED]
+    if not_implemented:
         gate_warnings.append(
-            "미구현 차원이 있습니다 (사람 승인) — 이 결과는 '제출 가능'을 의미하지 않습니다")
+            f"미구현 차원이 있습니다 ({', '.join(not_implemented)}) — "
+            "이 결과는 '제출 가능'을 의미하지 않습니다")
 
     return {
         "schema": "release_gate/v1",
@@ -276,7 +350,58 @@ def _write_report(report, workspace):
     return out
 
 
+def _undecidable_report(target, profile, workspace, reason):
+    """판정에 이르지 못하고 조기 종료할 때 남길 최소 리포트.
+
+    이전 실행의 PASS 리포트가 그대로 남으면 소비자(예: /finalize)가 이미 무효가 된
+    판정을 읽는다. 종료코드와 리포트가 서로 다른 이야기를 하지 않게 한다.
+    """
+    return {
+        "schema": "release_gate/v1",
+        "generated_utc": _utc_now(),
+        "target": target,
+        "doc_type": None,
+        "profile": profile,
+        "result": "UNDECIDABLE",
+        "exit_code": EXIT_UNDECIDABLE,
+        "blocked_dimensions": [],
+        "dimensions": [],
+        "score_informational": None,
+        "reason": reason,
+        "warnings": [reason],
+    }
+
+
+def _harden_stream(stream):
+    """인코딩 실패로 예외가 나가지 않도록 출력 스트림을 완화한다.
+
+    ASCII 로케일에서 한국어 findings나 ⛔/⚠️를 출력하면 UnicodeEncodeError가 main을
+    빠져나가고, 셸은 실제 판정(2) 대신 파이썬 기본 종료코드(1)를 본다 — '게이트가
+    고장났다'가 '문서가 불량하다'로 보고되는 것이다. reconfigure가 없는 스트림
+    (일부 테스트 대역·리다이렉트)도 있으므로 실패는 무시한다.
+    """
+    try:
+        stream.reconfigure(errors="backslashreplace")
+    except Exception:  # noqa: BLE001 — 출력 완화 실패가 판정을 바꿔선 안 된다
+        pass
+
+
 def main(argv=None):
+    """CLI 진입점. 어떤 예외도 0/1로 착지하지 못하게 감싼다."""
+    _harden_stream(sys.stdout)
+    _harden_stream(sys.stderr)
+    try:
+        return _run_cli(argv)
+    except Exception as exc:  # noqa: BLE001 — 게이트 자체의 고장은 판정이 아니다
+        try:
+            print(f"⛔ 판정 불가: 게이트 내부 오류 — {type(exc).__name__}: {exc}",
+                  file=sys.stderr)
+        except Exception:  # noqa: BLE001 — 보고 실패도 판정을 바꾸지 않는다
+            pass
+        return EXIT_UNDECIDABLE
+
+
+def _run_cli(argv):
     ap = argparse.ArgumentParser(
         description="Fail-closed release gate for protocol / ICF drafts.")
     ap.add_argument("target")
@@ -287,7 +412,16 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     if not os.path.isfile(args.target):
-        print(f"⛔ 최종화 거부: 대상 파일이 없습니다 — {args.target}", file=sys.stderr)
+        reason = f"대상 파일이 없습니다 — {args.target}"
+        print(f"⛔ 최종화 거부: {reason}", file=sys.stderr)
+        try:
+            _write_report(
+                _undecidable_report(args.target, args.profile, args.workspace,
+                                    reason),
+                args.workspace)
+        except Exception as exc:  # noqa: BLE001 — 증거 기록 실패는 더 약한 판정이 아니다
+            print(f"   (판정 불가 리포트 기록도 실패: {type(exc).__name__}: {exc})",
+                  file=sys.stderr)
         return EXIT_UNDECIDABLE
 
     report = run_gate(args.target, args.profile, args.workspace,
