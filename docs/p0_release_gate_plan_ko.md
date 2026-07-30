@@ -16,6 +16,7 @@
 - **검사기 3종을 수정하지 않는다**: `.claude/scripts/qa/doc_lint.py`, `citation_verify.py`, `dose_safety_guard.py`. 또한 `.claude/hooks/draft_advisory_hook.py`와 `.github/workflows/ci.yml`도 수정하지 않는다.
 - **런타임 경로는 `__file__` 기준 상대경로로 해석한다.** `sync_plugin.sh:44`는 `*.md`만 경로 치환하므로 `.py`에 `.claude/` 런타임 경로를 하드코딩하면 plugin 복사본에서 깨진다.
 - **테스트는 네트워크 I/O를 하지 않는다.** 기존 `.claude/scripts/tests/test_citation_verify.py`의 규약("NO test performs network I/O")을 따른다. online 경로는 `citation_verify.verify_online`을 monkeypatch한다.
+  - **암묵적 의존을 남기지 말 것**: `protocol_clean.md`로 submission 프로파일을 돌리는 테스트들(`test_fih_*`, `test_non_fih_*`, `test_missing_goal_spec_*`, `test_approval_*`, `test_score_*`)은 그 fixture에 인용이 **하나도 없어서** `verify_online`이 빈 리스트를 받고 네트워크를 타지 않는 것에 의존한다. 이 fixture에 나중에 PMID/NCT를 추가하면 조용히 실제 네트워크 호출이 발생한다. 따라서 `protocol_clean.md`에는 인용을 추가하지 않으며, 인용이 필요한 시나리오는 별도 fixture(`protocol_bad_pmid.md`)와 monkeypatch로 다룬다.
 - **상태 문자열 상수 (정확히 이 6개):** `PASS`, `FAIL`, `SKIPPED`, `FORMAT_ONLY`, `NOT_IMPLEMENTED`, `ERROR`
 - **종료코드:** `0` = 통과, `1` = 판정했고 불합격, `2` = 판정 불가(입력 오류·검사기 크래시·리포트 쓰기 실패). `ERROR`와 `FAIL`이 동시 존재하면 **2가 우선**한다.
 - **프로파일 이름 (정확히 이 2개):** `draft`(기본값), `submission`
