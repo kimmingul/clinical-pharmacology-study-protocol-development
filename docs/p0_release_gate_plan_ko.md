@@ -1261,6 +1261,31 @@ def test_report_records_failure_details(tmp_path):
     structure = next(d for d in saved["dimensions"]
                      if d["id"] == "structure")
     assert structure["findings"], "차단 사유가 리포트에 남아야 함"
+
+
+def test_unserializable_report_is_undecidable_and_preserves_prior(
+        tmp_path, monkeypatch):
+    """직렬화 실패도 exit 2 — exit 1(판정했고 불합격)과 구분되어야 한다."""
+    assert fr.main([fixture("protocol_clean.md"),
+                    "--workspace", str(tmp_path),
+                    "--goal-spec", fixture("goal_spec_ddi.json")]) == fr.EXIT_OK
+    out = tmp_path / "verification" / "release_gate.json"
+    prior = out.read_text(encoding="utf-8")
+
+    def dim_unserializable(target, profile, ctx):
+        return fr._dim("approval", fr.PASS, bad={"set은 JSON 불가"})
+
+    monkeypatch.setattr(fr, "DIMENSIONS", tuple(
+        (i, dim_unserializable if i == "approval" else fn)
+        for i, fn in fr.DIMENSIONS))
+
+    code = fr.main([fixture("protocol_clean.md"),
+                    "--workspace", str(tmp_path),
+                    "--goal-spec", fixture("goal_spec_ddi.json")])
+    assert code == fr.EXIT_UNDECIDABLE
+    assert out.read_text(encoding="utf-8") == prior, "이전 리포트가 보존되어야 함"
+    assert not (tmp_path / "verification" /
+                "release_gate.json.tmp").exists(), "임시 파일이 남으면 안 된다"
 ```
 
 - [ ] **Step 2: 테스트를 실행해 실패를 확인**
@@ -1274,15 +1299,26 @@ Expected: FAIL — `AssertionError: assert False` (`release_gate.json`이 생성
 
 ```python
 def _write_report(report, workspace):
-    """리포트를 <workspace>/verification/release_gate.json에 기록한다.
+    """리포트를 <workspace>/verification/release_gate.json에 원자적으로 기록한다.
 
     실패 시 예외를 전파한다 — 증거를 남기지 못하면 통과를 주장하지 않는다.
+    임시 파일에 먼저 쓰고 os.replace로 교체하므로, 직렬화가 중간에 실패해도
+    기존 리포트가 잘린 조각으로 덮이지 않는다.
     """
     out = os.path.join(workspace, "verification", "release_gate.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    with open(out, "w", encoding="utf-8") as fh:
-        json.dump(report, fh, ensure_ascii=False, indent=2)
-        fh.write("\n")
+    tmp = out + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(report, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+        os.replace(tmp, out)
+    except Exception:  # noqa: BLE001 — 실패해도 잔여 임시 파일을 남기지 않는다
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
     return out
 ```
 
@@ -1291,11 +1327,21 @@ def _write_report(report, workspace):
 ```python
     try:
         report_path = _write_report(report, args.workspace)
-    except OSError as exc:
-        print(f"⛔ 최종화 거부: 리포트 기록 실패 — {exc}", file=sys.stderr)
+    except Exception as exc:  # noqa: BLE001 — 어떤 실패도 판정으로 오인되면 안 된다
+        print(f"⛔ 최종화 거부: 리포트 기록 실패 — {type(exc).__name__}: {exc}",
+              file=sys.stderr)
         print("   증거를 남기지 못하면 통과를 주장하지 않습니다.", file=sys.stderr)
         return EXIT_UNDECIDABLE
 ```
+
+> **정정 (T7 리뷰 Important 2건, 사용자 판정 2026-07-30):** 최초 계획은
+> `except OSError` + 비원자적 `open(out, "w")`였다. 실측 결과 직렬화 오류
+> (`_dim(..., **extra)`에 JSON 불가 값이 들어오는 경우)가 핸들러를 빠져나가
+> **셸 종료코드 1**로 끝났다 — `EXIT_REJECTED`("판정했고 불합격")와 구분 불가.
+> 동시에 948바이트짜리 잘린 JSON이 디스크에 남았다. 게이트의 존재 이유가
+> "실패가 판정처럼 보이지 않게"이므로 (1) 예외를 `except Exception`으로 넓혀
+> 모든 쓰기·직렬화 실패를 exit 2로 보내고, (2) 임시 파일 + `os.replace`로
+> 원자적 교체하여 이전 리포트를 보존한다.
 
 `main()`의 마지막 `return report["exit_code"]` 앞에 추가:
 
