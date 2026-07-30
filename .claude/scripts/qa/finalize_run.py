@@ -159,11 +159,23 @@ def dim_dose(target, profile, ctx):
     return _dim("dose", PASS, mrsd_mg=res["mrsd_mg"])
 
 
+def dim_approval(target, profile, ctx):
+    """사람 승인 이벤트. 서명 이벤트 스토어(P0-5)가 없어 아직 판정할 수 없다.
+
+    이 차원을 조용히 빼는 대신 NOT_IMPLEMENTED로 매 실행 출력에 노출시킨다.
+    이 게이트가 고치려는 문제 자체가 '검사가 있는 척'이었으므로, 같은 종류의
+    공백을 새로 만들지 않는다.
+    """
+    return _dim("approval", NOT_IMPLEMENTED,
+                reason="서명 이벤트 스토어 미구현 (P0-5)")
+
+
 DIMENSIONS = (
     ("structure", dim_structure),
     ("citation", dim_citation),
     ("dose", dim_dose),
     ("advisory", dim_advisory),
+    ("approval", dim_approval),
 )
 
 # 프로파일별 차단 상태 집합. SKIPPED/NOT_IMPLEMENTED는 어느 쪽도 차단하지 않는다.
@@ -213,6 +225,18 @@ def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
     doc_type = next((d.get("doc_type") for d in dims if d.get("doc_type")),
                     None)
 
+    # score는 참고 수치이며 판정에 사용하지 않는다 (설계 D2). 계산이 실패해도
+    # 차단하지 않고 None으로 둔다.
+    try:
+        score = doc_lint.score_file(target, goal_spec=ctx["goal_spec"])["score"]
+    except Exception:  # noqa: BLE001 — 참고 수치이므로 실패를 삼킨다
+        score = None
+
+    gate_warnings = []
+    if any(d["status"] == NOT_IMPLEMENTED for d in dims):
+        gate_warnings.append(
+            "미구현 차원이 있습니다 (사람 승인) — 이 결과는 '제출 가능'을 의미하지 않습니다")
+
     return {
         "schema": "release_gate/v1",
         "generated_utc": _utc_now(),
@@ -223,7 +247,8 @@ def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
         "exit_code": exit_code,
         "blocked_dimensions": blocked,
         "dimensions": dims,
-        "warnings": [],
+        "score_informational": score,
+        "warnings": gate_warnings,
     }
 
 
@@ -248,6 +273,10 @@ def main(argv=None):
         print(f"  [{d['id']}] {d['status']}")
         for f in d["findings"]:
             print(f"      - {f}")
+    if report["score_informational"] is not None:
+        print(f"  score {report['score_informational']}/100 (참고, 판정 미사용)")
+    for w in report["warnings"]:
+        print(f"  ⚠️  {w}")
     return report["exit_code"]
 
 

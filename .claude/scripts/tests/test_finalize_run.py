@@ -10,6 +10,7 @@ import os
 import pytest
 
 import citation_verify
+import doc_lint as doc_lint_module
 import finalize_run as fr
 
 
@@ -236,3 +237,51 @@ def test_fih_unusable_mrsd_json_blocks_submission(tmp_path, payload):
                         goal_spec_path=fixture("goal_spec_fih.json"),
                         mrsd_json=str(mrsd))
     assert next(d for d in draft["dimensions"] if d["id"] == "dose")["status"] == fr.SKIPPED
+
+
+def test_approval_dimension_is_not_implemented(tmp_path):
+    for profile in ("draft", "submission"):
+        report = fr.run_gate(fixture("protocol_clean.md"), profile,
+                             str(tmp_path),
+                             goal_spec_path=fixture("goal_spec_ddi.json"))
+        approval = next(d for d in report["dimensions"]
+                        if d["id"] == "approval")
+        assert approval["status"] == fr.NOT_IMPLEMENTED
+        assert report["exit_code"] == fr.EXIT_OK, "미구현은 차단하지 않는다"
+        assert any("승인" in w for w in report["warnings"]), \
+            "미구현 통제는 매 실행마다 경고로 노출되어야 함"
+
+
+def test_checker_crash_yields_undecidable(tmp_path, monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("simulated engine crash")
+
+    monkeypatch.setattr(doc_lint_module, "lint_file", boom)
+    report = fr.run_gate(fixture("protocol_clean.md"), "draft", str(tmp_path))
+    statuses = {d["id"]: d["status"] for d in report["dimensions"]}
+    assert statuses["structure"] == fr.ERROR
+    assert report["result"] == "UNDECIDABLE"
+    assert report["exit_code"] == fr.EXIT_UNDECIDABLE
+
+
+def test_error_takes_precedence_over_fail(tmp_path, monkeypatch):
+    """structure는 ERROR, dose는 FAIL — exit는 2여야 한다."""
+    def boom(*a, **k):
+        raise RuntimeError("simulated engine crash")
+
+    monkeypatch.setattr(doc_lint_module, "lint_file", boom)
+    report = fr.run_gate(fixture("protocol_clean.md"), "submission",
+                         str(tmp_path))
+    statuses = {d["id"]: d["status"] for d in report["dimensions"]}
+    assert statuses["structure"] == fr.ERROR
+    assert statuses["dose"] == fr.FAIL, "goal_spec 없음 → submission FAIL"
+    assert report["exit_code"] == fr.EXIT_UNDECIDABLE
+
+
+def test_score_is_informational_only(tmp_path):
+    report = fr.run_gate(fixture("protocol_clean.md"), "submission",
+                         str(tmp_path),
+                         goal_spec_path=fixture("goal_spec_ddi.json"))
+    assert isinstance(report["score_informational"], int)
+    assert "score" not in [d["id"] for d in report["dimensions"]], \
+        "score는 차원이 아니다"
