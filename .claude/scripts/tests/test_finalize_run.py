@@ -330,3 +330,28 @@ def test_report_records_failure_details(tmp_path):
     structure = next(d for d in saved["dimensions"]
                      if d["id"] == "structure")
     assert structure["findings"], "차단 사유가 리포트에 남아야 함"
+
+
+def test_unserializable_report_is_undecidable_and_preserves_prior(
+        tmp_path, monkeypatch):
+    """직렬화 실패도 exit 2 — exit 1(판정했고 불합격)과 구분되어야 한다."""
+    assert fr.main([fixture("protocol_clean.md"),
+                    "--workspace", str(tmp_path),
+                    "--goal-spec", fixture("goal_spec_ddi.json")]) == fr.EXIT_OK
+    out = tmp_path / "verification" / "release_gate.json"
+    prior = out.read_text(encoding="utf-8")
+
+    def dim_unserializable(target, profile, ctx):
+        return fr._dim("approval", fr.PASS, bad={"set은 JSON 불가"})
+
+    monkeypatch.setattr(fr, "DIMENSIONS", tuple(
+        (i, dim_unserializable if i == "approval" else fn)
+        for i, fn in fr.DIMENSIONS))
+
+    code = fr.main([fixture("protocol_clean.md"),
+                    "--workspace", str(tmp_path),
+                    "--goal-spec", fixture("goal_spec_ddi.json")])
+    assert code == fr.EXIT_UNDECIDABLE
+    assert out.read_text(encoding="utf-8") == prior, "이전 리포트가 보존되어야 함"
+    assert not (tmp_path / "verification" /
+                "release_gate.json.tmp").exists(), "임시 파일이 남으면 안 된다"

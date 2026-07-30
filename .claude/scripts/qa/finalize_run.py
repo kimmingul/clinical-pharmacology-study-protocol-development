@@ -253,15 +253,26 @@ def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
 
 
 def _write_report(report, workspace):
-    """리포트를 <workspace>/verification/release_gate.json에 기록한다.
+    """리포트를 <workspace>/verification/release_gate.json에 원자적으로 기록한다.
 
     실패 시 예외를 전파한다 — 증거를 남기지 못하면 통과를 주장하지 않는다.
+    임시 파일에 먼저 쓰고 os.replace로 교체하므로, 직렬화가 중간에 실패해도
+    기존 리포트가 잘린 조각으로 덮이지 않는다.
     """
     out = os.path.join(workspace, "verification", "release_gate.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    with open(out, "w", encoding="utf-8") as fh:
-        json.dump(report, fh, ensure_ascii=False, indent=2)
-        fh.write("\n")
+    tmp = out + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(report, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+        os.replace(tmp, out)
+    except Exception:  # noqa: BLE001 — 실패해도 잔여 임시 파일을 남기지 않는다
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
     return out
 
 
@@ -284,8 +295,9 @@ def main(argv=None):
 
     try:
         report_path = _write_report(report, args.workspace)
-    except OSError as exc:
-        print(f"⛔ 최종화 거부: 리포트 기록 실패 — {exc}", file=sys.stderr)
+    except Exception as exc:  # noqa: BLE001 — 어떤 실패도 판정으로 오인되면 안 된다
+        print(f"⛔ 최종화 거부: 리포트 기록 실패 — {type(exc).__name__}: {exc}",
+              file=sys.stderr)
         print("   증거를 남기지 못하면 통과를 주장하지 않습니다.", file=sys.stderr)
         return EXIT_UNDECIDABLE
 
