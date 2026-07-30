@@ -30,6 +30,7 @@ if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
 import doc_lint  # noqa: E402
+import citation_verify  # noqa: E402
 
 # Status vocabulary. "checker not run" is never conflated with "passed".
 PASS = "PASS"
@@ -76,8 +77,42 @@ def dim_advisory(target, profile, ctx):
                 reason="draft — 권고 사항 표시만 (submission에서는 차단)")
 
 
+_SUMMARY_KEYS = ("total", "format_fail", "not_found", "unverified_network")
+
+
+def dim_citation(target, profile, ctx):
+    """인용 검증. draft는 형식만(FORMAT_ONLY), submission은 online 필수.
+
+    offline에서는 not_found가 구조적으로 항상 0이므로 '통과'라고 부르지 않고
+    FORMAT_ONLY로 표기한다. submission 프로파일에서 FORMAT_ONLY는 차단이다
+    (_BLOCKING 참조).
+    """
+    online = (profile == "submission")
+    audit = citation_verify.audit_files(
+        [target], workspace=ctx["workspace"], online=online)
+    s = audit["summary"]
+    detail = {k: s[k] for k in _SUMMARY_KEYS}
+
+    findings = []
+    if s["format_fail"]:
+        findings.append(f"format_fail={s['format_fail']} — 잘못된 형식의 인용 id")
+
+    if not online:
+        return _dim("citation", FORMAT_ONLY, findings, detail=detail,
+                    reason="offline — id 실제 존재 여부 미검증")
+
+    if s["not_found"]:
+        findings.append(f"not_found={s['not_found']} — 레지스트리에 없는 인용 id")
+    if s["unverified_network"]:
+        findings.append(
+            f"unverified_network={s['unverified_network']} — 네트워크 검증 불가")
+
+    return _dim("citation", FAIL if findings else PASS, findings, detail=detail)
+
+
 DIMENSIONS = (
     ("structure", dim_structure),
+    ("citation", dim_citation),
     ("advisory", dim_advisory),
 )
 

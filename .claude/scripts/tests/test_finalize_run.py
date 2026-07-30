@@ -9,6 +9,7 @@ import os
 
 import pytest
 
+import citation_verify
 import finalize_run as fr
 
 
@@ -100,3 +101,55 @@ def test_clean_protocol_advisory_passes_submission(tmp_path):
     advisory = next(d for d in report["dimensions"] if d["id"] == "advisory")
     assert advisory["status"] == fr.PASS
     assert advisory["findings"] == []
+
+
+def _mock_online(status):
+    """verify_online 대체 — 네트워크 접근 없이 지정 status를 돌려준다."""
+    def _fake(citations, timeout=8):
+        out = []
+        for kind in ("pmid", "nct"):
+            for value in citations.get(kind, []):
+                out.append({"type": kind, "value": value,
+                            "exists": status == "verified",
+                            "status": status, "detail": "mocked"})
+        return out
+    return _fake
+
+
+def test_citation_is_format_only_in_draft(tmp_path):
+    report = fr.run_gate(fixture("protocol_bad_pmid.md"), "draft",
+                         str(tmp_path))
+    citation = next(d for d in report["dimensions"] if d["id"] == "citation")
+    assert citation["status"] == fr.FORMAT_ONLY
+    assert citation["detail"]["not_found"] == 0
+    assert report["exit_code"] == fr.EXIT_OK
+
+
+def test_citation_not_found_blocks_submission(tmp_path, monkeypatch):
+    monkeypatch.setattr(citation_verify, "verify_online",
+                        _mock_online("not-found"))
+    report = fr.run_gate(fixture("protocol_bad_pmid.md"), "submission",
+                         str(tmp_path))
+    citation = next(d for d in report["dimensions"] if d["id"] == "citation")
+    assert citation["status"] == fr.FAIL
+    assert citation["detail"]["not_found"] == 1
+    assert report["exit_code"] == fr.EXIT_REJECTED
+
+
+def test_citation_network_failure_blocks_submission(tmp_path, monkeypatch):
+    monkeypatch.setattr(citation_verify, "verify_online",
+                        _mock_online("unverified-network"))
+    report = fr.run_gate(fixture("protocol_bad_pmid.md"), "submission",
+                         str(tmp_path))
+    citation = next(d for d in report["dimensions"] if d["id"] == "citation")
+    assert citation["status"] == fr.FAIL
+    assert citation["detail"]["unverified_network"] == 1
+
+
+def test_citation_verified_passes_submission(tmp_path, monkeypatch):
+    monkeypatch.setattr(citation_verify, "verify_online",
+                        _mock_online("verified"))
+    report = fr.run_gate(fixture("protocol_bad_pmid.md"), "submission",
+                         str(tmp_path))
+    citation = next(d for d in report["dimensions"] if d["id"] == "citation")
+    assert citation["status"] == fr.PASS
