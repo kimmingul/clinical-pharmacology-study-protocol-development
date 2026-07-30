@@ -135,7 +135,9 @@ Exit codes:
 import argparse
 import json
 import os
+import re
 import sys
+from datetime import datetime, timezone
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
@@ -343,9 +345,11 @@ _BLOCKING = {
 
 
 def _utc_now():
-    """UTC ISO-8601. datetime.now(timezone.utc)로 naive datetime을 피한다."""
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    """UTC ISO-8601. 형식은 citation_verify._utc_now()와 동일해야 한다 —
+    두 산출물이 같은 _workspace/verification/ 디렉토리에서 같은 generated_utc
+    필드명을 쓰므로 형식이 갈리면 안 된다 (citation_verify.py:59-60 참조).
+    """
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
@@ -407,7 +411,9 @@ def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
     return report["exit_code"]
 ```
 
-`_utc_now`를 함수 안에서 import하는 이유: 모듈 최상단 import를 늘리지 않고, 이 스크립트에서 시간이 필요한 곳이 한 군데뿐이다. 기존 `citation_verify.py`도 동일한 `_utc_now` 헬퍼 관례를 쓴다.
+`datetime`과 `re`는 Task 1의 모듈 최상단 import 블록에 이미 포함되어 있다 — `citation_verify.py:33`이 `from datetime import datetime, timezone`을 최상단에 두는 것과 같은 방식이므로 여기서 추가할 것은 없다.
+
+타임스탬프 형식은 `citation_verify._utc_now()`와 동일하게 `isoformat(timespec="seconds")`를 쓴다 (`2026-07-30T01:57:34+00:00` 형태). 두 산출물(`release_gate.json`, `citation_audit.json`)이 같은 `_workspace/verification/` 디렉토리에서 같은 `generated_utc` 필드명을 쓰므로 형식이 갈리면 안 된다.
 
 - [ ] **Step 5: 테스트를 실행해 통과를 확인**
 
@@ -908,7 +914,6 @@ Expected: FAIL — `AttributeError: module 'finalize_run' has no attribute '_is_
 import 블록에 추가:
 
 ```python
-import re  # noqa: E402  (표준 라이브러리이므로 최상단 import 블록에 둔다)
 import dose_safety_guard  # noqa: E402
 ```
 
