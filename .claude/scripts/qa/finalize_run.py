@@ -60,8 +60,25 @@ def dim_structure(target, profile, ctx):
     return _dim("structure", status, errors, doc_type=doc_type)
 
 
+def dim_advisory(target, profile, ctx):
+    """doc_lint WARNING 전체. draft는 표시만, submission은 0건이어야 한다.
+
+    warning을 분류하지 않는 것이 의도다 (설계 D5): 제출 직전에 미해결 권고가
+    남아 있으면 종류를 따지지 않고 차단한다. placeholder·미확인 인용·PIPA
+    누락·PG 선택동의 누락·CI 경계 표기 누락이 이 한 규칙으로 모두 커버된다.
+    """
+    _doc_type, _errors, warnings = doc_lint.lint_file(target)
+    if not warnings:
+        return _dim("advisory", PASS)
+    if profile == "submission":
+        return _dim("advisory", FAIL, warnings)
+    return _dim("advisory", PASS, warnings,
+                reason="draft — 권고 사항 표시만 (submission에서는 차단)")
+
+
 DIMENSIONS = (
     ("structure", dim_structure),
+    ("advisory", dim_advisory),
 )
 
 # 프로파일별 차단 상태 집합. SKIPPED/NOT_IMPLEMENTED는 어느 쪽도 차단하지 않는다.

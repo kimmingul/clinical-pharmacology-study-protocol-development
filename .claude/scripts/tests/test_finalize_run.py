@@ -7,6 +7,8 @@ always monkeypatched (same convention as test_citation_verify.py).
 import json
 import os
 
+import pytest
+
 import finalize_run as fr
 
 
@@ -68,3 +70,33 @@ def test_missing_section_fails_both_profiles(tmp_path):
 def test_structure_dimension_reports_doc_type(tmp_path):
     report = fr.run_gate(fixture("protocol_clean.md"), "draft", str(tmp_path))
     assert report["doc_type"] == "protocol"
+
+
+ADVISORY_FIXTURES = [
+    "protocol_unverified_marker.md",
+    "icf_no_pipa.md",
+    "icf_pg_without_part4.md",
+]
+
+
+@pytest.mark.parametrize("name", ADVISORY_FIXTURES)
+def test_advisory_findings_pass_draft_but_block_submission(name, tmp_path):
+    draft = fr.run_gate(fixture(name), "draft", str(tmp_path))
+    assert draft["exit_code"] == fr.EXIT_OK
+    draft_advisory = next(d for d in draft["dimensions"]
+                          if d["id"] == "advisory")
+    assert draft_advisory["status"] == fr.PASS
+    assert draft_advisory["findings"], "draft에서도 findings는 기록되어야 함"
+
+    sub = fr.run_gate(fixture(name), "submission", str(tmp_path))
+    sub_advisory = next(d for d in sub["dimensions"] if d["id"] == "advisory")
+    assert sub_advisory["status"] == fr.FAIL
+    assert sub["exit_code"] == fr.EXIT_REJECTED
+
+
+def test_clean_protocol_advisory_passes_submission(tmp_path):
+    report = fr.run_gate(fixture("protocol_clean.md"), "submission",
+                         str(tmp_path))
+    advisory = next(d for d in report["dimensions"] if d["id"] == "advisory")
+    assert advisory["status"] == fr.PASS
+    assert advisory["findings"] == []
