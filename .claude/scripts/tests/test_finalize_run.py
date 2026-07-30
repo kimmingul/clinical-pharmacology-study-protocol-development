@@ -39,3 +39,32 @@ def test_dim_helper_shape():
 def test_dim_helper_defaults_findings_to_empty_list():
     d = fr._dim("dose", fr.SKIPPED)
     assert d["findings"] == []
+
+
+FIXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "fixtures", "gate")
+
+
+def fixture(name):
+    return os.path.join(FIXTURES, name)
+
+
+def test_clean_protocol_passes_draft(tmp_path):
+    code = fr.main([fixture("protocol_clean.md"),
+                    "--profile", "draft", "--workspace", str(tmp_path)])
+    assert code == fr.EXIT_OK
+
+
+def test_missing_section_fails_both_profiles(tmp_path):
+    for profile in ("draft", "submission"):
+        report = fr.run_gate(fixture("protocol_missing_b7.md"),
+                             profile, str(tmp_path))
+        structure = next(d for d in report["dimensions"]
+                         if d["id"] == "structure")
+        assert structure["status"] == fr.FAIL
+        assert report["exit_code"] == fr.EXIT_REJECTED
+
+
+def test_structure_dimension_reports_doc_type(tmp_path):
+    report = fr.run_gate(fixture("protocol_clean.md"), "draft", str(tmp_path))
+    assert report["doc_type"] == "protocol"
