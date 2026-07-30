@@ -1,0 +1,6 @@
+{
+  "schema": "trial_goal_spec/v1",
+  "drug": "TEST-002",
+  "trial_type": "DDI",
+  "primary_objective": "CYP2C19 기질과의 약물상호작용 평가"
+}
