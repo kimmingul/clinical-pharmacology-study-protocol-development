@@ -6,16 +6,21 @@
 
 **Architecture:** `finalize_run.py`가 기존 검사기 3종을 `import`로 호출하고(subprocess 아님), 검사기는 사실(finding)만 반환하며 심각도 판정은 게이트가 프로파일(`draft`/`submission`)에 따라 소유한다. 5개 차원을 각각 try/except로 감싸 실행하고, 하나라도 차단 상태면 non-zero로 종료한다.
 
-**Tech Stack:** Python 3.12, 표준 라이브러리만(`argparse`/`json`/`os`/`re`/`sys`), pytest, monkeypatch
+**Tech Stack:** Python 3.11+ (로컬 개발 venv는 3.11.15, **CI는 3.12**), 표준 라이브러리만(`argparse`/`json`/`os`/`re`/`sys`/`datetime`), pytest, monkeypatch
 
 **설계 문서:** `docs/p0_release_gate_design_ko.md` (커밋 `e4e60ef`)
 
 ## Global Constraints
 
 - **신규 의존성 추가 금지.** 표준 라이브러리만 사용한다. `.claude/scripts/requirements.txt`를 수정하지 않는다.
+- **Python 3.11+에서 동작해야 한다.** 로컬 venv는 `.claude/scripts/.venv` (3.11.15), CI는 3.12다. 3.12 전용 문법·API를 쓰지 않는다. 로컬 통과가 CI 통과를 보장하지 않으므로, CI 결과는 push 후 별도로 확인한다.
+- **테스트·스크립트는 반드시 venv 파이썬으로 실행한다**: `.claude/scripts/.venv/bin/python`. 시스템 `python3`(3.14.4)에는 pytest·scipy·numpy가 없어 즉시 실패한다. 계획의 모든 `Run:` 명령은 이 경로를 명시하고 있다.
+- **작업 디렉터리를 벗어나지 않는다.** 모든 경로는 저장소 루트 기준 상대경로로 쓴다. `cd <절대경로>` 를 명령에 넣지 않는다 — 구현은 격리 워크트리에서 진행되며, 절대경로는 원본 체크아웃을 가리켜 워크트리 격리를 무력화한다.
+- **`except Exception`은 의도된 설계이며 유지한다.** `run_gate`의 차원별 포착과 `score_file` 호출의 예외 삼킴은 fail-closed 보장(검사기 크래시를 통과로 집계하지 않음)과 score의 참고-전용 성격에서 나온 것이다. `.claude/rules/moai/languages/python.md`가 금지하는 것은 **bare except**(`except:`)이며, 여기서 쓰는 것은 `except Exception`에 사유 주석을 붙인 형태다. 리뷰에서 이 항목이 지적되면 plan-mandated로 분류한다 — 좁히지 않는다.
 - **검사기 3종을 수정하지 않는다**: `.claude/scripts/qa/doc_lint.py`, `citation_verify.py`, `dose_safety_guard.py`. 또한 `.claude/hooks/draft_advisory_hook.py`와 `.github/workflows/ci.yml`도 수정하지 않는다.
 - **런타임 경로는 `__file__` 기준 상대경로로 해석한다.** `sync_plugin.sh:44`는 `*.md`만 경로 치환하므로 `.py`에 `.claude/` 런타임 경로를 하드코딩하면 plugin 복사본에서 깨진다.
 - **테스트는 네트워크 I/O를 하지 않는다.** 기존 `.claude/scripts/tests/test_citation_verify.py`의 규약("NO test performs network I/O")을 따른다. online 경로는 `citation_verify.verify_online`을 monkeypatch한다.
+  - **암묵적 의존을 남기지 말 것**: `protocol_clean.md`로 submission 프로파일을 돌리는 테스트들(`test_fih_*`, `test_non_fih_*`, `test_missing_goal_spec_*`, `test_approval_*`, `test_score_*`)은 그 fixture에 인용이 **하나도 없어서** `verify_online`이 빈 리스트를 받고 네트워크를 타지 않는 것에 의존한다. 이 fixture에 나중에 PMID/NCT를 추가하면 조용히 실제 네트워크 호출이 발생한다. 따라서 `protocol_clean.md`에는 인용을 추가하지 않으며, 인용이 필요한 시나리오는 별도 fixture(`protocol_bad_pmid.md`)와 monkeypatch로 다룬다.
 - **상태 문자열 상수 (정확히 이 6개):** `PASS`, `FAIL`, `SKIPPED`, `FORMAT_ONLY`, `NOT_IMPLEMENTED`, `ERROR`
 - **종료코드:** `0` = 통과, `1` = 판정했고 불합격, `2` = 판정 불가(입력 오류·검사기 크래시·리포트 쓰기 실패). `ERROR`와 `FAIL`이 동시 존재하면 **2가 우선**한다.
 - **프로파일 이름 (정확히 이 2개):** `draft`(기본값), `submission`
@@ -104,7 +109,7 @@ def test_dim_helper_defaults_findings_to_empty_list():
 
 - [ ] **Step 2: 테스트를 실행해 실패를 확인**
 
-Run: `cd /Users/min/Projects/clinical-pharmacology-study-protocol-development && python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'finalize_run'`
 
 - [ ] **Step 3: 최소 구현 작성**
@@ -135,7 +140,9 @@ Exit codes:
 import argparse
 import json
 import os
+import re
 import sys
+from datetime import datetime, timezone
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
@@ -188,7 +195,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 5 passed
 
 - [ ] **Step 5: 커밋**
@@ -310,7 +317,7 @@ def test_structure_dimension_reports_doc_type(tmp_path):
 
 - [ ] **Step 3: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: FAIL — `AttributeError: module 'finalize_run' has no attribute 'run_gate'`
 
 - [ ] **Step 4: 구현 — `dim_structure` + `run_gate`**
@@ -343,9 +350,11 @@ _BLOCKING = {
 
 
 def _utc_now():
-    """UTC ISO-8601. datetime.now(timezone.utc)로 naive datetime을 피한다."""
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    """UTC ISO-8601. 형식은 citation_verify._utc_now()와 동일해야 한다 —
+    두 산출물이 같은 _workspace/verification/ 디렉토리에서 같은 generated_utc
+    필드명을 쓰므로 형식이 갈리면 안 된다 (citation_verify.py:59-60 참조).
+    """
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
@@ -407,11 +416,13 @@ def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
     return report["exit_code"]
 ```
 
-`_utc_now`를 함수 안에서 import하는 이유: 모듈 최상단 import를 늘리지 않고, 이 스크립트에서 시간이 필요한 곳이 한 군데뿐이다. 기존 `citation_verify.py`도 동일한 `_utc_now` 헬퍼 관례를 쓴다.
+`datetime`과 `re`는 Task 1의 모듈 최상단 import 블록에 이미 포함되어 있다 — `citation_verify.py:33`이 `from datetime import datetime, timezone`을 최상단에 두는 것과 같은 방식이므로 여기서 추가할 것은 없다.
+
+타임스탬프 형식은 `citation_verify._utc_now()`와 동일하게 `isoformat(timespec="seconds")`를 쓴다 (`2026-07-30T01:57:34+00:00` 형태). 두 산출물(`release_gate.json`, `citation_audit.json`)이 같은 `_workspace/verification/` 디렉토리에서 같은 `generated_utc` 필드명을 쓰므로 형식이 갈리면 안 된다.
 
 - [ ] **Step 5: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 8 passed
 
 - [ ] **Step 6: 커밋**
@@ -492,10 +503,12 @@ fixture 파일명에 `icf`가 들어가면 `doc_lint.lint_file`이 자동으로 
 언제든지 참여를 철회할 수 있다.
 ```
 
-`.claude/scripts/tests/fixtures/gate/icf_pg_without_part4.md` — `개인정보`는 있고 `유전체`를 언급하지만 `Part 4`/`선택 동의`/`별도 동의`가 없는 ICF:
+`.claude/scripts/tests/fixtures/gate/icf_pg_without_part4.md` — `개인정보`는 있고 `유전체`를 언급하지만 `Part 4`/`선택 동의`/`별도 동의`가 없는 ICF.
+
+> ⚠️ **자기 무력화 함정 (실측 확인)**: fixture의 설명용 제목에 `선택동의`·`선택 동의`·`별도 동의`·`Part 4` 중 어느 것도 써서는 안 된다. `lint_icf`의 검사식은 `re.search(r"Part\s*4|선택\s*동의|별도\s*동의", text)`로 **문서 전체**를 훑으므로, 제목에 그 단어가 있으면 "선택 동의 절이 없다"를 보여주려는 fixture가 스스로 검사를 통과시킨다. 초안에서 제목을 `— PG 언급, 선택동의 없음`으로 썼다가 경고가 0건 나오는 것을 실측했다(`선택\s*동의`가 공백 없는 `선택동의`에도 매칭). 아래 제목은 `추가 동의`로 바꿔 이 함정을 피한 검증된 형태다.
 
 ```markdown
-# 시험대상자 동의설명서 (게이트 테스트용 fixture — PG 언급, 선택동의 없음)
+# 시험대상자 동의설명서 (게이트 테스트용 fixture — 약물유전체 언급, 추가 동의 절 부재)
 
 ## 1. 연구의 목적
 본 시험은 건강한 성인에서 약물의 약동학을 평가한다.
@@ -553,7 +566,7 @@ def test_clean_protocol_advisory_passes_submission(tmp_path):
 
 - [ ] **Step 3: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v -k advisory`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k advisory`
 Expected: FAIL — `StopIteration` (advisory 차원이 `DIMENSIONS`에 없음)
 
 - [ ] **Step 4: 구현 — `dim_advisory`**
@@ -588,7 +601,7 @@ DIMENSIONS = (
 
 - [ ] **Step 5: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 12 passed
 
 - [ ] **Step 6: 커밋**
@@ -709,7 +722,7 @@ def test_citation_verified_passes_submission(tmp_path, monkeypatch):
 
 - [ ] **Step 3: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v -k citation`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k citation`
 Expected: FAIL — `StopIteration` (citation 차원 없음)
 
 - [ ] **Step 4: 구현 — `dim_citation`**
@@ -768,7 +781,7 @@ DIMENSIONS = (
 
 - [ ] **Step 5: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 16 passed
 
 `test_clean_protocol_advisory_passes_submission`이 `protocol_clean.md`에 인용이 없어 여전히 통과함을 확인한다 (`total=0` → findings 없음 → PASS).
@@ -898,9 +911,37 @@ def test_dose_violation_blocks_both_profiles(tmp_path):
 `("mrsd_mg_rounded", "mrsd_mg")` 순서로 찾아 첫 숫자 값을 쓰므로, 위 테스트의
 `{"mrsd_mg": 1.0}`이 유효하다. 파일이 없거나 JSON이 깨져도 예외 없이 `None`을 반환한다.
 
+**정정 추가 테스트 (fail-open 회귀 방지).** `mrsd.json`이 존재하지만 MRSD 값을 얻을 수
+없는 3가지 형태(깨진 JSON / 키 누락 / 값이 `null`) 각각에 대해, FIH + 초과 용량 문서가
+submission에서 `dose == FAIL`(exit 1)이어야 한다. draft에서는 `SKIPPED`(exit 0)로 허용한다.
+
+```python
+@pytest.mark.parametrize("payload", ['{ not json', '{"unexpected_key": 1.0}',
+                                     '{"mrsd_mg_rounded": null}'])
+def test_fih_unusable_mrsd_json_blocks_submission(tmp_path, payload):
+    """mrsd.json이 있어도 MRSD 값을 못 얻으면 부재와 동일하게 취급해야 한다."""
+    mrsd = tmp_path / "mrsd.json"
+    mrsd.write_text(payload, encoding="utf-8")
+    doc = tmp_path / "protocol.md"
+    doc.write_text(
+        open(fixture("protocol_clean.md"), encoding="utf-8").read()
+        + "\n시작 용량: 9999 mg\n", encoding="utf-8")
+
+    sub = fr.run_gate(str(doc), "submission", str(tmp_path),
+                      goal_spec_path=fixture("goal_spec_fih.json"),
+                      mrsd_json=str(mrsd))
+    assert next(d for d in sub["dimensions"] if d["id"] == "dose")["status"] == fr.FAIL
+    assert sub["exit_code"] == fr.EXIT_REJECTED
+
+    draft = fr.run_gate(str(doc), "draft", str(tmp_path),
+                        goal_spec_path=fixture("goal_spec_fih.json"),
+                        mrsd_json=str(mrsd))
+    assert next(d for d in draft["dimensions"] if d["id"] == "dose")["status"] == fr.SKIPPED
+```
+
 - [ ] **Step 3: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v -k "fih or dose or goal_spec"`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k "fih or dose or goal_spec"`
 Expected: FAIL — `AttributeError: module 'finalize_run' has no attribute '_is_fih'`
 
 - [ ] **Step 4: 구현 — `_is_fih` + `dim_dose`**
@@ -908,7 +949,6 @@ Expected: FAIL — `AttributeError: module 'finalize_run' has no attribute '_is_
 import 블록에 추가:
 
 ```python
-import re  # noqa: E402  (표준 라이브러리이므로 최상단 import 블록에 둔다)
 import dose_safety_guard  # noqa: E402
 ```
 
@@ -931,10 +971,14 @@ def _is_fih(goal_spec):
 
 ```python
 def dim_dose(target, profile, ctx):
-    """FIH 시작 용량 대 MRSD. 시험유형을 모르면 submission에서 판정 불가로 차단."""
+    """FIH 시작 용량 대 MRSD. 시험유형·MRSD를 모르면 submission에서 판정 불가로 차단."""
     fih = _is_fih(ctx["goal_spec"])
     mrsd_path = ctx["mrsd_json"]
-    has_mrsd = bool(mrsd_path) and os.path.isfile(mrsd_path)
+    # 파일 존재가 아니라 MRSD '값'을 얻었는지로 판단한다. 파일이 있다는 이유만으로
+    # check_file에 위임하면, 손상·키 누락 파일에서 mrsd_mg=None -> status="skipped"가
+    # 되어 FIH 용량 위반이 submission을 통과한다(fail-open).
+    mrsd_mg = dose_safety_guard.mrsd_from_json(mrsd_path)
+    has_mrsd = mrsd_mg is not None
 
     if fih is None:
         if profile == "submission":
@@ -943,14 +987,17 @@ def dim_dose(target, profile, ctx):
         return _dim("dose", SKIPPED, reason="goal_spec 없음 (draft 허용)")
 
     if fih and not has_mrsd:
+        # 부재와 '읽었으나 값 없음'을 같은 분기로 처리하되 사유는 구분해 남긴다.
+        why = ("mrsd.json에서 MRSD 값을 얻지 못함(손상·키 누락)"
+               if mrsd_path and os.path.isfile(mrsd_path)
+               else "mrsd.json 없음")
         if profile == "submission":
             return _dim("dose", FAIL,
-                        ["FIH 계열이나 mrsd.json이 없어 MRSD 대조 불가"])
+                        [f"FIH 계열이나 {why} — MRSD 대조 불가"])
         return _dim("dose", SKIPPED,
-                    reason="FIH이나 mrsd.json 없음 (draft 허용)")
+                    reason=f"FIH이나 {why} (draft 허용)")
 
-    res = dose_safety_guard.check_file(
-        target, mrsd_json=mrsd_path if has_mrsd else None)
+    res = dose_safety_guard.check_file(target, mrsd_mg=mrsd_mg)
     if res["status"] == "violation":
         return _dim("dose", FAIL, [v["message"] for v in res["violations"]],
                     mrsd_mg=res["mrsd_mg"])
@@ -958,6 +1005,13 @@ def dim_dose(target, profile, ctx):
         return _dim("dose", SKIPPED, reason="MRSD 없음 — 대조 대상 없음")
     return _dim("dose", PASS, mrsd_mg=res["mrsd_mg"])
 ```
+
+> **정정 (T5 리뷰 Critical, 사용자 판정 2026-07-30):** 최초 계획은
+> `has_mrsd = bool(mrsd_path) and os.path.isfile(mrsd_path)`(파일 존재)였다.
+> 실측 결과 손상된 `mrsd.json`이 있으면 시작 용량 9999 mg인 FIH 문서가
+> submission에서 exit 0(PASS)로 통과했다(정상 파일이면 exit 1). 파일 존재가
+> 아니라 **MRSD 값 확보 여부**로 판단하도록 정정한다. 설계문서 §dose 표의
+> "mrsd 없음"은 "MRSD 값을 얻지 못함"을 포함한다.
 
 `DIMENSIONS`를 교체:
 
@@ -972,7 +1026,7 @@ DIMENSIONS = (
 
 - [ ] **Step 5: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 21 passed
 
 - [ ] **Step 6: 커밋**
@@ -1065,7 +1119,7 @@ import doc_lint as doc_lint_module
 
 - [ ] **Step 2: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v -k "approval or crash or precedence or score"`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k "approval or crash or precedence or score"`
 Expected: FAIL — `StopIteration` (approval 차원 없음), `KeyError: 'score_informational'`
 
 - [ ] **Step 3: 구현 — `dim_approval` + score + 경고**
@@ -1130,8 +1184,8 @@ DIMENSIONS = (
 
 - [ ] **Step 4: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
-Expected: 26 passed
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Expected: 28 passed (T5 fix의 파라미터화 회귀 테스트 3건 포함. 원안 26은 그 이전 수치)
 
 - [ ] **Step 5: 커밋**
 
@@ -1207,11 +1261,36 @@ def test_report_records_failure_details(tmp_path):
     structure = next(d for d in saved["dimensions"]
                      if d["id"] == "structure")
     assert structure["findings"], "차단 사유가 리포트에 남아야 함"
+
+
+def test_unserializable_report_is_undecidable_and_preserves_prior(
+        tmp_path, monkeypatch):
+    """직렬화 실패도 exit 2 — exit 1(판정했고 불합격)과 구분되어야 한다."""
+    assert fr.main([fixture("protocol_clean.md"),
+                    "--workspace", str(tmp_path),
+                    "--goal-spec", fixture("goal_spec_ddi.json")]) == fr.EXIT_OK
+    out = tmp_path / "verification" / "release_gate.json"
+    prior = out.read_text(encoding="utf-8")
+
+    def dim_unserializable(target, profile, ctx):
+        return fr._dim("approval", fr.PASS, bad={"set은 JSON 불가"})
+
+    monkeypatch.setattr(fr, "DIMENSIONS", tuple(
+        (i, dim_unserializable if i == "approval" else fn)
+        for i, fn in fr.DIMENSIONS))
+
+    code = fr.main([fixture("protocol_clean.md"),
+                    "--workspace", str(tmp_path),
+                    "--goal-spec", fixture("goal_spec_ddi.json")])
+    assert code == fr.EXIT_UNDECIDABLE
+    assert out.read_text(encoding="utf-8") == prior, "이전 리포트가 보존되어야 함"
+    assert not (tmp_path / "verification" /
+                "release_gate.json.tmp").exists(), "임시 파일이 남으면 안 된다"
 ```
 
 - [ ] **Step 2: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v -k report`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k report`
 Expected: FAIL — `AssertionError: assert False` (`release_gate.json`이 생성되지 않음)
 
 - [ ] **Step 3: 구현 — `_write_report` + `main` 연결**
@@ -1220,15 +1299,26 @@ Expected: FAIL — `AssertionError: assert False` (`release_gate.json`이 생성
 
 ```python
 def _write_report(report, workspace):
-    """리포트를 <workspace>/verification/release_gate.json에 기록한다.
+    """리포트를 <workspace>/verification/release_gate.json에 원자적으로 기록한다.
 
     실패 시 예외를 전파한다 — 증거를 남기지 못하면 통과를 주장하지 않는다.
+    임시 파일에 먼저 쓰고 os.replace로 교체하므로, 직렬화가 중간에 실패해도
+    기존 리포트가 잘린 조각으로 덮이지 않는다.
     """
     out = os.path.join(workspace, "verification", "release_gate.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    with open(out, "w", encoding="utf-8") as fh:
-        json.dump(report, fh, ensure_ascii=False, indent=2)
-        fh.write("\n")
+    tmp = out + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(report, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+        os.replace(tmp, out)
+    except Exception:  # noqa: BLE001 — 실패해도 잔여 임시 파일을 남기지 않는다
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
     return out
 ```
 
@@ -1237,11 +1327,21 @@ def _write_report(report, workspace):
 ```python
     try:
         report_path = _write_report(report, args.workspace)
-    except OSError as exc:
-        print(f"⛔ 최종화 거부: 리포트 기록 실패 — {exc}", file=sys.stderr)
+    except Exception as exc:  # noqa: BLE001 — 어떤 실패도 판정으로 오인되면 안 된다
+        print(f"⛔ 최종화 거부: 리포트 기록 실패 — {type(exc).__name__}: {exc}",
+              file=sys.stderr)
         print("   증거를 남기지 못하면 통과를 주장하지 않습니다.", file=sys.stderr)
         return EXIT_UNDECIDABLE
 ```
+
+> **정정 (T7 리뷰 Important 2건, 사용자 판정 2026-07-30):** 최초 계획은
+> `except OSError` + 비원자적 `open(out, "w")`였다. 실측 결과 직렬화 오류
+> (`_dim(..., **extra)`에 JSON 불가 값이 들어오는 경우)가 핸들러를 빠져나가
+> **셸 종료코드 1**로 끝났다 — `EXIT_REJECTED`("판정했고 불합격")와 구분 불가.
+> 동시에 948바이트짜리 잘린 JSON이 디스크에 남았다. 게이트의 존재 이유가
+> "실패가 판정처럼 보이지 않게"이므로 (1) 예외를 `except Exception`으로 넓혀
+> 모든 쓰기·직렬화 실패를 exit 2로 보내고, (2) 임시 파일 + `os.replace`로
+> 원자적 교체하여 이전 리포트를 보존한다.
 
 `main()`의 마지막 `return report["exit_code"]` 앞에 추가:
 
@@ -1251,8 +1351,8 @@ def _write_report(report, workspace):
 
 - [ ] **Step 4: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
-Expected: 29 passed
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Expected: 31 passed (T5 fix의 파라미터화 회귀 테스트 3건 포함. 원안 29는 그 이전 수치)
 
 - [ ] **Step 5: 커밋**
 
@@ -1302,7 +1402,7 @@ def test_v2_golden_fixture_passes_draft(tmp_path):
 
 - [ ] **Step 2: 테스트 실행 — 전량 통과 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/ -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/ -v`
 Expected: 30 passed (신규 30개 + 기존 테스트 전량). 기존 테스트가 하나라도 깨지면 검사기를 건드린 것이므로 되돌린다.
 
 - [ ] **Step 3: `finalize.md`를 래퍼로 재작성**
@@ -1378,8 +1478,8 @@ GATE=$?
 
 ```bash
 ./sync_plugin.sh
-python3 .github/scripts/validate_manifests.py; echo "validate_manifests exit=$?"
-python3 .github/scripts/check_internal_refs.py; echo "check_internal_refs exit=$?"
+.claude/scripts/.venv/bin/python .github/scripts/validate_manifests.py; echo "validate_manifests exit=$?"
+.claude/scripts/.venv/bin/python .github/scripts/check_internal_refs.py; echo "check_internal_refs exit=$?"
 ```
 
 Expected: `validate_manifests exit=0`, `check_internal_refs exit=0`
@@ -1394,13 +1494,13 @@ Expected: `validate_manifests exit=0`, `check_internal_refs exit=0`
 # 기준 1 — fixture 6종이 submission에서 전부 exit != 0
 for f in protocol_bad_pmid protocol_unverified_marker icf_no_pipa \
          icf_pg_without_part4 protocol_missing_b7; do
-  python3 .claude/scripts/qa/finalize_run.py \
+  .claude/scripts/.venv/bin/python .claude/scripts/qa/finalize_run.py \
     .claude/scripts/tests/fixtures/gate/$f.md \
     --profile submission --workspace /tmp/gate-check >/dev/null 2>&1
   echo "$f submission exit=$?"
 done
 # FIH+mrsd 없음은 goal_spec이 필요하다
-python3 .claude/scripts/qa/finalize_run.py \
+.claude/scripts/.venv/bin/python .claude/scripts/qa/finalize_run.py \
   .claude/scripts/tests/fixtures/gate/protocol_clean.md \
   --profile submission --workspace /tmp/gate-check \
   --goal-spec .claude/scripts/tests/fixtures/gate/goal_spec_fih.json >/dev/null 2>&1
@@ -1412,7 +1512,7 @@ Expected: 6줄 모두 `exit=1`
 # 기준 2 — draft에서는 protocol_missing_b7만 exit != 0
 for f in protocol_bad_pmid protocol_unverified_marker icf_no_pipa \
          icf_pg_without_part4 protocol_missing_b7; do
-  python3 .claude/scripts/qa/finalize_run.py \
+  .claude/scripts/.venv/bin/python .claude/scripts/qa/finalize_run.py \
     .claude/scripts/tests/fixtures/gate/$f.md \
     --profile draft --workspace /tmp/gate-check >/dev/null 2>&1
   echo "$f draft exit=$?"
@@ -1422,9 +1522,9 @@ Expected: `protocol_missing_b7 draft exit=1`, 나머지 4개 `exit=0`
 
 ```bash
 # 기준 3·4·6·7 — pytest가 커버
-python3 -m pytest .claude/scripts/tests/ -q
+.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/ -q
 # 기준 5 — plugin 동기화 불변식
-python3 .github/scripts/validate_manifests.py; echo "exit=$?"
+.claude/scripts/.venv/bin/python .github/scripts/validate_manifests.py; echo "exit=$?"
 ```
 Expected: pytest 전량 통과, `exit=0`
 

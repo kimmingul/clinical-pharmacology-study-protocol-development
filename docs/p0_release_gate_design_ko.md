@@ -240,6 +240,12 @@ trial_type, primary_objective]`).
 | 있음 + 그 외 유형 | `SKIPPED` | `SKIPPED` |
 | 없음 | `SKIPPED` | `FAIL` — 시험유형 확인 불가 시 제출 판정 불가 |
 
+여기서 "mrsd 없음"은 **MRSD 값을 얻지 못한 모든 경우**를 뜻한다 — 파일 부재뿐 아니라
+파일이 존재하지만 JSON이 깨졌거나 `mrsd_mg_rounded`/`mrsd_mg` 키가 없어
+`dose_safety_guard.mrsd_from_json`이 `None`을 반환하는 경우를 포함한다. 파일 존재만으로
+`check_file`에 위임하면 `status="skipped"`가 되어 FIH 용량 위반이 submission을 통과하는
+fail-open 경로가 생긴다(T5 리뷰 Critical, 실측 확인).
+
 `trial_type` 매칭은 대소문자 무시 + **단어 경계** 정규식으로 한다
 (`\b(FIH|SAD|MAD)\b`, `re.IGNORECASE`). 스키마가 `type: string` 자유 서술을 허용하므로
 `"FIH (SAD/MAD 포함)"` 같은 값이 올 수 있어 부분 일치가 필요하지만, 단어 경계 없이
@@ -376,8 +382,28 @@ fixture: `.claude/scripts/tests/fixtures/gate/`
   `3년`이 있고 `15년`이 없을 때만 error를 내므로, 해당 문장을 아예 생략하거나 `15년`으로
   쓰면 된다 (`doc_lint.py` `_retention_errors` 확인)
 - 의도한 결함 외의 placeholder·미확인 인용 마커가 없음 (차원 4 오염 방지)
+- **fixture의 설명용 제목·주석이 그 결함의 검사 정규식에 걸리지 않음** — 결함을 설명하려고
+  쓴 단어가 검사식에 매칭되면 fixture가 스스로 검사를 통과시킨다(자기 무력화).
 
 fixture 6(B.7 누락)만 예외로 차원 1을 의도적으로 위반하며, 그 외 차원은 깨끗해야 한다.
+
+#### 자기 무력화 함정 (실측 사례)
+
+`icf_pg_without_part4.md`의 초안 제목을 `— PG 언급, 선택동의 없음`으로 썼더니 의도한
+경고가 **0건** 나왔다. `lint_icf`의 검사식이
+
+```python
+if re.search(r"유전체|약물유전|대사체|인체유래물|잔여\s*검체", text):
+    if not re.search(r"Part\s*4|선택\s*동의|별도\s*동의", text):
+        warnings.append(...)
+```
+
+처럼 **문서 전체**를 훑고, `선택\s*동의`가 공백 없는 `선택동의`에도 매칭하기 때문이다.
+즉 "선택 동의 절이 없다"를 보여주려는 fixture가 제목에 그 단어를 담아 검사를 통과시켰다.
+`Part 4`도 같은 이유로 제목에 쓸 수 없다. 검증된 제목은 `— 약물유전체 언급, 추가 동의 절 부재`다.
+
+**절차적 방어**: fixture를 만든 직후 `doc_lint.py <fixture>`를 실행해 **의도한 findings가
+정확히 그 개수만** 나오는지 확인한다. fixture 내용을 눈으로 읽는 것으로는 이 함정을 잡을 수 없다.
 
 추가 테스트:
 
