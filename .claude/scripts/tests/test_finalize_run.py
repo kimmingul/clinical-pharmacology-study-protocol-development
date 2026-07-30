@@ -213,3 +213,26 @@ def test_dose_violation_blocks_both_profiles(tmp_path):
                              mrsd_json=str(mrsd))
         dose = next(d for d in report["dimensions"] if d["id"] == "dose")
         assert dose["status"] == fr.FAIL
+
+
+@pytest.mark.parametrize("payload", ['{ not json', '{"unexpected_key": 1.0}',
+                                     '{"mrsd_mg_rounded": null}'])
+def test_fih_unusable_mrsd_json_blocks_submission(tmp_path, payload):
+    """mrsd.json이 있어도 MRSD 값을 못 얻으면 부재와 동일하게 취급해야 한다."""
+    mrsd = tmp_path / "mrsd.json"
+    mrsd.write_text(payload, encoding="utf-8")
+    doc = tmp_path / "protocol.md"
+    doc.write_text(
+        open(fixture("protocol_clean.md"), encoding="utf-8").read()
+        + "\n시작 용량: 9999 mg\n", encoding="utf-8")
+
+    sub = fr.run_gate(str(doc), "submission", str(tmp_path),
+                      goal_spec_path=fixture("goal_spec_fih.json"),
+                      mrsd_json=str(mrsd))
+    assert next(d for d in sub["dimensions"] if d["id"] == "dose")["status"] == fr.FAIL
+    assert sub["exit_code"] == fr.EXIT_REJECTED
+
+    draft = fr.run_gate(str(doc), "draft", str(tmp_path),
+                        goal_spec_path=fixture("goal_spec_fih.json"),
+                        mrsd_json=str(mrsd))
+    assert next(d for d in draft["dimensions"] if d["id"] == "dose")["status"] == fr.SKIPPED

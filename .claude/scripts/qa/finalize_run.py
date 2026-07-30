@@ -124,10 +124,14 @@ def dim_citation(target, profile, ctx):
 
 
 def dim_dose(target, profile, ctx):
-    """FIH 시작 용량 대 MRSD. 시험유형을 모르면 submission에서 판정 불가로 차단."""
+    """FIH 시작 용량 대 MRSD. 시험유형·MRSD를 모르면 submission에서 판정 불가로 차단."""
     fih = _is_fih(ctx["goal_spec"])
     mrsd_path = ctx["mrsd_json"]
-    has_mrsd = bool(mrsd_path) and os.path.isfile(mrsd_path)
+    # 파일 존재가 아니라 MRSD '값'을 얻었는지로 판단한다. 파일이 있다는 이유만으로
+    # check_file에 위임하면, 손상·키 누락 파일에서 mrsd_mg=None -> status="skipped"가
+    # 되어 FIH 용량 위반이 submission을 통과한다(fail-open).
+    mrsd_mg = dose_safety_guard.mrsd_from_json(mrsd_path)
+    has_mrsd = mrsd_mg is not None
 
     if fih is None:
         if profile == "submission":
@@ -136,14 +140,17 @@ def dim_dose(target, profile, ctx):
         return _dim("dose", SKIPPED, reason="goal_spec 없음 (draft 허용)")
 
     if fih and not has_mrsd:
+        # 부재와 '읽었으나 값 없음'을 같은 분기로 처리하되 사유는 구분해 남긴다.
+        why = ("mrsd.json에서 MRSD 값을 얻지 못함(손상·키 누락)"
+               if mrsd_path and os.path.isfile(mrsd_path)
+               else "mrsd.json 없음")
         if profile == "submission":
             return _dim("dose", FAIL,
-                        ["FIH 계열이나 mrsd.json이 없어 MRSD 대조 불가"])
+                        [f"FIH 계열이나 {why} — MRSD 대조 불가"])
         return _dim("dose", SKIPPED,
-                    reason="FIH이나 mrsd.json 없음 (draft 허용)")
+                    reason=f"FIH이나 {why} (draft 허용)")
 
-    res = dose_safety_guard.check_file(
-        target, mrsd_json=mrsd_path if has_mrsd else None)
+    res = dose_safety_guard.check_file(target, mrsd_mg=mrsd_mg)
     if res["status"] == "violation":
         return _dim("dose", FAIL, [v["message"] for v in res["violations"]],
                     mrsd_mg=res["mrsd_mg"])
