@@ -36,3 +36,12 @@ plugin/**/*.zip
 /.omc/*
 !/.omc/research/
 /plugin/.omc/
+
+# git worktree 격리 작업공간 (구현 중 생성, 저장소에 커밋하지 않음)
+/.claude/worktrees/
+
+# Subagent-Driven Development 진행 원장·브리프·리뷰 패키지 (스크래치)
+/.superpowers/
+
+# 외부 모델 협의체(xllm) 산출물 — 참고 자료이며 저장소 이력에 남기지 않음
+/.xllm/
