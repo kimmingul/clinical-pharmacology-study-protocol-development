@@ -14,6 +14,8 @@
 
 - **신규 의존성 추가 금지.** 표준 라이브러리만 사용한다. `.claude/scripts/requirements.txt`를 수정하지 않는다.
 - **Python 3.11+에서 동작해야 한다.** 로컬 venv는 `.claude/scripts/.venv` (3.11.15), CI는 3.12다. 3.12 전용 문법·API를 쓰지 않는다. 로컬 통과가 CI 통과를 보장하지 않으므로, CI 결과는 push 후 별도로 확인한다.
+- **테스트·스크립트는 반드시 venv 파이썬으로 실행한다**: `.claude/scripts/.venv/bin/python`. 시스템 `python3`(3.14.4)에는 pytest·scipy·numpy가 없어 즉시 실패한다. 계획의 모든 `Run:` 명령은 이 경로를 명시하고 있다.
+- **작업 디렉터리를 벗어나지 않는다.** 모든 경로는 저장소 루트 기준 상대경로로 쓴다. `cd <절대경로>` 를 명령에 넣지 않는다 — 구현은 격리 워크트리에서 진행되며, 절대경로는 원본 체크아웃을 가리켜 워크트리 격리를 무력화한다.
 - **`except Exception`은 의도된 설계이며 유지한다.** `run_gate`의 차원별 포착과 `score_file` 호출의 예외 삼킴은 fail-closed 보장(검사기 크래시를 통과로 집계하지 않음)과 score의 참고-전용 성격에서 나온 것이다. `.claude/rules/moai/languages/python.md`가 금지하는 것은 **bare except**(`except:`)이며, 여기서 쓰는 것은 `except Exception`에 사유 주석을 붙인 형태다. 리뷰에서 이 항목이 지적되면 plan-mandated로 분류한다 — 좁히지 않는다.
 - **검사기 3종을 수정하지 않는다**: `.claude/scripts/qa/doc_lint.py`, `citation_verify.py`, `dose_safety_guard.py`. 또한 `.claude/hooks/draft_advisory_hook.py`와 `.github/workflows/ci.yml`도 수정하지 않는다.
 - **런타임 경로는 `__file__` 기준 상대경로로 해석한다.** `sync_plugin.sh:44`는 `*.md`만 경로 치환하므로 `.py`에 `.claude/` 런타임 경로를 하드코딩하면 plugin 복사본에서 깨진다.
@@ -107,7 +109,7 @@ def test_dim_helper_defaults_findings_to_empty_list():
 
 - [ ] **Step 2: 테스트를 실행해 실패를 확인**
 
-Run: `cd /Users/min/Projects/clinical-pharmacology-study-protocol-development && python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'finalize_run'`
 
 - [ ] **Step 3: 최소 구현 작성**
@@ -193,7 +195,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 5 passed
 
 - [ ] **Step 5: 커밋**
@@ -315,7 +317,7 @@ def test_structure_dimension_reports_doc_type(tmp_path):
 
 - [ ] **Step 3: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: FAIL — `AttributeError: module 'finalize_run' has no attribute 'run_gate'`
 
 - [ ] **Step 4: 구현 — `dim_structure` + `run_gate`**
@@ -420,7 +422,7 @@ def run_gate(target, profile, workspace, goal_spec_path=None, mrsd_json=None):
 
 - [ ] **Step 5: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 8 passed
 
 - [ ] **Step 6: 커밋**
@@ -562,7 +564,7 @@ def test_clean_protocol_advisory_passes_submission(tmp_path):
 
 - [ ] **Step 3: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v -k advisory`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k advisory`
 Expected: FAIL — `StopIteration` (advisory 차원이 `DIMENSIONS`에 없음)
 
 - [ ] **Step 4: 구현 — `dim_advisory`**
@@ -597,7 +599,7 @@ DIMENSIONS = (
 
 - [ ] **Step 5: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 12 passed
 
 - [ ] **Step 6: 커밋**
@@ -718,7 +720,7 @@ def test_citation_verified_passes_submission(tmp_path, monkeypatch):
 
 - [ ] **Step 3: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v -k citation`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k citation`
 Expected: FAIL — `StopIteration` (citation 차원 없음)
 
 - [ ] **Step 4: 구현 — `dim_citation`**
@@ -777,7 +779,7 @@ DIMENSIONS = (
 
 - [ ] **Step 5: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 16 passed
 
 `test_clean_protocol_advisory_passes_submission`이 `protocol_clean.md`에 인용이 없어 여전히 통과함을 확인한다 (`total=0` → findings 없음 → PASS).
@@ -909,7 +911,7 @@ def test_dose_violation_blocks_both_profiles(tmp_path):
 
 - [ ] **Step 3: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v -k "fih or dose or goal_spec"`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k "fih or dose or goal_spec"`
 Expected: FAIL — `AttributeError: module 'finalize_run' has no attribute '_is_fih'`
 
 - [ ] **Step 4: 구현 — `_is_fih` + `dim_dose`**
@@ -980,7 +982,7 @@ DIMENSIONS = (
 
 - [ ] **Step 5: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 21 passed
 
 - [ ] **Step 6: 커밋**
@@ -1073,7 +1075,7 @@ import doc_lint as doc_lint_module
 
 - [ ] **Step 2: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v -k "approval or crash or precedence or score"`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k "approval or crash or precedence or score"`
 Expected: FAIL — `StopIteration` (approval 차원 없음), `KeyError: 'score_informational'`
 
 - [ ] **Step 3: 구현 — `dim_approval` + score + 경고**
@@ -1138,7 +1140,7 @@ DIMENSIONS = (
 
 - [ ] **Step 4: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 26 passed
 
 - [ ] **Step 5: 커밋**
@@ -1219,7 +1221,7 @@ def test_report_records_failure_details(tmp_path):
 
 - [ ] **Step 2: 테스트를 실행해 실패를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v -k report`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v -k report`
 Expected: FAIL — `AssertionError: assert False` (`release_gate.json`이 생성되지 않음)
 
 - [ ] **Step 3: 구현 — `_write_report` + `main` 연결**
@@ -1259,7 +1261,7 @@ def _write_report(report, workspace):
 
 - [ ] **Step 4: 테스트를 실행해 통과를 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/test_finalize_run.py -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
 Expected: 29 passed
 
 - [ ] **Step 5: 커밋**
@@ -1310,7 +1312,7 @@ def test_v2_golden_fixture_passes_draft(tmp_path):
 
 - [ ] **Step 2: 테스트 실행 — 전량 통과 확인**
 
-Run: `python3 -m pytest .claude/scripts/tests/ -v`
+Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/ -v`
 Expected: 30 passed (신규 30개 + 기존 테스트 전량). 기존 테스트가 하나라도 깨지면 검사기를 건드린 것이므로 되돌린다.
 
 - [ ] **Step 3: `finalize.md`를 래퍼로 재작성**
@@ -1386,8 +1388,8 @@ GATE=$?
 
 ```bash
 ./sync_plugin.sh
-python3 .github/scripts/validate_manifests.py; echo "validate_manifests exit=$?"
-python3 .github/scripts/check_internal_refs.py; echo "check_internal_refs exit=$?"
+.claude/scripts/.venv/bin/python .github/scripts/validate_manifests.py; echo "validate_manifests exit=$?"
+.claude/scripts/.venv/bin/python .github/scripts/check_internal_refs.py; echo "check_internal_refs exit=$?"
 ```
 
 Expected: `validate_manifests exit=0`, `check_internal_refs exit=0`
@@ -1402,13 +1404,13 @@ Expected: `validate_manifests exit=0`, `check_internal_refs exit=0`
 # 기준 1 — fixture 6종이 submission에서 전부 exit != 0
 for f in protocol_bad_pmid protocol_unverified_marker icf_no_pipa \
          icf_pg_without_part4 protocol_missing_b7; do
-  python3 .claude/scripts/qa/finalize_run.py \
+  .claude/scripts/.venv/bin/python .claude/scripts/qa/finalize_run.py \
     .claude/scripts/tests/fixtures/gate/$f.md \
     --profile submission --workspace /tmp/gate-check >/dev/null 2>&1
   echo "$f submission exit=$?"
 done
 # FIH+mrsd 없음은 goal_spec이 필요하다
-python3 .claude/scripts/qa/finalize_run.py \
+.claude/scripts/.venv/bin/python .claude/scripts/qa/finalize_run.py \
   .claude/scripts/tests/fixtures/gate/protocol_clean.md \
   --profile submission --workspace /tmp/gate-check \
   --goal-spec .claude/scripts/tests/fixtures/gate/goal_spec_fih.json >/dev/null 2>&1
@@ -1420,7 +1422,7 @@ Expected: 6줄 모두 `exit=1`
 # 기준 2 — draft에서는 protocol_missing_b7만 exit != 0
 for f in protocol_bad_pmid protocol_unverified_marker icf_no_pipa \
          icf_pg_without_part4 protocol_missing_b7; do
-  python3 .claude/scripts/qa/finalize_run.py \
+  .claude/scripts/.venv/bin/python .claude/scripts/qa/finalize_run.py \
     .claude/scripts/tests/fixtures/gate/$f.md \
     --profile draft --workspace /tmp/gate-check >/dev/null 2>&1
   echo "$f draft exit=$?"
@@ -1430,9 +1432,9 @@ Expected: `protocol_missing_b7 draft exit=1`, 나머지 4개 `exit=0`
 
 ```bash
 # 기준 3·4·6·7 — pytest가 커버
-python3 -m pytest .claude/scripts/tests/ -q
+.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/ -q
 # 기준 5 — plugin 동기화 불변식
-python3 .github/scripts/validate_manifests.py; echo "exit=$?"
+.claude/scripts/.venv/bin/python .github/scripts/validate_manifests.py; echo "exit=$?"
 ```
 Expected: pytest 전량 통과, `exit=0`
 
