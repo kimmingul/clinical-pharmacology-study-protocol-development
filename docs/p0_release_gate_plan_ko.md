@@ -6,13 +6,15 @@
 
 **Architecture:** `finalize_run.py`가 기존 검사기 3종을 `import`로 호출하고(subprocess 아님), 검사기는 사실(finding)만 반환하며 심각도 판정은 게이트가 프로파일(`draft`/`submission`)에 따라 소유한다. 5개 차원을 각각 try/except로 감싸 실행하고, 하나라도 차단 상태면 non-zero로 종료한다.
 
-**Tech Stack:** Python 3.12, 표준 라이브러리만(`argparse`/`json`/`os`/`re`/`sys`), pytest, monkeypatch
+**Tech Stack:** Python 3.11+ (로컬 개발 venv는 3.11.15, **CI는 3.12**), 표준 라이브러리만(`argparse`/`json`/`os`/`re`/`sys`/`datetime`), pytest, monkeypatch
 
 **설계 문서:** `docs/p0_release_gate_design_ko.md` (커밋 `e4e60ef`)
 
 ## Global Constraints
 
 - **신규 의존성 추가 금지.** 표준 라이브러리만 사용한다. `.claude/scripts/requirements.txt`를 수정하지 않는다.
+- **Python 3.11+에서 동작해야 한다.** 로컬 venv는 `.claude/scripts/.venv` (3.11.15), CI는 3.12다. 3.12 전용 문법·API를 쓰지 않는다. 로컬 통과가 CI 통과를 보장하지 않으므로, CI 결과는 push 후 별도로 확인한다.
+- **`except Exception`은 의도된 설계이며 유지한다.** `run_gate`의 차원별 포착과 `score_file` 호출의 예외 삼킴은 fail-closed 보장(검사기 크래시를 통과로 집계하지 않음)과 score의 참고-전용 성격에서 나온 것이다. `.claude/rules/moai/languages/python.md`가 금지하는 것은 **bare except**(`except:`)이며, 여기서 쓰는 것은 `except Exception`에 사유 주석을 붙인 형태다. 리뷰에서 이 항목이 지적되면 plan-mandated로 분류한다 — 좁히지 않는다.
 - **검사기 3종을 수정하지 않는다**: `.claude/scripts/qa/doc_lint.py`, `citation_verify.py`, `dose_safety_guard.py`. 또한 `.claude/hooks/draft_advisory_hook.py`와 `.github/workflows/ci.yml`도 수정하지 않는다.
 - **런타임 경로는 `__file__` 기준 상대경로로 해석한다.** `sync_plugin.sh:44`는 `*.md`만 경로 치환하므로 `.py`에 `.claude/` 런타임 경로를 하드코딩하면 plugin 복사본에서 깨진다.
 - **테스트는 네트워크 I/O를 하지 않는다.** 기존 `.claude/scripts/tests/test_citation_verify.py`의 규약("NO test performs network I/O")을 따른다. online 경로는 `citation_verify.verify_online`을 monkeypatch한다.
