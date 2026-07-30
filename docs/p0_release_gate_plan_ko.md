@@ -1185,7 +1185,7 @@ DIMENSIONS = (
 - [ ] **Step 4: 테스트를 실행해 통과를 확인**
 
 Run: `.claude/scripts/.venv/bin/python -m pytest .claude/scripts/tests/test_finalize_run.py -v`
-Expected: 26 passed
+Expected: 28 passed (T5 fix의 파라미터화 회귀 테스트 3건 포함. 원안 26은 그 이전 수치)
 
 - [ ] **Step 5: 커밋**
 
