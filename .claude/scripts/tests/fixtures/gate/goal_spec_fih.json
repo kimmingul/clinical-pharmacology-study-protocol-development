@@ -1,0 +1,6 @@
+{
+  "schema": "trial_goal_spec/v1",
+  "drug": "TEST-001",
+  "trial_type": "FIH (SAD/MAD 포함)",
+  "primary_objective": "건강한 성인에서 단회 상승 용량의 안전성·내성 평가"
+}

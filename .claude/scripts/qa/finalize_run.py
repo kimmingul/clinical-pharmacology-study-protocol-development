@@ -31,6 +31,7 @@ if _HERE not in sys.path:
 
 import doc_lint  # noqa: E402
 import citation_verify  # noqa: E402
+import dose_safety_guard  # noqa: E402
 
 # Status vocabulary. "checker not run" is never conflated with "passed".
 PASS = "PASS"
@@ -52,6 +53,18 @@ def _dim(dim_id, status, findings=None, **extra):
     out = {"id": dim_id, "status": status, "findings": list(findings or [])}
     out.update(extra)
     return out
+
+
+# trial_type은 스키마상 자유 서술 문자열이므로 부분 일치가 필요하지만,
+# 단어 경계 없이 매칭하면 다른 단어 속 SAD/MAD를 오탐한다.
+_FIH_RE = re.compile(r"\b(FIH|SAD|MAD)\b", re.IGNORECASE)
+
+
+def _is_fih(goal_spec):
+    """FIH 계열 여부. goal_spec이 없으면 None('알 수 없음')을 돌려준다."""
+    if not goal_spec:
+        return None
+    return bool(_FIH_RE.search(str(goal_spec.get("trial_type", ""))))
 
 
 def dim_structure(target, profile, ctx):
@@ -110,9 +123,39 @@ def dim_citation(target, profile, ctx):
     return _dim("citation", FAIL if findings else PASS, findings, detail=detail)
 
 
+def dim_dose(target, profile, ctx):
+    """FIH 시작 용량 대 MRSD. 시험유형을 모르면 submission에서 판정 불가로 차단."""
+    fih = _is_fih(ctx["goal_spec"])
+    mrsd_path = ctx["mrsd_json"]
+    has_mrsd = bool(mrsd_path) and os.path.isfile(mrsd_path)
+
+    if fih is None:
+        if profile == "submission":
+            return _dim("dose", FAIL,
+                        ["goal_spec 없음 — trial_type을 확인할 수 없어 제출 판정 불가"])
+        return _dim("dose", SKIPPED, reason="goal_spec 없음 (draft 허용)")
+
+    if fih and not has_mrsd:
+        if profile == "submission":
+            return _dim("dose", FAIL,
+                        ["FIH 계열이나 mrsd.json이 없어 MRSD 대조 불가"])
+        return _dim("dose", SKIPPED,
+                    reason="FIH이나 mrsd.json 없음 (draft 허용)")
+
+    res = dose_safety_guard.check_file(
+        target, mrsd_json=mrsd_path if has_mrsd else None)
+    if res["status"] == "violation":
+        return _dim("dose", FAIL, [v["message"] for v in res["violations"]],
+                    mrsd_mg=res["mrsd_mg"])
+    if res["status"] == "skipped":
+        return _dim("dose", SKIPPED, reason="MRSD 없음 — 대조 대상 없음")
+    return _dim("dose", PASS, mrsd_mg=res["mrsd_mg"])
+
+
 DIMENSIONS = (
     ("structure", dim_structure),
     ("citation", dim_citation),
+    ("dose", dim_dose),
     ("advisory", dim_advisory),
 )
 

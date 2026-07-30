@@ -153,3 +153,63 @@ def test_citation_verified_passes_submission(tmp_path, monkeypatch):
                          str(tmp_path))
     citation = next(d for d in report["dimensions"] if d["id"] == "citation")
     assert citation["status"] == fr.PASS
+
+
+def test_is_fih_word_boundary():
+    assert fr._is_fih({"trial_type": "FIH (SAD/MAD 포함)"}) is True
+    assert fr._is_fih({"trial_type": "sad"}) is True
+    assert fr._is_fih({"trial_type": "DDI"}) is False
+    assert fr._is_fih({"trial_type": "NOMADIC"}) is False, "부분 문자열 오탐 금지"
+    assert fr._is_fih(None) is None, "goal_spec 없음은 '알 수 없음'"
+
+
+def test_fih_without_mrsd_blocks_submission_only(tmp_path):
+    draft = fr.run_gate(fixture("protocol_clean.md"), "draft", str(tmp_path),
+                        goal_spec_path=fixture("goal_spec_fih.json"))
+    dose = next(d for d in draft["dimensions"] if d["id"] == "dose")
+    assert dose["status"] == fr.SKIPPED
+    assert draft["exit_code"] == fr.EXIT_OK
+
+    sub = fr.run_gate(fixture("protocol_clean.md"), "submission",
+                      str(tmp_path),
+                      goal_spec_path=fixture("goal_spec_fih.json"))
+    dose = next(d for d in sub["dimensions"] if d["id"] == "dose")
+    assert dose["status"] == fr.FAIL
+    assert sub["exit_code"] == fr.EXIT_REJECTED
+
+
+def test_non_fih_dose_is_skipped_in_both_profiles(tmp_path):
+    for profile in ("draft", "submission"):
+        report = fr.run_gate(fixture("protocol_clean.md"), profile,
+                             str(tmp_path),
+                             goal_spec_path=fixture("goal_spec_ddi.json"))
+        dose = next(d for d in report["dimensions"] if d["id"] == "dose")
+        assert dose["status"] == fr.SKIPPED
+
+
+def test_missing_goal_spec_blocks_submission(tmp_path):
+    draft = fr.run_gate(fixture("protocol_clean.md"), "draft", str(tmp_path))
+    dose = next(d for d in draft["dimensions"] if d["id"] == "dose")
+    assert dose["status"] == fr.SKIPPED
+
+    sub = fr.run_gate(fixture("protocol_clean.md"), "submission",
+                      str(tmp_path))
+    dose = next(d for d in sub["dimensions"] if d["id"] == "dose")
+    assert dose["status"] == fr.FAIL
+    assert "trial_type" in " ".join(dose["findings"])
+
+
+def test_dose_violation_blocks_both_profiles(tmp_path):
+    mrsd = tmp_path / "mrsd.json"
+    mrsd.write_text(json.dumps({"mrsd_mg": 1.0}), encoding="utf-8")
+    doc = tmp_path / "protocol_overdose.md"
+    doc.write_text(
+        "\n".join(f"# B.{i} section" for i in range(1, 17))
+        + "\n시작 용량: 50 mg\n", encoding="utf-8")
+
+    for profile in ("draft", "submission"):
+        report = fr.run_gate(str(doc), profile, str(tmp_path),
+                             goal_spec_path=fixture("goal_spec_fih.json"),
+                             mrsd_json=str(mrsd))
+        dose = next(d for d in report["dimensions"] if d["id"] == "dose")
+        assert dose["status"] == fr.FAIL
