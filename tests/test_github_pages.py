@@ -75,7 +75,7 @@ class GitHubPagesTest(unittest.TestCase):
             "/plugin marketplace add kimmingul/clinical-pharmacology-study-protocol-development",
             page_text,
         )
-        self.assertIn("v4.2.0", page_text)
+        self.assertIn("v4.3.0", page_text)
 
 
 if __name__ == "__main__":

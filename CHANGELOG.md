@@ -6,6 +6,10 @@ log lives in `CLAUDE.md` (진화 로그); this file tracks user-facing releases.
 
 ## [Unreleased]
 
+_No unreleased changes._
+
+## [4.3.0] — 2026-07-31 — fail-closed release 게이트
+
 ### Added — fail-closed release 게이트 (`/finalize`)
 
 - **`.claude/scripts/qa/finalize_run.py` 신설.** `/finalize`의 판정 로직이 커맨드
